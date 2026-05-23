@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart, MessageCircle, Sparkles, Zap, Globe2, ArrowRight, Star } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -35,9 +35,9 @@ function Nav() {
         </nav>
         <div className="flex items-center gap-2">
           <button className="hidden sm:inline-flex h-9 px-4 text-sm text-muted-foreground hover:text-foreground transition">登录</button>
-          <button className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition">
-            立刻加入 <ArrowRight className="size-3.5" />
-          </button>
+          <Link to="/discover" className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition">
+            开始匹配 <ArrowRight className="size-3.5" />
+          </Link>
         </div>
       </div>
     </header>
