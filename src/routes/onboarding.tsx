@@ -67,6 +67,7 @@ const initial: Profile = {
 };
 
 function Onboarding() {
+  const [authed, setAuthed] = useState(false);
   const [step, setStep] = useState(0);
   const [data, setData] = useState<Profile>(initial);
   const navigate = useNavigate();
@@ -108,6 +109,14 @@ function Onboarding() {
   const prev = () => { setError(null); setStep(Math.max(0, step - 1)); };
 
   const progress = ((step + 1) / STEPS.length) * 100;
+
+  if (!authed) {
+    return <AuthGate onContinue={(method) => {
+      // 预填昵称（如有），并进入资料填写
+      if (method.nickname) setData((d) => ({ ...d, nickname: method.nickname! }));
+      setAuthed(true);
+    }} />;
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
