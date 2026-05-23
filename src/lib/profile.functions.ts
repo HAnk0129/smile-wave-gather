@@ -47,7 +47,7 @@ export const saveProfile = createServerFn({ method: "POST" })
 
     const { error } = await supabase
       .from("profiles")
-      .upsert(payload, { onConflict: "id" });
+      .upsert(payload as never, { onConflict: "id" });
 
     if (error) throw new Error(error.message);
     return { ok: true };
