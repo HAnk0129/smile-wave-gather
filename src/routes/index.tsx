@@ -77,10 +77,6 @@ function Hero() {
               免费开始匹配
               <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
             </Link>
-            <button className="inline-flex items-center gap-2 h-12 px-6 rounded-full border border-border bg-surface/60 backdrop-blur font-medium hover:bg-surface transition">
-              <Sparkles className="size-4 text-sun" />
-              看看大家在聊什么
-            </button>
           </div>
 
           <div className="mt-10 flex items-center gap-3 text-sm text-muted-foreground">
