@@ -74,6 +74,7 @@ function DiscoverPage() {
   const [index, setIndex] = useState(0);
   const [history, setHistory] = useState<Array<{ id: number; dir: "left" | "right" | "up" }>>([]);
   const [lastAction, setLastAction] = useState<"like" | "nope" | "super" | null>(null);
+  const [matched, setMatched] = useState<Profile | null>(null);
 
   const current = PROFILES[index % PROFILES.length];
   const next = PROFILES[(index + 1) % PROFILES.length];
@@ -82,6 +83,13 @@ function DiscoverPage() {
   const swipe = (dir: "left" | "right" | "up") => {
     setHistory((h) => [...h, { id: current.id, dir }]);
     setLastAction(dir === "right" ? "like" : dir === "left" ? "nope" : "super");
+    if (dir === "right" || dir === "up") {
+      // simulate ~50% chance of mutual match, super-like always matches
+      if (dir === "up" || Math.random() < 0.5) {
+        const matchedProfile = current;
+        window.setTimeout(() => setMatched(matchedProfile), 600);
+      }
+    }
     setIndex((i) => i + 1);
     window.setTimeout(() => setLastAction(null), 700);
   };
@@ -178,6 +186,54 @@ function DiscoverPage() {
           左右滑动卡片 · 向上滑动表示超级喜欢
         </p>
       </main>
+
+      <AnimatePresence>
+        {matched && (
+          <motion.div
+            className="fixed inset-0 z-50 grid place-items-center bg-background/80 px-5 backdrop-blur-xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.85, y: 30, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 18 }}
+              className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-coral/40 bg-surface p-6 text-center shadow-2xl"
+            >
+              <div className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-b ${matched.gradient} opacity-50`} />
+              <div className="relative">
+                <div className="text-xs uppercase tracking-[0.3em] text-coral">It's a Match</div>
+                <h2 className="mt-2 font-display text-3xl font-semibold">你们互相喜欢 💞</h2>
+                <p className="mt-1 text-sm text-muted-foreground">和 {matched.name} 同频度 {matched.match}%</p>
+
+                <div className="relative mx-auto mt-6 flex items-center justify-center">
+                  <div className="grid h-24 w-24 -mr-4 place-items-center rounded-full border-4 border-background bg-gradient-to-br from-coral to-sun font-display text-2xl text-background shadow-lg">我</div>
+                  <div className={`grid h-24 w-24 -ml-4 place-items-center rounded-full border-4 border-background bg-gradient-to-br ${matched.gradient} font-display text-2xl text-background shadow-lg`}>
+                    {matched.name.slice(0, 1)}
+                  </div>
+                  <motion.div
+                    className="absolute grid h-10 w-10 place-items-center rounded-full bg-coral text-background shadow-xl"
+                    initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: "spring" }}
+                  >
+                    <Heart className="h-5 w-5 fill-current" />
+                  </motion.div>
+                </div>
+
+                <Link
+                  to="/chat"
+                  search={{ name: matched.name, avatar: matched.gradient, from: "match", city: matched.city }}
+                  className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-coral to-sun px-4 py-3 text-sm font-semibold text-background shadow-lg"
+                >
+                  <MessageCircle className="h-4 w-4" /> 发送第一条消息
+                </Link>
+                <button onClick={() => setMatched(null)} className="mt-3 w-full text-xs text-muted-foreground">继续滑卡</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
