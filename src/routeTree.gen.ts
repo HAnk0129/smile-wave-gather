@@ -18,6 +18,7 @@ import { Route as GamesPalmRouteImport } from './routes/games.palm'
 import { Route as GamesLeaderboardRouteImport } from './routes/games.leaderboard'
 import { Route as ExploreVoiceRouteImport } from './routes/explore.voice'
 import { Route as ExploreVideoRouteImport } from './routes/explore.video'
+import { Route as ExploreTreeholeRouteImport } from './routes/explore.treehole'
 
 const RadarRoute = RadarRouteImport.update({
   id: '/radar',
@@ -64,6 +65,11 @@ const ExploreVideoRoute = ExploreVideoRouteImport.update({
   path: '/video',
   getParentRoute: () => ExploreRoute,
 } as any)
+const ExploreTreeholeRoute = ExploreTreeholeRouteImport.update({
+  id: '/treehole',
+  path: '/treehole',
+  getParentRoute: () => ExploreRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
   '/radar': typeof RadarRoute
+  '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
   '/radar': typeof RadarRoute
+  '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
   '/radar': typeof RadarRoute
+  '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/games'
     | '/radar'
+    | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
     | '/games/leaderboard'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/games'
     | '/radar'
+    | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
     | '/games/leaderboard'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/games'
     | '/radar'
+    | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
     | '/games/leaderboard'
@@ -208,15 +220,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExploreVideoRouteImport
       parentRoute: typeof ExploreRoute
     }
+    '/explore/treehole': {
+      id: '/explore/treehole'
+      path: '/treehole'
+      fullPath: '/explore/treehole'
+      preLoaderRoute: typeof ExploreTreeholeRouteImport
+      parentRoute: typeof ExploreRoute
+    }
   }
 }
 
 interface ExploreRouteChildren {
+  ExploreTreeholeRoute: typeof ExploreTreeholeRoute
   ExploreVideoRoute: typeof ExploreVideoRoute
   ExploreVoiceRoute: typeof ExploreVoiceRoute
 }
 
 const ExploreRouteChildren: ExploreRouteChildren = {
+  ExploreTreeholeRoute: ExploreTreeholeRoute,
   ExploreVideoRoute: ExploreVideoRoute,
   ExploreVoiceRoute: ExploreVoiceRoute,
 }
