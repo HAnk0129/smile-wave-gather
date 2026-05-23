@@ -10,7 +10,7 @@ function Index() {
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <Nav />
       <Hero />
-      <Marquee />
+
       <Features />
       <PhonePreview />
       <Stats />
@@ -96,25 +96,6 @@ function Hero() {
             <span>4.9 · 来自 12,580 条真实评价</span>
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function Marquee() {
-  const tags = [
-    "📷 摄影爱好者", "🎵 独立音乐", "☕ 周末咖啡馆", "🏃 跑步搭子",
-    "🎮 双人游戏", "📚 共读一本书", "🌃 City Walk", "🍜 探店饭搭",
-    "🎬 一起看电影", "🧗 户外攀岩", "✈️ 旅行同行", "🎨 看展览",
-  ];
-  return (
-    <section className="relative border-y border-border bg-surface/40 py-6 overflow-hidden">
-      <div className="flex gap-3 w-max animate-marquee">
-        {[...tags, ...tags].map((t, i) => (
-          <span key={i} className="shrink-0 rounded-full border border-border bg-background/60 px-4 py-2 text-sm whitespace-nowrap">
-            {t}
-          </span>
-        ))}
       </div>
     </section>
   );
