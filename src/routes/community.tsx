@@ -1,11 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, MessageCircle, Bookmark, Share2, MapPin, ChevronDown, Plus,
   Flame, TrendingUp, Search, Home, Compass, Trophy, User, X, Image as ImageIcon,
   Tag, ShoppingBag, MessageSquare, HelpCircle,
 } from "lucide-react";
+import {
+  listCommunityPosts,
+  createCommunityPost,
+  toggleCommunityLike,
+  type CommunityPost,
+} from "@/lib/community.functions";
 
 export const Route = createFileRoute("/community")({
   head: () => ({
@@ -32,33 +41,10 @@ const LOCATIONS = [
   "陵水 · 清水湾",
 ];
 
-type Post = {
-  id: string;
-  author: string;
-  avatar: string;
-  category: Exclude<Category, "all">;
-  title: string;
-  content: string;
-  cover: string;
-  tags: string[];
-  likes: number;
-  comments: number;
-  hot: number;
-  height: "tall" | "mid" | "short";
-};
-
-const POSTS: Post[] = [
-  { id: "1", author: "海岛小鹿", avatar: "🦌", category: "second", title: "宿舍搬家急出：宜家小书桌 + 落地灯", content: "毕业搬走，原价 ¥899，现 ¥250 打包带走，可自取。", cover: "from-mint/40 via-mint/10 to-transparent", tags: ["#宿舍好物", "#自取"], likes: 328, comments: 42, hot: 9821, height: "tall" },
-  { id: "2", author: "K酱不熬夜", avatar: "🌙", category: "vent", title: "试验区的食堂阿姨手抖到底是什么超能力", content: "排队 20 分钟，到我这里突然只剩半勺……是不是我打开方式错了😭", cover: "from-coral/40 via-coral/10 to-transparent", tags: ["#食堂日记"], likes: 1203, comments: 286, hot: 18420, height: "mid" },
-  { id: "3", author: "Lina", avatar: "🌊", category: "ask", title: "有人一起拼车去三亚机场吗 周五下午 3 点", content: "黎安出发，可均摊车费，最好带行李箱大件多的同学～", cover: "from-sun/40 via-sun/10 to-transparent", tags: ["#拼车", "#周五"], likes: 86, comments: 53, hot: 6701, height: "short" },
-  { id: "4", author: "Coco", avatar: "🐚", category: "second", title: "九成新 iPad Air 5 + 妙控键盘", content: "今年三月买的，配件齐全，¥3680。课程结束用不上了。", cover: "from-mint/40 via-mint/10 to-transparent", tags: ["#数码", "#可小刀"], likes: 564, comments: 91, hot: 12033, height: "mid" },
-  { id: "5", author: "雨果不下雨", avatar: "☔", category: "vent", title: "为什么海南的雨都是定点开始定点结束", content: "刚出门，云直接给我表演了一个开关水龙头。", cover: "from-coral/40 via-coral/10 to-transparent", tags: ["#天气", "#今日份吐槽"], likes: 712, comments: 168, hot: 9420, height: "short" },
-  { id: "6", author: "可乐no冰", avatar: "🥤", category: "ask", title: "试验区附近有靠谱的牙科诊所吗", content: "智齿肿了……求大佬推荐，最好能预约周末。", cover: "from-sun/40 via-sun/10 to-transparent", tags: ["#求推荐"], likes: 42, comments: 37, hot: 4302, height: "tall" },
-  { id: "7", author: "Sunny", avatar: "🌞", category: "second", title: "出一张 周杰伦三亚演唱会内场票", content: "原价转，临时有事去不了，认证后转。", cover: "from-mint/40 via-mint/10 to-transparent", tags: ["#演唱会", "#急出"], likes: 2189, comments: 412, hot: 23890, height: "tall" },
-  { id: "8", author: "Mochi", avatar: "🍡", category: "vent", title: "图书馆的空调真的会冻醒人", content: "穿短袖进去，三十分钟后开始怀疑人生。", cover: "from-coral/40 via-coral/10 to-transparent", tags: ["#图书馆"], likes: 488, comments: 102, hot: 7210, height: "mid" },
-];
-
-const HOT_RANK = [...POSTS].sort((a, b) => b.hot - a.hot).slice(0, 5);
+function heightFor(id: string): "tall" | "mid" | "short" {
+  const n = id.charCodeAt(0) + id.charCodeAt(id.length - 1);
+  return n % 3 === 0 ? "tall" : n % 3 === 1 ? "mid" : "short";
+}
 
 function CommunityPage() {
   const [activeCat, setActiveCat] = useState<Category>("all");
@@ -66,10 +52,38 @@ function CommunityPage() {
   const [locOpen, setLocOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
 
-  const filtered = useMemo(
-    () => (activeCat === "all" ? POSTS : POSTS.filter((p) => p.category === activeCat)),
-    [activeCat]
-  );
+  const listFn = useServerFn(listCommunityPosts);
+  const likeFn = useServerFn(toggleCommunityLike);
+  const qc = useQueryClient();
+
+  const queryKey = ["community-posts", activeCat, location] as const;
+  const { data, isLoading } = useQuery({
+    queryKey,
+    queryFn: () => listFn({ data: { category: activeCat, location } }),
+  });
+
+  const posts = data?.posts ?? [];
+  const hotRank = useMemo(() => [...posts].sort((a, b) => b.hot - a.hot).slice(0, 5), [posts]);
+
+  const likeMut = useMutation({
+    mutationFn: (post_id: string) => likeFn({ data: { post_id } }),
+    onMutate: async (post_id) => {
+      await qc.cancelQueries({ queryKey });
+      const prev = qc.getQueryData<{ posts: CommunityPost[] }>(queryKey);
+      if (prev) {
+        qc.setQueryData(queryKey, {
+          posts: prev.posts.map((p) =>
+            p.id === post_id
+              ? { ...p, liked_by_me: !p.liked_by_me, likes_count: p.likes_count + (p.liked_by_me ? -1 : 1) }
+              : p,
+          ),
+        });
+      }
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => ctx?.prev && qc.setQueryData(queryKey, ctx.prev),
+    onSettled: () => qc.invalidateQueries({ queryKey }),
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24">
@@ -130,7 +144,10 @@ function CommunityPage() {
             </span>
           </div>
           <ol className="space-y-2.5">
-            {HOT_RANK.map((p, i) => {
+            {hotRank.length === 0 && (
+              <li className="text-xs text-muted-foreground">暂时还没有热门内容～</li>
+            )}
+            {hotRank.map((p, i) => {
               const Icon = CATEGORY_META[p.category].icon;
               return (
                 <li key={p.id} className="flex items-center gap-3">
@@ -155,10 +172,22 @@ function CommunityPage() {
 
         {/* Posts feed - Xiaohongshu masonry */}
         <section>
+          {isLoading && (
+            <div className="py-10 text-center text-sm text-muted-foreground">加载中…</div>
+          )}
+          {!isLoading && posts.length === 0 && (
+            <div className="py-16 text-center text-sm text-muted-foreground">
+              这个分类还没有动态，点击右下角发布第一条吧～
+            </div>
+          )}
           <div className="columns-2 md:columns-3 gap-3 [column-fill:_balance]">
             <AnimatePresence>
-              {filtered.map((post) => (
-                <PostCard key={post.id} post={post} />
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onLike={() => likeMut.mutate(post.id)}
+                />
               ))}
             </AnimatePresence>
           </div>
@@ -202,16 +231,24 @@ function CommunityPage() {
 
       {/* Compose */}
       <AnimatePresence>
-        {composeOpen && <ComposeSheet onClose={() => setComposeOpen(false)} location={location} />}
+        {composeOpen && (
+          <ComposeSheet
+            onClose={() => setComposeOpen(false)}
+            location={location}
+            onPublished={() => qc.invalidateQueries({ queryKey: ["community-posts"] })}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
 }
 
-function PostCard({ post }: { post: Post }) {
+function PostCard({ post, onLike }: { post: CommunityPost; onLike: () => void }) {
   const meta = CATEGORY_META[post.category];
+  const h = heightFor(post.id);
   const heightClass =
-    post.height === "tall" ? "h-56" : post.height === "mid" ? "h-44" : "h-32";
+    h === "tall" ? "h-56" : h === "mid" ? "h-44" : "h-32";
+  const avatar = post.author_id.slice(0, 2).toUpperCase();
   return (
     <motion.article
       layout
@@ -238,12 +275,18 @@ function PostCard({ post }: { post: Post }) {
         </div>
         <div className="mt-2.5 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="size-5 rounded-full bg-surface flex items-center justify-center text-[11px]">{post.avatar}</span>
-            <span className="truncate max-w-[80px]">{post.author}</span>
+            <span className="size-5 rounded-full bg-surface flex items-center justify-center text-[10px]">{avatar}</span>
+            <span className="truncate max-w-[80px]">同学 {avatar}</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-0.5"><Heart className="size-3" />{post.likes}</span>
-            <span className="inline-flex items-center gap-0.5"><MessageCircle className="size-3" />{post.comments}</span>
+            <button
+              onClick={(e) => { e.stopPropagation(); onLike(); }}
+              className={`inline-flex items-center gap-0.5 transition ${post.liked_by_me ? "text-coral" : "hover:text-coral"}`}
+            >
+              <Heart className={`size-3 ${post.liked_by_me ? "fill-coral" : ""}`} />
+              {post.likes_count}
+            </button>
+            <span className="inline-flex items-center gap-0.5"><MessageCircle className="size-3" />{post.comments_count}</span>
           </div>
         </div>
       </div>
@@ -303,10 +346,43 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
   );
 }
 
-function ComposeSheet({ onClose, location }: { onClose: () => void; location: string }) {
+function ComposeSheet({
+  onClose,
+  location,
+  onPublished,
+}: {
+  onClose: () => void;
+  location: string;
+  onPublished: () => void;
+}) {
   const [cat, setCat] = useState<Exclude<Category, "all">>("second");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const createFn = useServerFn(createCommunityPost);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    if (!title.trim() || !content.trim()) return;
+    setSubmitting(true);
+    try {
+      await createFn({
+        data: {
+          category: cat,
+          title: title.trim(),
+          content: content.trim(),
+          location,
+          tags: [],
+        },
+      });
+      toast.success("发布成功");
+      onPublished();
+      onClose();
+    } catch (e: any) {
+      toast.error(e?.message?.includes("Unauthorized") ? "请先登录" : "发布失败，请稍后再试");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <Modal onClose={onClose} title="发布新动态">
@@ -359,11 +435,11 @@ function ComposeSheet({ onClose, location }: { onClose: () => void; location: st
         </div>
 
         <button
-          onClick={onClose}
-          disabled={!title.trim()}
+          onClick={submit}
+          disabled={!title.trim() || !content.trim() || submitting}
           className="w-full h-11 rounded-full bg-gradient-to-r from-coral to-sun text-background font-semibold disabled:opacity-40"
         >
-          发布到社区
+          {submitting ? "发布中…" : "发布到社区"}
         </button>
       </div>
     </Modal>
