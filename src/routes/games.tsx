@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Users, Wand2 } from "lucide-react";
+import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Users, Wand2, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/games")({
   head: () => ({
@@ -25,6 +25,7 @@ type Game = {
   color: "coral" | "sun" | "mint";
   icon: typeof Heart;
   badge?: string;
+  href?: string;
 };
 
 const GAMES: Game[] = [
