@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Users, Wand2, Zap } from "lucide-react";
 
@@ -113,6 +113,12 @@ const GAMES: Game[] = [
 ];
 
 function GamesPage() {
+  const location = useLocation();
+
+  if (location.pathname !== "/games") {
+    return <Outlet />;
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <Nav />
