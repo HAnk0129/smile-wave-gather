@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RadarRouteImport } from './routes/radar'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as GamesRouteImport } from './routes/games'
 import { Route as ExploreRouteImport } from './routes/explore'
@@ -33,6 +34,11 @@ const RadarRoute = RadarRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeRoute = MeRouteImport.update({
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
   '/me': typeof MeRoute
+  '/messages': typeof MessagesRoute
   '/onboarding': typeof OnboardingRoute
   '/radar': typeof RadarRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
   '/me': typeof MeRoute
+  '/messages': typeof MessagesRoute
   '/onboarding': typeof OnboardingRoute
   '/radar': typeof RadarRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
   '/me': typeof MeRoute
+  '/messages': typeof MessagesRoute
   '/onboarding': typeof OnboardingRoute
   '/radar': typeof RadarRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/games'
     | '/me'
+    | '/messages'
     | '/onboarding'
     | '/radar'
     | '/explore/treehole'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/games'
     | '/me'
+    | '/messages'
     | '/onboarding'
     | '/radar'
     | '/explore/treehole'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/games'
     | '/me'
+    | '/messages'
     | '/onboarding'
     | '/radar'
     | '/explore/treehole'
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRouteWithChildren
   GamesRoute: typeof GamesRouteWithChildren
   MeRoute: typeof MeRoute
+  MessagesRoute: typeof MessagesRoute
   OnboardingRoute: typeof OnboardingRoute
   RadarRoute: typeof RadarRoute
 }
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/me': {
@@ -366,9 +386,20 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRouteWithChildren,
   GamesRoute: GamesRouteWithChildren,
   MeRoute: MeRoute,
+  MessagesRoute: MessagesRoute,
   OnboardingRoute: OnboardingRoute,
   RadarRoute: RadarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
