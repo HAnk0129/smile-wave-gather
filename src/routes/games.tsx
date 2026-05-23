@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowRight, Dices, Flame, Heart, MessagesSquare, Sparkles, Users, Wand2, Zap } from "lucide-react";
+import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Users, Wand2 } from "lucide-react";
 
 export const Route = createFileRoute("/games")({
   head: () => ({
@@ -65,14 +65,14 @@ const GAMES: Game[] = [
   },
   {
     id: "wouldyou",
-    title: "你会怎么选",
-    tagline: "二选一，秒懂三观契合度。",
-    desc: "山或海？早 C 晚 A？50 道犀利二选一，实时比对你们的契合度。",
-    players: "2 人",
-    duration: "3-5 分钟",
+    title: "AI 看手相",
+    tagline: "拍张手掌，读懂你的爱情线。",
+    desc: "上传手掌照片，AI 解读感情线、生命线与事业线。生成专属手相报告，可与心动对象交换查看缘分契合度。",
+    players: "1 人 / 双人对照",
+    duration: "1-2 分钟",
     hotness: 80,
     color: "coral",
-    icon: Zap,
+    icon: Hand,
   },
   {
     id: "story",
