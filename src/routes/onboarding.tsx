@@ -1,11 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, Check, Upload, X, Camera, Heart, Sparkles,
   Shield, Phone, GraduationCap, BadgeCheck, Star, Plus, User2, MapPin,
   Cigarette, Wine, Moon, Utensils, Cat, Image as ImageIcon, Video,
 } from "lucide-react";
+import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { saveProfile } from "@/lib/profile.functions";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
 
