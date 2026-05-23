@@ -30,7 +30,7 @@ function Nav() {
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <Link to="/games" className="hover:text-foreground transition">游戏</Link>
-          <Link to="/radar" className="hover:text-foreground transition">社交雷达</Link>
+          <Link to="/explore" className="hover:text-foreground transition">发现</Link>
           <a href="#community" className="hover:text-foreground transition">社区</a>
         </nav>
         <div className="flex items-center gap-2">
