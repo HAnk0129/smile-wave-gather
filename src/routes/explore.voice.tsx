@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Mic, MicOff, Phone, PhoneOff, Shuffle, Heart, UserPlus, Star, RotateCcw, Volume2 } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, PhoneOff, Shuffle, Heart, UserPlus, Star, RotateCcw, Volume2 } from "lucide-react";
 
 export const Route = createFileRoute("/explore/voice")({
   head: () => ({ meta: [{ title: "语音聊天 · Pulse" }] }),
