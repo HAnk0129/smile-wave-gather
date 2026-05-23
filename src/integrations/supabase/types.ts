@@ -14,7 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          age_range: Json | null
+          birthday: string | null
+          city: string | null
+          created_at: string
+          diet: string | null
+          distance: string | null
+          drink: string | null
+          education: string | null
+          gender: string | null
+          height: string | null
+          hometown: string | null
+          icebreaker: string | null
+          id: string
+          ideal_type: string | null
+          intent: Json
+          interests: Json
+          intro: string | null
+          job: string | null
+          main_idx: number
+          mbti: string | null
+          nickname: string | null
+          onboarded: boolean
+          personality: Json
+          pet: string | null
+          phone: string | null
+          photos: Json
+          relationship: string | null
+          school: string | null
+          signature: string | null
+          sleep: string | null
+          smoke: string | null
+          status: string | null
+          updated_at: string
+          verify_real: boolean
+          verify_student: boolean
+          video_intro: string | null
+          zodiac: string | null
+        }
+        Insert: {
+          age_range?: Json | null
+          birthday?: string | null
+          city?: string | null
+          created_at?: string
+          diet?: string | null
+          distance?: string | null
+          drink?: string | null
+          education?: string | null
+          gender?: string | null
+          height?: string | null
+          hometown?: string | null
+          icebreaker?: string | null
+          id: string
+          ideal_type?: string | null
+          intent?: Json
+          interests?: Json
+          intro?: string | null
+          job?: string | null
+          main_idx?: number
+          mbti?: string | null
+          nickname?: string | null
+          onboarded?: boolean
+          personality?: Json
+          pet?: string | null
+          phone?: string | null
+          photos?: Json
+          relationship?: string | null
+          school?: string | null
+          signature?: string | null
+          sleep?: string | null
+          smoke?: string | null
+          status?: string | null
+          updated_at?: string
+          verify_real?: boolean
+          verify_student?: boolean
+          video_intro?: string | null
+          zodiac?: string | null
+        }
+        Update: {
+          age_range?: Json | null
+          birthday?: string | null
+          city?: string | null
+          created_at?: string
+          diet?: string | null
+          distance?: string | null
+          drink?: string | null
+          education?: string | null
+          gender?: string | null
+          height?: string | null
+          hometown?: string | null
+          icebreaker?: string | null
+          id?: string
+          ideal_type?: string | null
+          intent?: Json
+          interests?: Json
+          intro?: string | null
+          job?: string | null
+          main_idx?: number
+          mbti?: string | null
+          nickname?: string | null
+          onboarded?: boolean
+          personality?: Json
+          pet?: string | null
+          phone?: string | null
+          photos?: Json
+          relationship?: string | null
+          school?: string | null
+          signature?: string | null
+          sleep?: string | null
+          smoke?: string | null
+          status?: string | null
+          updated_at?: string
+          verify_real?: boolean
+          verify_student?: boolean
+          video_intro?: string | null
+          zodiac?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
