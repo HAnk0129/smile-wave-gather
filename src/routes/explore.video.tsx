@@ -87,8 +87,8 @@ function VideoChatPage() {
               <div className="mx-auto grid h-44 w-44 place-items-center rounded-full bg-gradient-to-br from-sun to-coral text-background shadow-2xl">
                 <Video className="h-14 w-14" />
               </div>
-              <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight">先躲在头像后面聊 5 分钟</h1>
-              <p className="mt-2 text-sm text-muted-foreground">不用露脸也能开口——选一个你喜欢的形象，慢慢熟悉就好。</p>
+              <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight">5 分钟视频,自在做自己</h1>
+              <p className="mt-2 text-sm text-muted-foreground">想素颜出镜就素颜,想戴口罩、加点小装饰也都行——按自己的节奏来。</p>
               <button onClick={goPreview} className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-gradient-to-r from-sun to-coral px-7 font-semibold text-background shadow-lg hover:scale-[1.02]">
                 <Sparkles className="h-4 w-4" /> 进入视频预览
               </button>
