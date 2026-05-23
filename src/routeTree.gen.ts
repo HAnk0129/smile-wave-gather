@@ -16,6 +16,7 @@ import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GamesPalmRouteImport } from './routes/games.palm'
 import { Route as GamesLeaderboardRouteImport } from './routes/games.leaderboard'
+import { Route as ExploreVoiceRouteImport } from './routes/explore.voice'
 
 const RadarRoute = RadarRouteImport.update({
   id: '/radar',
@@ -52,22 +53,29 @@ const GamesLeaderboardRoute = GamesLeaderboardRouteImport.update({
   path: '/leaderboard',
   getParentRoute: () => GamesRoute,
 } as any)
+const ExploreVoiceRoute = ExploreVoiceRouteImport.update({
+  id: '/voice',
+  path: '/voice',
+  getParentRoute: () => ExploreRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
-  '/explore': typeof ExploreRoute
+  '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
   '/radar': typeof RadarRoute
+  '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
-  '/explore': typeof ExploreRoute
+  '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
   '/radar': typeof RadarRoute
+  '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
 }
@@ -75,9 +83,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
-  '/explore': typeof ExploreRoute
+  '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
   '/radar': typeof RadarRoute
+  '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/games'
     | '/radar'
+    | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/games'
     | '/radar'
+    | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/games'
     | '/radar'
+    | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
   fileRoutesById: FileRoutesById
@@ -114,7 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DiscoverRoute: typeof DiscoverRoute
-  ExploreRoute: typeof ExploreRoute
+  ExploreRoute: typeof ExploreRouteWithChildren
   GamesRoute: typeof GamesRouteWithChildren
   RadarRoute: typeof RadarRoute
 }
@@ -170,8 +182,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GamesLeaderboardRouteImport
       parentRoute: typeof GamesRoute
     }
+    '/explore/voice': {
+      id: '/explore/voice'
+      path: '/voice'
+      fullPath: '/explore/voice'
+      preLoaderRoute: typeof ExploreVoiceRouteImport
+      parentRoute: typeof ExploreRoute
+    }
   }
 }
+
+interface ExploreRouteChildren {
+  ExploreVoiceRoute: typeof ExploreVoiceRoute
+}
+
+const ExploreRouteChildren: ExploreRouteChildren = {
+  ExploreVoiceRoute: ExploreVoiceRoute,
+}
+
+const ExploreRouteWithChildren =
+  ExploreRoute._addFileChildren(ExploreRouteChildren)
 
 interface GamesRouteChildren {
   GamesLeaderboardRoute: typeof GamesLeaderboardRoute
@@ -188,7 +218,7 @@ const GamesRouteWithChildren = GamesRoute._addFileChildren(GamesRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DiscoverRoute: DiscoverRoute,
-  ExploreRoute: ExploreRoute,
+  ExploreRoute: ExploreRouteWithChildren,
   GamesRoute: GamesRouteWithChildren,
   RadarRoute: RadarRoute,
 }
