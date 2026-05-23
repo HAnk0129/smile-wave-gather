@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal } from "lucide-react";
@@ -230,5 +230,3 @@ function ChatPage() {
     </div>
   );
 }
-
-export { Link as _Link };
