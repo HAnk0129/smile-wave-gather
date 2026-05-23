@@ -61,12 +61,7 @@ function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-6 pt-20 pb-32 md:pt-32 md:pb-40">
         <div className="flex flex-col items-center text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 backdrop-blur px-3 py-1 text-xs text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-mint animate-pulse" />
-            10 万年轻人正在线 · 今晚见
-          </span>
-
-          <h1 className="mt-8 font-display text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.95] max-w-5xl">
+          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.95] max-w-5xl">
             遇见<span className="font-serif-display italic text-gradient-hero">同频</span>的人，<br />
             从一次<span className="text-coral">心跳</span>开始。
           </h1>
