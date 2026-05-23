@@ -76,10 +76,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Pulse 是为年轻人打造的综合社交平台：滑卡匹配、动态广场、实时聊天，找到真正同频的灵魂。" },
       { name: "author", content: "Pulse" },
       { property: "og:title", content: "Pulse · 遇见同频的人" },
-      { property: "og:description", content: "滑卡匹配、动态广场、实时聊天，找到真正同频的灵魂。" },
+      { property: "og:description", content: "Pulse 是为年轻人打造的综合社交平台：滑卡匹配、动态广场、实时聊天，找到真正同频的灵魂。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Pulse · 遇见同频的人" },
+      { name: "twitter:description", content: "Pulse 是为年轻人打造的综合社交平台：滑卡匹配、动态广场、实时聊天，找到真正同频的灵魂。" },
     ],
     links: [
       {
@@ -96,11 +98,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <head>
         <HeadContent />
       </head>
-      <body suppressHydrationWarning>
+      <body>
         {children}
         <Scripts />
       </body>
