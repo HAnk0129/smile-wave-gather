@@ -1,9 +1,14 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal } from "lucide-react";
+import { getConversation, sendMessage as sendMessageFn } from "@/lib/chat.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 type ChatSearch = {
+  conv?: string;
   name?: string;
   avatar?: string;
   from?: "voice" | "video" | "match" | "radar";
@@ -14,6 +19,7 @@ type ChatSearch = {
 export const Route = createFileRoute("/chat")({
   head: () => ({ meta: [{ title: "聊天 · Pulse" }] }),
   validateSearch: (s: Record<string, unknown>): ChatSearch => ({
+    conv: typeof s.conv === "string" ? s.conv : undefined,
     name: typeof s.name === "string" ? s.name : undefined,
     avatar: typeof s.avatar === "string" ? s.avatar : undefined,
     from: (["voice", "video", "match", "radar"] as const).includes(s.from as never)
@@ -48,6 +54,12 @@ function now() {
 }
 
 function ChatPage() {
+  const search = Route.useSearch();
+  if (search.conv) return <RealChat convId={search.conv} fallbackName={search.name} from={search.from} />;
+  return <MockChat />;
+}
+
+function MockChat() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const name = search.name || "晚风";
