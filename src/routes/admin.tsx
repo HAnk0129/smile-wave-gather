@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  checkIsAdmin, claimFirstAdmin, getAdminStats, getAdminCharts,
+  claimFirstAdmin, getAdminStats, getAdminCharts,
   adminListUsers, adminListMessages, adminListReports, adminUpdateReport,
   adminListTreehole, adminListPosts, adminDeleteMessage,
 } from "@/lib/admin.functions";
