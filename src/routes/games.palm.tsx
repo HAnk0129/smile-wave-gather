@@ -94,10 +94,6 @@ function PalmPage() {
                   <span className="font-serif-display italic text-gradient-hero"> AI 看手相</span>
                 </h1>
               </div>
-              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                <Zap className="size-4 text-sun" />
-                <span>约 30 秒生成报告</span>
-              </div>
             </div>
 
             <div className="grid md:grid-cols-[1.05fr_0.95fr] gap-6 md:gap-8 items-center">
