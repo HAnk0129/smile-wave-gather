@@ -1,0 +1,283 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+/** 内部校验:必须是 admin */
+async function assertAdmin(supabase: any, userId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("没有管理员权限");
+}
+
+/** 检查当前用户是否 admin(给前端 gate 用,不抛异常) */
+export const checkIsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    return { isAdmin: !!data };
+  });
+
+/** 首次申领管理员:全表无 admin 时,允许当前登录用户成为首位管理员 */
+export const claimFirstAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { count, error: cErr } = await supabase
+      .from("user_roles")
+      .select("user_id", { count: "exact", head: true })
+      .eq("role", "admin");
+    if (cErr) throw new Error(cErr.message);
+    if ((count ?? 0) > 0) throw new Error("管理员已存在,请联系现有管理员授权");
+    const { error } = await supabase
+      .from("user_roles")
+      .insert({ user_id: userId, role: "admin" } as never);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** 概览统计 */
+export const getAdminStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    const countOf = async (table: string, filter?: (q: any) => any) => {
+      let q = supabase.from(table).select("*", { count: "exact", head: true });
+      if (filter) q = filter(q);
+      const { count } = await q;
+      return count ?? 0;
+    };
+
+    const sinceToday = new Date();
+    sinceToday.setHours(0, 0, 0, 0);
+
+    const [users, messages, msgsToday, posts, treehole, reports, openFlags, calls] = await Promise.all([
+      countOf("profiles"),
+      countOf("messages"),
+      countOf("messages", (q) => q.gte("created_at", sinceToday.toISOString())),
+      countOf("community_posts"),
+      countOf("treehole_posts"),
+      countOf("reports", (q) => q.eq("status", "pending")),
+      countOf("content_flags", (q) => q.eq("status", "open")),
+      countOf("call_sessions"),
+    ]);
+
+    return {
+      stats: {
+        users, messages, messagesToday: msgsToday, posts, treehole,
+        pendingReports: reports, openFlags, calls,
+      },
+    };
+  });
+
+/** 用户列表 */
+export const adminListUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      search: z.string().optional(),
+      limit: z.number().min(1).max(100).default(30),
+      offset: z.number().min(0).default(0),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    let q = supabase
+      .from("profiles")
+      .select("id, nickname, gender, city, photos, main_idx, onboarded, created_at", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(data.offset, data.offset + data.limit - 1);
+    if (data.search) q = q.ilike("nickname", `%${data.search}%`);
+    const { data: rows, count, error } = await q;
+    if (error) throw new Error(error.message);
+    return { users: rows ?? [], total: count ?? 0 };
+  });
+
+/** 消息列表(含附件,默认按时间倒序) */
+export const adminListMessages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      search: z.string().optional(),
+      userId: z.string().uuid().optional(),
+      hasMedia: z.boolean().optional(),
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    let q = supabase
+      .from("messages")
+      .select("id, conversation_id, sender_id, content, created_at, read_at", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(data.offset, data.offset + data.limit - 1);
+    if (data.search) q = q.ilike("content", `%${data.search}%`);
+    if (data.userId) q = q.eq("sender_id", data.userId);
+    const { data: msgs, count, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const ids = (msgs ?? []).map((m) => m.id);
+    const senderIds = Array.from(new Set((msgs ?? []).map((m) => m.sender_id)));
+
+    const [{ data: atts }, { data: profs }] = await Promise.all([
+      ids.length
+        ? supabase.from("message_attachments").select("*").in("message_id", ids)
+        : Promise.resolve({ data: [] as any[] }),
+      senderIds.length
+        ? supabase.from("profiles").select("id, nickname, photos, main_idx").in("id", senderIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const attMap = new Map<string, any[]>();
+    (atts ?? []).forEach((a: any) => {
+      const arr = attMap.get(a.message_id) ?? [];
+      arr.push(a);
+      attMap.set(a.message_id, arr);
+    });
+    const profMap = new Map<string, any>();
+    (profs ?? []).forEach((p: any) => profMap.set(p.id, p));
+
+    let merged = (msgs ?? []).map((m) => {
+      const attachments = attMap.get(m.id) ?? [];
+      const p = profMap.get(m.sender_id);
+      const photos = Array.isArray(p?.photos) ? p.photos : [];
+      return {
+        ...m,
+        attachments,
+        sender: {
+          id: m.sender_id,
+          nickname: p?.nickname || "未知用户",
+          avatar: photos[p?.main_idx ?? 0] || photos[0] || null,
+        },
+      };
+    });
+    if (data.hasMedia) merged = merged.filter((m) => m.attachments.length > 0);
+
+    return { messages: merged, total: count ?? 0 };
+  });
+
+/** 举报列表 */
+export const adminListReports = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { data, error } = await supabase
+      .from("reports")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return { reports: data ?? [] };
+  });
+
+/** 更新举报状态 */
+export const adminUpdateReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      status: z.enum(["pending", "reviewing", "resolved", "rejected"]),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { error } = await supabase
+      .from("reports")
+      .update({ status: data.status } as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await supabase.from("moderation_actions").insert({
+      admin_id: userId, target_type: "report", target_id: data.id,
+      action: `update_status:${data.status}`,
+    } as never);
+    return { ok: true };
+  });
+
+/** 树洞列表 */
+export const adminListTreehole = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { data, error } = await supabase
+      .from("treehole_posts")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return { posts: data ?? [] };
+  });
+
+/** 社区帖子列表 */
+export const adminListPosts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { data, error } = await supabase
+      .from("community_posts")
+      .select("id, author_id, title, content, category, hot, likes_count, comments_count, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return { posts: data ?? [] };
+  });
+
+/** 删除消息(管理员) */
+export const adminDeleteMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    // 默认 messages 表没开 DELETE 策略,通过更新 content 软删除
+    const { error } = await supabase
+      .from("messages")
+      .update({ content: "[已被管理员删除]" } as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await supabase.from("moderation_actions").insert({
+      admin_id: userId, target_type: "message", target_id: data.id, action: "soft_delete",
+    } as never);
+    return { ok: true };
+  });
+
+/** 添加内容标记 */
+export const adminFlagContent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      targetType: z.enum(["message", "post", "treehole", "profile"]),
+      targetId: z.string().uuid(),
+      reason: z.string().min(1).max(200),
+      severity: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { error } = await supabase.from("content_flags").insert({
+      target_type: data.targetType, target_id: data.targetId,
+      reason: data.reason, severity: data.severity, source: "user",
+    } as never);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
