@@ -104,29 +104,19 @@ function DiscoverPage() {
     <div className="min-h-screen bg-background bg-grid text-foreground">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_oklab,var(--coral)_25%,transparent),transparent)]" />
 
-      <div className="fixed inset-x-0 top-0 z-30 border-b border-border/40 bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-md items-center justify-around px-5 py-2.5">
-          {[
-            { Icon: Radar, label: "社交雷达", color: "var(--mint)" },
-            { Icon: Mic, label: "语音破冰", color: "var(--coral)" },
-            { Icon: Ghost, label: "匿名树洞", color: "var(--sun)" },
-          ].map(({ Icon, label, color }) => (
-            <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Icon className="h-4 w-4" style={{ color }} />
-              <span>{label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <header className="relative z-10 mx-auto flex w-full max-w-md items-center justify-between px-5 pt-16">
+      <header className="relative z-10 mx-auto flex w-full max-w-md items-center gap-3 px-5 pt-6">
         <Link to="/" className="flex items-center gap-2">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-coral to-sun text-background">
             <Flame className="h-5 w-5" />
           </div>
           <span className="font-display text-lg font-semibold tracking-tight">Pulse</span>
         </Link>
-        <button className="rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Radar className="h-3.5 w-3.5" style={{ color: "var(--mint)" }} aria-label="社交雷达" />
+          <Mic className="h-3.5 w-3.5" style={{ color: "var(--coral)" }} aria-label="语音破冰" />
+          <Ghost className="h-3.5 w-3.5" style={{ color: "var(--sun)" }} aria-label="匿名树洞" />
+        </div>
+        <button className="ml-auto rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur">
           附近 · 5km 内
         </button>
       </header>
