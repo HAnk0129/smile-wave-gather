@@ -21,7 +21,7 @@ export function NeonInner({ variant, children }: { variant: NeonVariant; childre
   }
   return (
     <>
-      <span className="absolute inset-0 rounded-[10px] bg-[#D85A30]" />
+      <span className="absolute inset-0 rounded-[10px] bg-[#E54848]" />
       <span className="relative font-semibold tracking-wide text-sm text-white inline-flex items-center gap-2">{children}</span>
     </>
   );
