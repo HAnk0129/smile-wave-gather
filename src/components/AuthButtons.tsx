@@ -3,14 +3,14 @@ import { forwardRef, type ReactNode, type ComponentPropsWithoutRef } from "react
 
 /** 统一霓虹机能风按钮：玻璃描边（ghost） + 珊瑚红硬投影（coral）。
  *  作为 <button> 使用；如需 <Link>，用 NeonLinkButton。 */
-type Variant = "ghost" | "coral";
+export type NeonVariant = "ghost" | "coral";
 
-const sizeMap: Record<Variant, string> = {
+const sizeMap: Record<NeonVariant, string> = {
   ghost: "px-7 py-2.5",
   coral: "px-9 py-2.5",
 };
 
-function NeonInner({ variant, children }: { variant: Variant; children: ReactNode }) {
+export function NeonInner({ variant, children }: { variant: NeonVariant; children: ReactNode }) {
   if (variant === "ghost") {
     return (
       <>
@@ -34,43 +34,41 @@ function NeonInner({ variant, children }: { variant: Variant; children: ReactNod
 }
 
 const baseCls = "group relative inline-flex items-center cursor-pointer transition-all duration-300 active:scale-95";
-const hoverCls: Record<Variant, string> = {
+const hoverCls: Record<NeonVariant, string> = {
   ghost: "",
   coral: "hover:-translate-y-1 active:translate-y-0",
 };
 
-export const NeonButton = forwardRef<HTMLButtonElement, ComponentPropsWithoutRef<"button"> & { variant?: Variant }>(
+export function neonButtonClass(variant: NeonVariant = "ghost", extra = "") {
+  return `${baseCls} ${sizeMap[variant]} ${hoverCls[variant]} ${extra}`;
+}
+
+export const NeonButton = forwardRef<HTMLButtonElement, ComponentPropsWithoutRef<"button"> & { variant?: NeonVariant }>(
   ({ variant = "ghost", className = "", children, ...rest }, ref) => (
-    <button ref={ref} className={`${baseCls} ${sizeMap[variant]} ${hoverCls[variant]} ${className}`} {...rest}>
+    <button ref={ref} className={neonButtonClass(variant, className)} {...rest}>
       <NeonInner variant={variant}>{children}</NeonInner>
     </button>
   ),
 );
 NeonButton.displayName = "NeonButton";
 
-export function NeonLinkButton({
-  variant = "ghost",
-  className = "",
-  children,
-  ...rest
-}: ComponentPropsWithoutRef<typeof Link> & { variant?: Variant }) {
-  return (
-    // @ts-expect-error TanStack Link generic typing
-    <Link className={`${baseCls} ${sizeMap[variant]} ${hoverCls[variant]} ${className}`} {...rest}>
-      <NeonInner variant={variant}>{children}</NeonInner>
-    </Link>
-  );
-}
-
 export function AuthButtons() {
   return (
     <div className="flex items-center gap-5">
-      <NeonLinkButton to="/auth" search={{ mode: "login", redirect: "/discover" }} variant="ghost">
-        登录
-      </NeonLinkButton>
-      <NeonLinkButton to="/auth" search={{ mode: "signup", redirect: "/onboarding" }} variant="coral">
-        注册
-      </NeonLinkButton>
+      <Link
+        to="/auth"
+        search={{ mode: "login", redirect: "/discover" }}
+        className={neonButtonClass("ghost")}
+      >
+        <NeonInner variant="ghost">登录</NeonInner>
+      </Link>
+      <Link
+        to="/auth"
+        search={{ mode: "signup", redirect: "/onboarding" }}
+        className={neonButtonClass("coral")}
+      >
+        <NeonInner variant="coral">注册</NeonInner>
+      </Link>
     </div>
   );
 }
