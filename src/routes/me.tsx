@@ -231,7 +231,7 @@ function MePage() {
         <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-surface/60 divide-y divide-border">
           <MenuItem icon={Edit3} label="编辑资料" to="/onboarding" />
           <MenuItem icon={Heart} label="我喜欢的人" badge="敬请期待" />
-          <MenuItem icon={MessageCircle} label="我的消息" to="/chat" search={{ name: "Pulse 助手", from: "match" }} />
+          <MenuItem icon={MessageCircle} label="我的消息" to="/messages" />
           <MenuItem icon={Crown} label="升级 Pulse Pro" badge="HOT" badgeColor="bg-sun text-background" />
         </section>
 
