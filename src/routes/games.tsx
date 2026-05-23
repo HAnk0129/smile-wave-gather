@@ -375,13 +375,13 @@ function GameCard({ game }: { game: Game }) {
       </div>
 
       {game.href ? (
-        <Link
-          to={game.href}
+        <a
+          href={game.href}
           className="relative w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-primary text-primary-foreground text-sm font-semibold glow-coral hover:scale-[1.01] transition"
         >
           立即开玩
           <ArrowRight className="size-3.5" />
-        </Link>
+        </a>
       ) : (
         <button className="relative w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-background/60 border border-border text-sm font-semibold hover:bg-foreground hover:text-background transition">
           立即开玩

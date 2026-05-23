@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Hand, Heart, Loader2, RefreshCw, Sparkles, Upload, Zap } from "lucide-react";
 import { readPalm } from "@/lib/palm.functions";
 
@@ -25,6 +25,10 @@ function PalmPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
 
   const onFile = async (file: File) => {
     setError(null);
