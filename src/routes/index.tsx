@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Heart, MessageCircle, Sparkles, Zap, Globe2, ArrowRight, Star } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, Zap, Globe2, ArrowRight, Radar, Gamepad2, Mic } from "lucide-react";
 import { AuthButtons, NeonButton, NeonInner, neonButtonClass } from "@/components/AuthButtons";
 
 export const Route = createFileRoute("/")({
@@ -30,7 +30,7 @@ function Nav() {
           <span className="font-display font-bold text-lg tracking-tight">Pulse</span>
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-          <Link to="/games" className="hover:text-foreground transition">游戏</Link>
+          <Link to="/games" className="hover:text-foreground transition">破冰</Link>
           <Link to="/explore" className="hover:text-foreground transition">发现</Link>
           <Link to="/community" className="hover:text-foreground transition">社区</Link>
         </nav>
@@ -52,19 +52,19 @@ function Hero() {
   return (
     <section className="relative">
       <div className="absolute inset-0 bg-grid opacity-60 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-      <div className="absolute top-20 -left-20 size-[420px] rounded-full bg-coral/30 blur-[120px]" />
+      <div className="absolute top-20 -left-20 size-[420px] rounded-full blur-[120px]" style={{ background: "color-mix(in oklab, #7F77DD 35%, transparent)" }} />
       <div className="absolute top-40 right-0 size-[380px] rounded-full bg-mint/25 blur-[120px]" />
 
       <div className="relative mx-auto max-w-7xl px-6 pt-20 pb-32 md:pt-32 md:pb-40">
         <div className="flex flex-col items-center text-center">
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.95] max-w-5xl">
-            遇见<span className="font-serif-display italic text-gradient-hero">同频</span>的人，<br />
-            从一次<span className="text-coral">心跳</span>开始。
+          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl tracking-tight leading-[0.95] max-w-5xl" style={{ fontWeight: 500 }}>
+            不只是认识，是真的
+            <span className="font-serif-display italic" style={{ color: "#7F77DD", fontWeight: 500 }}>相遇</span>
+            。
           </h1>
 
-          <p className="mt-6 max-w-xl text-base md:text-lg text-muted-foreground leading-relaxed">
-            Pulse 是为 Z 世代打造的综合社交平台。滑卡匹配、动态广场、实时聊天——
-            在这里，每一次相遇都不是巧合。
+          <p className="mt-6 max-w-xl text-base md:text-lg text-muted-foreground leading-relaxed font-normal">
+            游戏破冰、语音聊天、周边探索——找到那个和你同频的人
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center gap-5">
@@ -76,24 +76,20 @@ function Hero() {
             </Link>
           </div>
 
-          <div className="mt-10 flex items-center gap-3 text-sm text-muted-foreground">
-            <div className="flex -space-x-2">
-              {["coral", "sun", "mint", "coral"].map((c, i) => (
-                <div
-                  key={i}
-                  className="size-8 rounded-full border-2 border-background"
-                  style={{ background: `linear-gradient(135deg, var(--${c}), var(--${["sun","mint","coral","sun"][i]}))` }}
-                />
-              ))}
-            </div>
-            <div className="flex items-center gap-1 text-foreground">
-              <Star className="size-3.5 fill-sun text-sun" />
-              <Star className="size-3.5 fill-sun text-sun" />
-              <Star className="size-3.5 fill-sun text-sun" />
-              <Star className="size-3.5 fill-sun text-sun" />
-              <Star className="size-3.5 fill-sun text-sun" />
-            </div>
-            <span>4.9 · 来自 12,580 条真实评价</span>
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-3 md:gap-4 text-sm">
+            {[
+              { icon: Mic, label: "10分钟语音破冰" },
+              { icon: Radar, label: "社交雷达探索周边" },
+              { icon: Gamepad2, label: "破冰小游戏" },
+            ].map((f, i) => (
+              <div
+                key={i}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/50 backdrop-blur px-4 py-2 text-foreground/90"
+              >
+                <f.icon className="size-4" style={{ color: "#7F77DD" }} />
+                <span>{f.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
