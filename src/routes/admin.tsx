@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  checkIsAdmin, claimFirstAdmin, getAdminStats, getAdminCharts,
+  claimFirstAdmin, getAdminStats, getAdminCharts,
   adminListUsers, adminListMessages, adminListReports, adminUpdateReport,
   adminListTreehole, adminListPosts, adminDeleteMessage,
 } from "@/lib/admin.functions";
@@ -31,17 +31,33 @@ type Tab = "overview" | "users" | "messages" | "reports" | "treehole" | "posts";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthed(!!data.session);
+      setUserId(data.session?.user.id ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setAuthed(!!s);
+      setUserId(s?.user.id ?? null);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const checkFn = useServerFn(checkIsAdmin);
+  // 直接走浏览器端 supabase 查询,避免 serverFn 冷启动延迟
   const { data: roleData, isLoading: roleLoading, refetch: refetchRole } = useQuery({
-    queryKey: ["is-admin"],
-    queryFn: () => checkFn(),
-    enabled: authed === true,
+    queryKey: ["is-admin", userId],
+    queryFn: async () => {
+      if (!userId) return { isAdmin: false };
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      return { isAdmin: !!data };
+    },
+    enabled: authed === true && !!userId,
   });
 
   if (authed === false) return <Gate title="请先登录" subtitle="员工内部后台需要登录账号" cta={<Link to="/auth" className="rounded-lg bg-coral px-5 py-2.5 text-white">去登录</Link>} />;
