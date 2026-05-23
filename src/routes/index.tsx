@@ -29,7 +29,7 @@ function Nav() {
           <span className="font-display font-bold text-lg tracking-tight">Pulse</span>
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-          <a href="#features" className="hover:text-foreground transition">功能</a>
+          <a href="#features" className="hover:text-foreground transition">游戏</a>
           <Link to="/radar" className="hover:text-foreground transition">社交雷达</Link>
           <a href="#community" className="hover:text-foreground transition">社区</a>
         </nav>
