@@ -35,10 +35,8 @@ function Nav() {
           <a href="#community" className="hover:text-foreground transition">社区</a>
         </nav>
         <div className="flex items-center gap-2">
-          <button className="hidden sm:inline-flex h-9 px-4 text-sm text-muted-foreground hover:text-foreground transition">登录</button>
-          <Link to="/discover" className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition">
-            开始匹配 <ArrowRight className="size-3.5" />
-          </Link>
+          <button className="inline-flex h-9 px-4 rounded-full border border-border bg-surface/60 text-sm text-foreground hover:bg-surface transition">登录</button>
+          <button className="inline-flex h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition">注册</button>
         </div>
       </div>
     </header>
