@@ -30,7 +30,6 @@ function Nav() {
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground transition">功能</a>
-          <a href="#preview" className="hover:text-foreground transition">体验</a>
           <Link to="/radar" className="hover:text-foreground transition">社交雷达</Link>
           <a href="#community" className="hover:text-foreground transition">社区</a>
         </nav>
