@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart, MessageCircle, Sparkles, Zap, Globe2, ArrowRight, Star } from "lucide-react";
-import { AuthButtons } from "@/components/AuthButtons";
+import { AuthButtons, NeonButton, NeonInner, neonButtonClass } from "@/components/AuthButtons";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -67,10 +67,12 @@ function Hero() {
             在这里，每一次相遇都不是巧合。
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center gap-3">
-            <Link to="/discover" className="group inline-flex items-center gap-2 h-12 px-7 rounded-full bg-primary text-primary-foreground font-semibold glow-coral hover:scale-[1.02] active:scale-[0.98] transition">
-              免费开始匹配
-              <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
+          <div className="mt-10 flex flex-col sm:flex-row items-center gap-5">
+            <Link to="/discover" className={neonButtonClass("coral")}>
+              <NeonInner variant="coral">
+                免费开始匹配
+                <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
+              </NeonInner>
             </Link>
           </div>
 
@@ -306,9 +308,9 @@ function CTA() {
             今晚，<span className="font-serif-display italic">就开始</span>。
           </h2>
           <p className="mt-4 text-white/80 max-w-md mx-auto">下载 Pulse，让下一个让你心跳加速的人，离你只有一次右滑的距离。</p>
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <button className="h-12 px-7 rounded-full bg-background text-foreground font-semibold hover:scale-[1.02] transition">立即下载 iOS</button>
-            <button className="h-12 px-7 rounded-full bg-white/15 backdrop-blur border border-white/20 text-white font-semibold hover:bg-white/20 transition">Android 版本</button>
+          <div className="mt-8 flex flex-col sm:flex-row gap-5 justify-center">
+            <NeonButton variant="coral">立即下载 iOS</NeonButton>
+            <NeonButton variant="ghost">Android 版本</NeonButton>
           </div>
         </div>
       </div>

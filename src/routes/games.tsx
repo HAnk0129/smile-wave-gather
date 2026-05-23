@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Trophy, Users, Wand2, Zap } from "lucide-react";
-import { AuthButtons } from "@/components/AuthButtons";
+import { AuthButtons, NeonButton, NeonInner, neonButtonClass } from "@/components/AuthButtons";
 
 export const Route = createFileRoute("/games")({
   head: () => ({
@@ -173,14 +173,13 @@ function Hero() {
           告别"在吗 / 吃了吗"。Pulse 游戏中心精选 20+ 款轻量社交小游戏，
           让你们的第一句话就有意思。
         </p>
-        <div className="mt-7 flex items-center justify-center gap-3">
-          <Link
-            to="/games/leaderboard"
-            className="inline-flex items-center gap-2 h-11 px-5 rounded-full border border-border bg-surface/60 hover:bg-surface text-sm font-semibold transition"
-          >
-            <Trophy className="size-4 text-sun" />
-            查看战绩榜
-            <ArrowRight className="size-3.5" />
+        <div className="mt-7 flex items-center justify-center gap-5">
+          <Link to="/games/leaderboard" className={neonButtonClass("ghost")}>
+            <NeonInner variant="ghost">
+              <Trophy className="size-4 text-sun" />
+              查看战绩榜
+              <ArrowRight className="size-3.5" />
+            </NeonInner>
           </Link>
         </div>
       </div>
@@ -257,19 +256,15 @@ function DemoPlayground() {
               </p>
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={spin}
-                disabled={spinning}
-                className="group flex-1 inline-flex items-center justify-center gap-2 h-12 rounded-full bg-primary text-primary-foreground font-semibold glow-coral hover:scale-[1.01] active:scale-[0.99] transition disabled:opacity-70"
-              >
+            <div className="mt-8 flex flex-col sm:flex-row gap-5 justify-center">
+              <NeonButton variant="coral" onClick={spin} disabled={spinning}>
                 <Dices className={`size-4 ${spinning ? "animate-spin" : "group-hover:rotate-12 transition"}`} />
                 {spinning ? "正在抽卡…" : "换一题"}
-              </button>
-              <button className="flex-1 inline-flex items-center justify-center gap-2 h-12 rounded-full border border-border bg-surface hover:bg-surface-2 transition text-sm font-semibold">
+              </NeonButton>
+              <NeonButton variant="ghost">
                 <Heart className="size-4 text-coral" />
                 收藏这题
-              </button>
+              </NeonButton>
             </div>
 
             <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground">
@@ -389,19 +384,15 @@ function GameCard({ game }: { game: Game }) {
       </div>
 
       {game.href ? (
-        <a
-          href={game.href}
-          className="relative w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-primary text-primary-foreground text-sm font-semibold glow-coral hover:scale-[1.01] transition"
-        >
-          立即开玩
-          <ArrowRight className="size-3.5" />
+        <a href={game.href} className={`${neonButtonClass("coral")} w-full justify-center`}>
+          <NeonInner variant="coral">
+            立即开玩
+            <ArrowRight className="size-3.5" />
+          </NeonInner>
         </a>
       ) : (
-        <button
-          disabled
-          className="relative w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-background/40 border border-dashed border-border text-sm font-semibold text-muted-foreground cursor-not-allowed"
-        >
-          敬请期待
+        <button disabled className={`${neonButtonClass("ghost")} w-full justify-center opacity-60 cursor-not-allowed`}>
+          <NeonInner variant="ghost">敬请期待</NeonInner>
         </button>
       )}
     </div>
@@ -422,12 +413,11 @@ function CTA() {
             找到那个能<span className="font-serif-display italic">陪你玩</span>的人。
           </h2>
           <p className="mt-4 text-white/80 max-w-md mx-auto">先匹配，再开聊。让游戏成为你们故事的开场。</p>
-          <Link
-            to="/discover"
-            className="mt-8 inline-flex items-center gap-2 h-12 px-7 rounded-full bg-background text-foreground font-semibold hover:scale-[1.02] transition"
-          >
-            去发现页匹配
-            <ArrowRight className="size-4" />
+          <Link to="/discover" className={`${neonButtonClass("coral")} mt-8`}>
+            <NeonInner variant="coral">
+              去发现页匹配
+              <ArrowRight className="size-4" />
+            </NeonInner>
           </Link>
         </div>
       </div>
