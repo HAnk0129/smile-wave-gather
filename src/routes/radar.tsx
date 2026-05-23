@@ -25,6 +25,7 @@ type Blip = {
   tag: string;
   heat: "hot" | "warm" | "cool";
   status: string;
+  compat: number;
 };
 
 const RING_KM = [0.5, 1, 2, 5]; // ring radii in km
@@ -56,6 +57,7 @@ function makeBlips(count: number): Blip[] {
       tag: rand(TAGS, Math.floor(Math.random() * 9999)),
       heat,
       status: rand(STATUSES, Math.floor(Math.random() * 9999)),
+      compat: 60 + Math.floor(Math.random() * 39),
     };
   });
 }
