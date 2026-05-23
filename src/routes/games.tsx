@@ -383,9 +383,11 @@ function GameCard({ game }: { game: Game }) {
           <ArrowRight className="size-3.5" />
         </a>
       ) : (
-        <button className="relative w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-background/60 border border-border text-sm font-semibold hover:bg-foreground hover:text-background transition">
-          立即开玩
-          <ArrowRight className="size-3.5" />
+        <button
+          disabled
+          className="relative w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-background/40 border border-dashed border-border text-sm font-semibold text-muted-foreground cursor-not-allowed"
+        >
+          敬请期待
         </button>
       )}
     </div>
