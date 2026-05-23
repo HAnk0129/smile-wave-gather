@@ -96,14 +96,14 @@ export const getAdminCharts = createServerFn({ method: "GET" })
     since.setDate(since.getDate() - (DAYS - 1));
     const sinceISO = since.toISOString();
 
-    const fetchDates = async (table: string) => {
+    const fetchDates = async (table: string, col: string = "created_at") => {
       const { data, error } = await (supabase as any)
         .from(table)
-        .select("created_at")
-        .gte("created_at", sinceISO)
+        .select(col)
+        .gte(col, sinceISO)
         .limit(5000);
       if (error) throw new Error(error.message);
-      return (data ?? []).map((r: any) => r.created_at as string);
+      return (data ?? []).map((r: any) => r[col] as string);
     };
 
     const [uDates, mDates, pDates, tDates, cDates] = await Promise.all([
@@ -111,7 +111,7 @@ export const getAdminCharts = createServerFn({ method: "GET" })
       fetchDates("messages"),
       fetchDates("community_posts"),
       fetchDates("treehole_posts"),
-      fetchDates("call_sessions"),
+      fetchDates("call_sessions", "started_at"),
     ]);
 
     // 构造每日序列
