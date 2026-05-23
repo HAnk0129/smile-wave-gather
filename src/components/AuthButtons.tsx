@@ -6,21 +6,11 @@ import { forwardRef, type ReactNode, type ComponentPropsWithoutRef } from "react
 export type NeonVariant = "ghost" | "coral";
 
 const sizeMap: Record<NeonVariant, string> = {
-  ghost: "px-7 py-2.5",
+  ghost: "px-9 py-2.5",
   coral: "px-9 py-2.5",
 };
 
 export function NeonInner({ variant, children }: { variant: NeonVariant; children: ReactNode }) {
-  if (variant === "ghost") {
-    return (
-      <>
-        <span className="absolute inset-0 rounded-full border-2 border-[#FF3B5C]/60 group-hover:border-[#FF3B5C] transition-colors" />
-        <span className="absolute inset-0 rounded-full bg-[#FF3B5C]/10 blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity" />
-        <span className="absolute -top-1 -left-1 size-2 rounded-full bg-[#FF3B5C] scale-0 group-hover:scale-100 transition-transform duration-500 shadow-[0_0_10px_#FF3B5C]" />
-        <span className="relative font-bold tracking-wider text-sm text-[#FF3B5C] inline-flex items-center gap-2">{children}</span>
-      </>
-    );
-  }
   return (
     <>
       <span className="absolute inset-0 translate-x-1.5 translate-y-1.5 rounded-full bg-[#B91C3C] transition-transform group-hover:translate-x-2 group-hover:translate-y-2" />
@@ -35,7 +25,7 @@ export function NeonInner({ variant, children }: { variant: NeonVariant; childre
 
 const baseCls = "group relative inline-flex items-center cursor-pointer transition-all duration-300 active:scale-95";
 const hoverCls: Record<NeonVariant, string> = {
-  ghost: "",
+  ghost: "hover:-translate-y-1 active:translate-y-0",
   coral: "hover:-translate-y-1 active:translate-y-0",
 };
 
