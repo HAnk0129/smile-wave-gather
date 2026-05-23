@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Users, Wand2, Zap } from "lucide-react";
+import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Trophy, Users, Wand2, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/games")({
   head: () => ({
@@ -175,6 +175,16 @@ function Hero() {
           告别"在吗 / 吃了吗"。Pulse 游戏中心精选 20+ 款轻量社交小游戏，
           让你们的第一句话就有意思。
         </p>
+        <div className="mt-7 flex items-center justify-center gap-3">
+          <Link
+            to="/games/leaderboard"
+            className="inline-flex items-center gap-2 h-11 px-5 rounded-full border border-border bg-surface/60 hover:bg-surface text-sm font-semibold transition"
+          >
+            <Trophy className="size-4 text-sun" />
+            查看战绩榜
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
       </div>
     </section>
   );
