@@ -206,7 +206,7 @@ function PhoneMockup() {
             </div>
 
             {/* Profile card */}
-            <div className="mt-4 flex-1 rounded-3xl relative overflow-hidden" style={{ background: "linear-gradient(160deg, oklch(0.72 0.18 22), oklch(0.5 0.15 350))" }}>
+            <div className="mt-4 flex-1 rounded-3xl relative overflow-hidden" style={{ background: "linear-gradient(160deg, oklch(0.72 0.18 22), #7F77DD)" }}>
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
               {/* abstract pattern */}
               <div className="absolute top-6 right-6 size-20 rounded-full bg-sun/40 blur-2xl" />
@@ -296,7 +296,7 @@ function CTA() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-24">
       <div className="relative overflow-hidden rounded-[40px] p-12 md:p-20 text-center"
-        style={{ background: "linear-gradient(135deg, oklch(0.72 0.18 22), oklch(0.55 0.2 350) 60%, oklch(0.4 0.15 270))" }}>
+        style={{ background: "linear-gradient(135deg, oklch(0.72 0.18 22), #7F77DD 60%, #1a1030)" }}>
         <div className="absolute -top-20 -left-20 size-80 rounded-full bg-sun/40 blur-3xl" />
         <div className="absolute -bottom-20 -right-20 size-80 rounded-full bg-mint/30 blur-3xl" />
         <div className="relative">
