@@ -80,25 +80,27 @@ function PalmPage() {
         </div>
       </header>
 
-      <section className="relative mx-auto max-w-3xl px-6 pt-12 md:pt-16 pb-6 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground">
-          <Sparkles className="size-3.5 text-coral" />
-          <span>Powered by Pulse AI · 仅供娱乐</span>
-        </div>
-        <h1 className="mt-6 font-display text-4xl md:text-6xl font-bold tracking-tight leading-[0.98]">
-          拍张<span className="font-serif-display italic text-gradient-hero">手掌</span>，
-          <br className="md:hidden" />
-          看看你的爱情线。
-        </h1>
-        <p className="mt-5 max-w-lg mx-auto text-muted-foreground leading-relaxed">
-          AI 会解读你的感情线、事业线与生命线，生成一份独家手相报告——可与心动对象互换查看缘分契合度。
-        </p>
-      </section>
-
-      <section className="relative mx-auto max-w-3xl px-6 pb-20">
+      <section className="relative mx-auto max-w-4xl px-6 pt-8 md:pt-10 pb-20">
         {!report && (
-          <div className="relative rounded-[32px] border border-border bg-surface/70 backdrop-blur p-6 md:p-10">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="relative rounded-[32px] border border-border bg-surface/70 backdrop-blur p-5 md:p-8">
+            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground">
+                  <Sparkles className="size-3.5 text-coral" />
+                  <span>Powered by Pulse AI · 仅供娱乐</span>
+                </div>
+                <h1 className="mt-4 font-display text-3xl md:text-5xl font-bold tracking-tight leading-[0.98]">
+                  上传手掌，马上开始
+                  <span className="font-serif-display italic text-gradient-hero"> AI 看手相</span>
+                </h1>
+              </div>
+              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <Zap className="size-4 text-sun" />
+                <span>约 30 秒生成报告</span>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-[1.05fr_0.95fr] gap-6 md:gap-8 items-center">
               <UploadZone
                 preview={preview}
                 onSelect={() => inputRef.current?.click()}
