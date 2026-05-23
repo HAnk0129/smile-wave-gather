@@ -1,9 +1,14 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal } from "lucide-react";
+import { getConversation, sendMessage as sendMessageFn } from "@/lib/chat.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 type ChatSearch = {
+  conv?: string;
   name?: string;
   avatar?: string;
   from?: "voice" | "video" | "match" | "radar";
@@ -14,6 +19,7 @@ type ChatSearch = {
 export const Route = createFileRoute("/chat")({
   head: () => ({ meta: [{ title: "聊天 · Pulse" }] }),
   validateSearch: (s: Record<string, unknown>): ChatSearch => ({
+    conv: typeof s.conv === "string" ? s.conv : undefined,
     name: typeof s.name === "string" ? s.name : undefined,
     avatar: typeof s.avatar === "string" ? s.avatar : undefined,
     from: (["voice", "video", "match", "radar"] as const).includes(s.from as never)
@@ -48,6 +54,12 @@ function now() {
 }
 
 function ChatPage() {
+  const search = Route.useSearch();
+  if (search.conv) return <RealChat convId={search.conv} fallbackName={search.name} from={search.from} />;
+  return <MockChat />;
+}
+
+function MockChat() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const name = search.name || "晚风";
@@ -223,6 +235,187 @@ function ChatPage() {
             <button className="text-muted-foreground"><Mic className="h-4 w-4" /></button>
           </div>
           <button onClick={() => send(input)} disabled={!input.trim()} className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-coral to-sun text-background shadow-lg disabled:opacity-40">
+            <Send className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RealChat({
+  convId, fallbackName, from,
+}: { convId: string; fallbackName?: string; from?: ChatSearch["from"] }) {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const fetchConv = useServerFn(getConversation);
+  const sendFn = useServerFn(sendMessageFn);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  const queryKey = ["conversation", convId] as const;
+  const { data, isLoading, error } = useQuery({
+    queryKey,
+    queryFn: () => fetchConv({ data: { id: convId } }),
+    refetchOnWindowFocus: false,
+  });
+
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+
+  // realtime: append new messages for this conversation
+  useEffect(() => {
+    const channel = supabase
+      .channel(`messages-${convId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${convId}` },
+        (payload) => {
+          const m = payload.new as { id: string; sender_id: string; content: string; created_at: string; read_at: string | null };
+          qc.setQueryData(queryKey, (prev: any) => {
+            if (!prev) return prev;
+            if (prev.messages.some((x: any) => x.id === m.id)) return prev;
+            return {
+              ...prev,
+              messages: [
+                ...prev.messages,
+                { id: m.id, senderId: m.sender_id, content: m.content, createdAt: m.created_at, readAt: m.read_at },
+              ],
+            };
+          });
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [convId, qc]);
+
+  useEffect(() => {
+    scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
+  }, [data?.messages?.length]);
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || sending) return;
+    setSending(true);
+    setInput("");
+    try {
+      await sendFn({ data: { conversationId: convId, content: text } });
+      // realtime will update; also optimistic-refresh as fallback
+      qc.invalidateQueries({ queryKey });
+    } catch (e) {
+      setInput(text);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const partnerName = data?.partner.name || fallbackName || "Pulse 用户";
+  const partnerCity = data?.partner.city || "";
+  const me = data?.me;
+  const source = data?.source || from || "match";
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-md items-center gap-3 px-4 py-3">
+          <button onClick={() => navigate({ to: "/messages" })} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground">
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          {data?.partner.avatar ? (
+            <img src={data.partner.avatar} alt={partnerName} className="h-10 w-10 rounded-full object-cover" />
+          ) : (
+            <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-coral to-sun font-display text-base text-background">
+              {partnerName.slice(0, 1)}
+            </div>
+          )}
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5 font-display text-base font-semibold">
+              {partnerName}
+              <span className="grid h-4 w-4 place-items-center rounded-full bg-mint/20 text-mint"><Sparkles className="h-2.5 w-2.5" /></span>
+            </div>
+            <div className="text-[11px] text-muted-foreground">{partnerCity ? `${partnerCity} · ` : ""}在线</div>
+          </div>
+          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><Phone className="h-4 w-4" /></button>
+          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><Video className="h-4 w-4" /></button>
+          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></button>
+        </div>
+      </header>
+
+      <div className="mx-auto w-full max-w-md px-4 pt-3">
+        <div className="rounded-2xl border border-coral/30 bg-gradient-to-r from-coral/15 via-sun/10 to-mint/15 p-3">
+          <div className="flex items-center gap-2 text-xs">
+            <div className="grid h-7 w-7 place-items-center rounded-full bg-coral/20 text-coral"><Heart className="h-3.5 w-3.5 fill-current" /></div>
+            <div className="font-display text-sm font-semibold">
+              {source === "match" ? "你们互相喜欢" : source === "voice" ? "想继续聊聊" : source === "video" ? "彼此心动" : "在 Pulse 相遇"} · 已开启对话
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div ref={scrollerRef} className="mx-auto w-full max-w-md flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        {error && (
+          <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            会话加载失败：{(error as Error).message}
+            <div className="mt-2"><Link to="/messages" className="underline">返回消息列表</Link></div>
+          </div>
+        )}
+        {isLoading && (
+          <>
+            <div className="ml-9 h-10 w-2/3 animate-pulse rounded-2xl bg-surface/60" />
+            <div className="ml-auto h-10 w-1/2 animate-pulse rounded-2xl bg-surface/60" />
+          </>
+        )}
+        <AnimatePresence initial={false}>
+          {(data?.messages ?? []).map((m) => {
+            const mine = m.senderId === me;
+            return (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={mine ? "flex justify-end" : "flex items-end gap-2"}
+              >
+                {!mine && (
+                  data?.partner.avatar ? (
+                    <img src={data.partner.avatar} alt="" className="h-7 w-7 rounded-full object-cover" />
+                  ) : (
+                    <div className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-coral to-sun text-[11px] text-background">
+                      {partnerName.slice(0, 1)}
+                    </div>
+                  )
+                )}
+                <div
+                  className={
+                    mine
+                      ? "max-w-[78%] rounded-2xl rounded-br-md bg-gradient-to-br from-coral to-sun px-3.5 py-2 text-sm text-background shadow-md"
+                      : "max-w-[78%] rounded-2xl rounded-bl-md border border-border bg-surface/80 px-3.5 py-2 text-sm"
+                  }
+                >
+                  {m.content}
+                  <div className={`mt-1 text-right text-[10px] ${mine ? "text-background/70" : "text-muted-foreground"}`}>
+                    {new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+
+      <div className="sticky bottom-0 border-t border-border/60 bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-md items-center gap-2 px-3 py-3">
+          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><Smile className="h-4 w-4" /></button>
+          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><ImageIcon className="h-4 w-4" /></button>
+          <div className="flex flex-1 items-center rounded-full border border-border bg-surface/70 px-3">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") send(); }}
+              placeholder="说点什么..."
+              className="flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground/70"
+            />
+            <button className="text-muted-foreground"><Mic className="h-4 w-4" /></button>
+          </div>
+          <button onClick={send} disabled={!input.trim() || sending} className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-coral to-sun text-background shadow-lg disabled:opacity-40">
             <Send className="h-4 w-4" />
           </button>
         </div>
