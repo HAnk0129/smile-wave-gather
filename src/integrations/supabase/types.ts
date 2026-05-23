@@ -179,7 +179,6 @@ export type Database = {
           onboarded: boolean
           personality: Json
           pet: string | null
-          phone: string | null
           photos: Json
           relationship: string | null
           school: string | null
@@ -218,7 +217,6 @@ export type Database = {
           onboarded?: boolean
           personality?: Json
           pet?: string | null
-          phone?: string | null
           photos?: Json
           relationship?: string | null
           school?: string | null
@@ -257,7 +255,6 @@ export type Database = {
           onboarded?: boolean
           personality?: Json
           pet?: string | null
-          phone?: string | null
           photos?: Json
           relationship?: string | null
           school?: string | null
@@ -273,12 +270,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles_private: {
+        Row: {
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      start_conversation: {
+        Args: { partner_id: string; source?: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

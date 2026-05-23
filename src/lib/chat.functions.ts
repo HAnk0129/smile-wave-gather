@@ -2,9 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const orderedPair = (a: string, b: string): [string, string] =>
-  a < b ? [a, b] : [b, a];
-
 export const listConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -133,19 +130,10 @@ export const startConversation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (data.partnerId === userId) throw new Error("不能和自己开始对话");
-    const [a, b] = orderedPair(userId, data.partnerId);
-    const { data: existing } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("user_a", a)
-      .eq("user_b", b)
-      .maybeSingle();
-    if (existing) return { id: existing.id };
-    const { data: created, error } = await supabase
-      .from("conversations")
-      .insert({ user_a: a, user_b: b, source: data.source })
-      .select("id")
-      .single();
+    const { data: convId, error } = await supabase.rpc("start_conversation", {
+      partner_id: data.partnerId,
+      source: data.source,
+    });
     if (error) throw new Error(error.message);
-    return { id: created.id };
+    return { id: convId as string };
   });

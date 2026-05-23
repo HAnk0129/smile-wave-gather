@@ -39,7 +39,6 @@ export const saveProfile = createServerFn({ method: "POST" })
       age_range: data.ageRange ?? null,
       distance: (data.distance as string) || null,
       icebreaker: (data.icebreaker as string) || null,
-      phone: (data.phone as string) || null,
       verify_real: Boolean(data.verifyReal),
       verify_student: Boolean(data.verifyStudent),
       onboarded: true,
@@ -50,6 +49,14 @@ export const saveProfile = createServerFn({ method: "POST" })
       .upsert(payload as never, { onConflict: "id" });
 
     if (error) throw new Error(error.message);
+
+    const phone = (data.phone as string) || null;
+    if (phone) {
+      const { error: pErr } = await supabase
+        .from("profiles_private")
+        .upsert({ id: userId, phone } as never, { onConflict: "id" });
+      if (pErr) throw new Error(pErr.message);
+    }
     return { ok: true };
   });
 
