@@ -9,6 +9,143 @@ import {
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
 
+/* ---------- Auth Gate (WeChat / Google / Phone) ---------- */
+
+type AuthMethod = { provider: "wechat" | "google" | "phone"; nickname?: string };
+
+function AuthGate({ onContinue }: { onContinue: (m: AuthMethod) => void }) {
+  const [loading, setLoading] = useState<AuthMethod["provider"] | null>(null);
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [sent, setSent] = useState(false);
+
+  const handleOAuth = (provider: "wechat" | "google") => {
+    setLoading(provider);
+    // 模拟 OAuth 授权流程
+    setTimeout(() => {
+      onContinue({
+        provider,
+        nickname: provider === "wechat" ? "微信用户" : "Google 用户",
+      });
+    }, 900);
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden flex flex-col">
+      <div className="absolute -top-32 -left-20 size-[420px] rounded-full bg-coral/25 blur-[140px]" />
+      <div className="absolute top-40 -right-20 size-[380px] rounded-full bg-mint/20 blur-[140px]" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 size-[500px] rounded-full bg-sun/15 blur-[160px]" />
+
+      <header className="relative z-10 mx-auto w-full max-w-md px-6 pt-6">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition">
+          <ArrowLeft className="size-4" /> 返回
+        </Link>
+      </header>
+
+      <main className="relative z-10 flex-1 mx-auto w-full max-w-md px-6 pt-10 pb-8 flex flex-col">
+        <div className="text-center">
+          <div className="mx-auto size-16 rounded-3xl bg-gradient-to-br from-coral via-sun to-mint flex items-center justify-center glow-coral mb-5">
+            <Heart className="size-7 text-background fill-background" />
+          </div>
+          <h1 className="font-display text-3xl font-bold tracking-tight">
+            加入 <span className="font-serif-display italic text-coral">Pulse</span>
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">选择你偏好的方式，30 秒开启心动之旅</p>
+        </div>
+
+        {/* Social buttons */}
+        <div className="mt-10 space-y-3">
+          <button
+            onClick={() => handleOAuth("wechat")}
+            disabled={loading !== null}
+            className="w-full h-12 rounded-2xl bg-[#07C160] text-white font-semibold flex items-center justify-center gap-3 hover:opacity-90 active:scale-[0.99] transition disabled:opacity-60"
+          >
+            <WeChatIcon />
+            {loading === "wechat" ? "正在唤起微信…" : "使用微信注册 / 登录"}
+          </button>
+
+          <button
+            onClick={() => handleOAuth("google")}
+            disabled={loading !== null}
+            className="w-full h-12 rounded-2xl bg-white text-[#1f1f1f] font-semibold flex items-center justify-center gap-3 hover:bg-white/90 active:scale-[0.99] transition disabled:opacity-60"
+          >
+            <GoogleIcon />
+            {loading === "google" ? "正在跳转 Google…" : "使用 Google 注册 / 登录"}
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="my-7 flex items-center gap-3 text-[11px] uppercase tracking-wider text-muted-foreground">
+          <div className="flex-1 h-px bg-border" />
+          或使用手机号
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
+        {/* Phone */}
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <div className="inline-flex h-12 items-center px-3 rounded-2xl border border-border bg-surface/60 text-sm">+86</div>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+              placeholder="请输入手机号"
+              inputMode="numeric"
+              className="flex-1 h-12 px-4 rounded-2xl border border-border bg-surface/60 text-sm focus:outline-none focus:border-coral/50"
+            />
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="6 位短信验证码"
+              inputMode="numeric"
+              className="flex-1 h-12 px-4 rounded-2xl border border-border bg-surface/60 text-sm focus:outline-none focus:border-coral/50"
+            />
+            <button
+              onClick={() => phone.length === 11 && setSent(true)}
+              disabled={phone.length !== 11 || sent}
+              className="h-12 px-4 rounded-2xl border border-coral/40 text-coral text-sm font-medium disabled:opacity-50"
+            >
+              {sent ? "已发送" : "获取验证码"}
+            </button>
+          </div>
+          <button
+            onClick={() => onContinue({ provider: "phone" })}
+            disabled={phone.length !== 11 || code.length !== 6}
+            className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold glow-coral disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] transition"
+          >
+            手机号注册 / 登录
+          </button>
+        </div>
+
+        <p className="mt-8 text-center text-[11px] text-muted-foreground leading-relaxed">
+          继续即代表同意 <a className="underline">《用户协议》</a> 与 <a className="underline">《隐私政策》</a>
+          <br />我们会严格保护你的真实信息
+        </p>
+      </main>
+    </div>
+  );
+}
+
+function WeChatIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="currentColor" aria-hidden>
+      <path d="M8.7 2C4.5 2 1 4.9 1 8.5c0 2 1.1 3.8 2.9 5L3 16l2.6-1.4c.7.2 1.5.3 2.3.4-.1-.4-.2-.9-.2-1.4 0-3.5 3.3-6.3 7.4-6.3h.7C15 4.1 12.2 2 8.7 2zm-2.6 4a.9.9 0 110 1.8.9.9 0 010-1.8zm5.2 0a.9.9 0 110 1.8.9.9 0 010-1.8zM15.5 9c-3.6 0-6.5 2.4-6.5 5.4 0 3 2.9 5.4 6.5 5.4.7 0 1.4-.1 2-.3l2.2 1.2-.6-2c1.5-1 2.4-2.6 2.4-4.3 0-3-2.9-5.4-6-5.4zm-2 3.2a.7.7 0 110 1.4.7.7 0 010-1.4zm4 0a.7.7 0 110 1.4.7.7 0 010-1.4z"/>
+    </svg>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+      <path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 01-2 3v2.5h3.3c1.9-1.8 3-4.4 3-7.3z"/>
+      <path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.5l-3.3-2.5c-.9.6-2.1 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3v2.6A10 10 0 0012 22z"/>
+      <path fill="#FBBC05" d="M6.4 13.9a6 6 0 010-3.8V7.5H3a10 10 0 000 9l3.4-2.6z"/>
+      <path fill="#EA4335" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 003 7.5l3.4 2.6C7.2 7.7 9.4 5.9 12 5.9z"/>
+    </svg>
+  );
+}
+
 const STEPS = [
   { key: "basic", title: "账号基础", subtitle: "让我们先认识一下你" },
   { key: "photos", title: "照片展示", subtitle: "上传 2–8 张真实照片" },
