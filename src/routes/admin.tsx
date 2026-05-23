@@ -6,9 +6,13 @@ import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
 } from "lucide-react";
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
+  PieChart, Pie, Cell, Legend, BarChart, Bar,
+} from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  checkIsAdmin, claimFirstAdmin, getAdminStats,
+  checkIsAdmin, claimFirstAdmin, getAdminStats, getAdminCharts,
   adminListUsers, adminListMessages, adminListReports, adminUpdateReport,
   adminListTreehole, adminListPosts, adminDeleteMessage,
 } from "@/lib/admin.functions";
@@ -173,6 +177,110 @@ function Overview() {
           );
         })}
       </div>
+      <ChartsPanel />
+    </div>
+  );
+}
+
+/* -------------------- Charts -------------------- */
+const COLORS = ["#E54848", "#7F77DD", "#F5C443", "#3DDC97", "#5BC0EB", "#FF8A65"];
+
+function ChartsPanel() {
+  const fn = useServerFn(getAdminCharts);
+  const { data, isLoading } = useQuery({ queryKey: ["admin-charts"], queryFn: () => fn() });
+
+  if (isLoading || !data) {
+    return <div className="rounded-2xl border border-border bg-surface/40 p-8 text-center text-sm text-muted-foreground">图表加载中…</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <ChartCard title="近 14 天新增趋势" subtitle="新用户 · 消息 · 帖子">
+        <ResponsiveContainer width="100%" height={240}>
+          <AreaChart data={data.daily} margin={{ left: -10, right: 8, top: 8, bottom: 0 }}>
+            <defs>
+              <linearGradient id="gMsg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#7F77DD" stopOpacity={0.6} />
+                <stop offset="100%" stopColor="#7F77DD" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="gUser" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#E54848" stopOpacity={0.6} />
+                <stop offset="100%" stopColor="#E54848" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="gPost" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#F5C443" stopOpacity={0.6} />
+                <stop offset="100%" stopColor="#F5C443" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }} tickLine={false} axisLine={false} width={28} />
+            <Tooltip contentStyle={{ background: "#1a1030", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }} labelStyle={{ color: "#fff" }} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Area type="monotone" name="消息" dataKey="messages" stroke="#7F77DD" fill="url(#gMsg)" strokeWidth={2} />
+            <Area type="monotone" name="新用户" dataKey="users" stroke="#E54848" fill="url(#gUser)" strokeWidth={2} />
+            <Area type="monotone" name="帖子" dataKey="posts" stroke="#F5C443" fill="url(#gPost)" strokeWidth={2} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <ChartCard title="内容分布" subtitle="近 14 天产出占比">
+        <ResponsiveContainer width="100%" height={240}>
+          <PieChart>
+            <Pie data={data.contentMix} dataKey="value" nameKey="name" innerRadius={50} outerRadius={88} paddingAngle={3}>
+              {data.contentMix.map((_, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="transparent" />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={{ background: "#1a1030", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+          </PieChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <ChartCard title="风险等级分布" subtitle="AI 标记的内容风险">
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={data.riskBars} margin={{ left: -10, right: 8, top: 8, bottom: 0 }}>
+            <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="level" tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }} tickLine={false} axisLine={false} width={28} />
+            <Tooltip contentStyle={{ background: "#1a1030", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+            <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+              {data.riskBars.map((_, i) => (
+                <Cell key={i} fill={["#3DDC97", "#F5C443", "#E54848"][i] ?? "#7F77DD"} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <ChartCard title="举报处理状态" subtitle={`未关闭风险 ${data.flagStatus.open} · 已处理 ${data.flagStatus.resolved}`}>
+        <ResponsiveContainer width="100%" height={240}>
+          <PieChart>
+            <Pie data={data.reportPie} dataKey="value" nameKey="name" outerRadius={92} label={{ fill: "rgba(255,255,255,0.7)", fontSize: 11 }}>
+              {data.reportPie.map((_, i) => (
+                <Cell key={i} fill={["#E54848", "#3DDC97", "#7F77DD"][i] ?? "#F5C443"} stroke="transparent" />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={{ background: "#1a1030", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+          </PieChart>
+        </ResponsiveContainer>
+      </ChartCard>
+    </div>
+  );
+}
+
+function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface/60 p-4">
+      <div className="mb-3 flex items-end justify-between">
+        <div>
+          <div className="text-sm font-semibold">{title}</div>
+          {subtitle && <div className="text-[11px] text-muted-foreground">{subtitle}</div>}
+        </div>
+      </div>
+      {children}
     </div>
   );
 }
