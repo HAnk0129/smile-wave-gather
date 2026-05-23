@@ -77,10 +77,10 @@ function Hero() {
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center gap-3">
-            <button className="group inline-flex items-center gap-2 h-12 px-7 rounded-full bg-primary text-primary-foreground font-semibold glow-coral hover:scale-[1.02] active:scale-[0.98] transition">
+            <Link to="/discover" className="group inline-flex items-center gap-2 h-12 px-7 rounded-full bg-primary text-primary-foreground font-semibold glow-coral hover:scale-[1.02] active:scale-[0.98] transition">
               免费开始匹配
               <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
-            </button>
+            </Link>
             <button className="inline-flex items-center gap-2 h-12 px-6 rounded-full border border-border bg-surface/60 backdrop-blur font-medium hover:bg-surface transition">
               <Sparkles className="size-4 text-sun" />
               看看大家在聊什么
