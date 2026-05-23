@@ -54,7 +54,7 @@ export const getAdminStats = createServerFn({ method: "GET" })
     await assertAdmin(supabase, userId);
 
     const countOf = async (table: string, filter?: (q: any) => any) => {
-      let q = supabase.from(table).select("*", { count: "exact", head: true });
+      let q: any = (supabase as any).from(table).select("*", { count: "exact", head: true });
       if (filter) q = filter(q);
       const { count } = await q;
       return count ?? 0;
