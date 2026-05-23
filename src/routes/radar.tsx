@@ -25,6 +25,7 @@ type Blip = {
   tag: string;
   heat: "hot" | "warm" | "cool";
   status: string;
+  compat: number;
 };
 
 const RING_KM = [0.5, 1, 2, 5]; // ring radii in km
@@ -56,6 +57,7 @@ function makeBlips(count: number): Blip[] {
       tag: rand(TAGS, Math.floor(Math.random() * 9999)),
       heat,
       status: rand(STATUSES, Math.floor(Math.random() * 9999)),
+      compat: 60 + Math.floor(Math.random() * 39),
     };
   });
 }
@@ -337,7 +339,7 @@ function RadarPage() {
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <span className="rounded-full border border-border bg-background/40 px-2.5 py-1 text-[11px]">#{selected.tag}</span>
-                <span className="rounded-full border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11px] text-mint">同频度 {60 + Math.floor(Math.random()*39)}%</span>
+                <span className="rounded-full border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11px] text-mint">同频度 {selected.compat}%</span>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <button className="flex items-center justify-center gap-2 rounded-xl border border-border bg-background/40 py-3 text-sm hover:bg-background/70">
