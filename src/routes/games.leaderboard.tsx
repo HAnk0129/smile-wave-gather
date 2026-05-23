@@ -149,11 +149,6 @@ function Header() {
 }
 
 function Hero({ period, setPeriod }: { period: Period; setPeriod: (p: Period) => void }) {
-  const tabs: { id: Period; label: string }[] = [
-    { id: "daily", label: "今日" },
-    { id: "weekly", label: "本周" },
-    { id: "season: "本赛季" } as never,
-  ].filter(Boolean) as any;
   const real: { id: Period; label: string }[] = [
     { id: "daily", label: "今日" },
     { id: "weekly", label: "本周" },
