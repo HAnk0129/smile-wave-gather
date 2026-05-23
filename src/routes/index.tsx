@@ -34,9 +34,16 @@ function Nav() {
           <Link to="/community" className="hover:text-foreground transition">社区</Link>
         </nav>
         <div className="flex items-center gap-2">
-          <button className="inline-flex items-center h-10 px-6 rounded-full border border-zinc-800 bg-transparent text-[15px] font-medium text-zinc-400 hover:text-white hover:border-zinc-700 transition-all duration-300 active:scale-95">登录</button>
           <Link
-            to="/onboarding"
+            to="/auth"
+            search={{ mode: "login", redirect: "/discover" }}
+            className="inline-flex items-center h-10 px-6 rounded-full border border-zinc-800 bg-transparent text-[15px] font-medium text-zinc-400 hover:text-white hover:border-zinc-700 transition-all duration-300 active:scale-95"
+          >
+            登录
+          </Link>
+          <Link
+            to="/auth"
+            search={{ mode: "signup", redirect: "/onboarding" }}
             className="inline-flex items-center h-10 px-7 rounded-full text-[15px] font-bold text-white bg-gradient-to-r from-[#FF3B5C] to-[#FF5E7B] shadow-[0_8px_20px_-6px_rgba(255,59,92,0.45)] hover:shadow-[0_12px_24px_-6px_rgba(255,59,92,0.65)] hover:-translate-y-0.5 transition-all duration-300 active:scale-95"
           >
             注册
