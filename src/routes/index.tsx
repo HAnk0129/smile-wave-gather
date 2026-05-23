@@ -31,7 +31,7 @@ function Nav() {
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <Link to="/games" className="hover:text-foreground transition">游戏</Link>
           <Link to="/explore" className="hover:text-foreground transition">发现</Link>
-          <a href="#community" className="hover:text-foreground transition">社区</a>
+          <Link to="/community" className="hover:text-foreground transition">社区</Link>
         </nav>
         <div className="flex items-center gap-2">
           <button className="inline-flex h-9 px-4 rounded-full border border-border bg-surface/60 text-sm text-foreground hover:bg-surface transition">登录</button>
