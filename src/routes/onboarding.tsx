@@ -208,10 +208,30 @@ const initial: Profile = {
 };
 
 function Onboarding() {
-  const [authed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(0);
   const [data, setData] = useState<Profile>(initial);
   const navigate = useNavigate();
+  const saveProfileFn = useServerFn(saveProfile);
+
+  // 校验登录态：未登录跳到 /auth 注册模式
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: s }) => {
+      if (!s.session) {
+        navigate({ to: "/auth", search: { mode: "signup", redirect: "/onboarding" } });
+      } else {
+        setAuthed(true);
+        const meta = s.session.user.user_metadata as { nickname?: string } | null;
+        const fallback = s.session.user.email?.split("@")[0] ?? "";
+        setData((d) => ({
+          ...d,
+          nickname: d.nickname || meta?.nickname || fallback,
+          phone: d.phone || s.session.user.phone || "",
+        }));
+      }
+    });
+  }, [navigate]);
 
   const update = (patch: Partial<Profile>) => setData((d) => ({ ...d, ...patch }));
 
@@ -237,26 +257,35 @@ function Onboarding() {
   ];
 
   const [error, setError] = useState<string | null>(null);
-  const next = () => {
+  const next = async () => {
     const err = validators[step]();
     if (err) { setError(err); return; }
     setError(null);
     if (step < STEPS.length - 1) setStep(step + 1);
     else {
-      try { localStorage.setItem("pulse_profile", JSON.stringify(data)); } catch {}
-      navigate({ to: "/discover" });
+      setSubmitting(true);
+      try {
+        await saveProfileFn({ data: data as unknown as Record<string, unknown> });
+        try { localStorage.setItem("pulse_profile", JSON.stringify(data)); } catch {}
+        toast.success("资料已保存，开始遇见");
+        navigate({ to: "/discover" });
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : "保存失败，请重试");
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
   const prev = () => { setError(null); setStep(Math.max(0, step - 1)); };
 
   const progress = ((step + 1) / STEPS.length) * 100;
 
-  if (!authed) {
-    return <AuthGate onContinue={(method) => {
-      // 预填昵称（如有），并进入资料填写
-      if (method.nickname) setData((d) => ({ ...d, nickname: method.nickname! }));
-      setAuthed(true);
-    }} />;
+  if (authed === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
+        正在校验登录状态…
+      </div>
+    );
   }
 
   return (
