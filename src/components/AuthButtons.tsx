@@ -6,23 +6,23 @@ import { forwardRef, type ReactNode, type ComponentPropsWithoutRef } from "react
 export type NeonVariant = "ghost" | "coral";
 
 const sizeMap: Record<NeonVariant, string> = {
-  ghost: "px-9 py-2.5",
-  coral: "px-9 py-2.5",
+  ghost: "px-7 py-2.5",
+  coral: "px-7 py-2.5",
 };
 
 export function NeonInner({ variant, children }: { variant: NeonVariant; children: ReactNode }) {
   if (variant === "ghost") {
     return (
       <>
-        <span className="absolute inset-0 rounded-full border-2 border-[#FF3B5C] transition-colors" />
-        <span className="relative font-extrabold tracking-widest text-sm text-[#FF3B5C] inline-flex items-center gap-2">{children}</span>
+        <span className="absolute inset-0 rounded-[10px] border-2 border-[#7F77DD] transition-colors" />
+        <span className="relative font-semibold tracking-wide text-sm text-[#7F77DD] inline-flex items-center gap-2">{children}</span>
       </>
     );
   }
   return (
     <>
-      <span className="absolute inset-0 rounded-full bg-[#FF3B5C]" />
-      <span className="relative font-extrabold tracking-widest text-sm text-white inline-flex items-center gap-2">{children}</span>
+      <span className="absolute inset-0 rounded-[10px] bg-[#D85A30]" />
+      <span className="relative font-semibold tracking-wide text-sm text-white inline-flex items-center gap-2">{children}</span>
     </>
   );
 }
