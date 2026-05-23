@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Trophy, Users, Wand2, Zap } from "lucide-react";
+import { AuthButtons } from "@/components/AuthButtons";
 
 export const Route = createFileRoute("/games")({
   head: () => ({
@@ -146,10 +147,7 @@ function Nav() {
           <Link to="/radar" className="hover:text-foreground transition">社交雷达</Link>
           <Link to="/discover" className="hover:text-foreground transition">发现</Link>
         </nav>
-        <div className="flex items-center gap-2">
-          <button className="inline-flex h-9 px-4 rounded-full border border-border bg-surface/60 text-sm hover:bg-surface transition">登录</button>
-          <button className="inline-flex h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition">注册</button>
-        </div>
+        <AuthButtons />
       </div>
     </header>
   );
