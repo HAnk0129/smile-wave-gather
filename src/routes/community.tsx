@@ -300,7 +300,7 @@ function BottomNav() {
     { to: "/explore", icon: Compass, label: "发现" },
     { to: "/community", icon: MessageSquare, label: "社区", active: true },
     { to: "/games", icon: Trophy, label: "游戏" },
-    { to: "/onboarding", icon: User, label: "我的" },
+    { to: "/me", icon: User, label: "我的" },
   ];
   return (
     <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl bg-background/85 border-t border-border">
