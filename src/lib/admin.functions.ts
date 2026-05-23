@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /** 内部校验:必须是 admin */
 async function assertAdmin(supabase: any, userId: string) {
@@ -33,13 +34,13 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { count, error: cErr } = await supabase
+    const { count, error: cErr } = await supabaseAdmin
       .from("user_roles")
       .select("user_id", { count: "exact", head: true })
       .eq("role", "admin");
     if (cErr) throw new Error(cErr.message);
     if ((count ?? 0) > 0) throw new Error("管理员已存在,请联系现有管理员授权");
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: userId, role: "admin" } as never);
     if (error) throw new Error(error.message);
