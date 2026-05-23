@@ -13,6 +13,7 @@ import { Route as RadarRouteImport } from './routes/radar'
 import { Route as GamesRouteImport } from './routes/games'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GamesPalmRouteImport } from './routes/games.palm'
 
 const RadarRoute = RadarRouteImport.update({
   id: '/radar',
@@ -34,38 +35,46 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesPalmRoute = GamesPalmRouteImport.update({
+  id: '/palm',
+  path: '/palm',
+  getParentRoute: () => GamesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
-  '/games': typeof GamesRoute
+  '/games': typeof GamesRouteWithChildren
   '/radar': typeof RadarRoute
+  '/games/palm': typeof GamesPalmRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
-  '/games': typeof GamesRoute
+  '/games': typeof GamesRouteWithChildren
   '/radar': typeof RadarRoute
+  '/games/palm': typeof GamesPalmRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
-  '/games': typeof GamesRoute
+  '/games': typeof GamesRouteWithChildren
   '/radar': typeof RadarRoute
+  '/games/palm': typeof GamesPalmRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/discover' | '/games' | '/radar'
+  fullPaths: '/' | '/discover' | '/games' | '/radar' | '/games/palm'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/discover' | '/games' | '/radar'
-  id: '__root__' | '/' | '/discover' | '/games' | '/radar'
+  to: '/' | '/discover' | '/games' | '/radar' | '/games/palm'
+  id: '__root__' | '/' | '/discover' | '/games' | '/radar' | '/games/palm'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DiscoverRoute: typeof DiscoverRoute
-  GamesRoute: typeof GamesRoute
+  GamesRoute: typeof GamesRouteWithChildren
   RadarRoute: typeof RadarRoute
 }
 
@@ -99,13 +108,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games/palm': {
+      id: '/games/palm'
+      path: '/palm'
+      fullPath: '/games/palm'
+      preLoaderRoute: typeof GamesPalmRouteImport
+      parentRoute: typeof GamesRoute
+    }
   }
 }
+
+interface GamesRouteChildren {
+  GamesPalmRoute: typeof GamesPalmRoute
+}
+
+const GamesRouteChildren: GamesRouteChildren = {
+  GamesPalmRoute: GamesPalmRoute,
+}
+
+const GamesRouteWithChildren = GamesRoute._addFileChildren(GamesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DiscoverRoute: DiscoverRoute,
-  GamesRoute: GamesRoute,
+  GamesRoute: GamesRouteWithChildren,
   RadarRoute: RadarRoute,
 }
 export const routeTree = rootRouteImport

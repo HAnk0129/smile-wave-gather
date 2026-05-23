@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Users, Wand2 } from "lucide-react";
+import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Users, Wand2, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/games")({
   head: () => ({
@@ -25,9 +25,23 @@ type Game = {
   color: "coral" | "sun" | "mint";
   icon: typeof Heart;
   badge?: string;
+  href?: string;
 };
 
 const GAMES: Game[] = [
+  {
+    id: "palm",
+    title: "AI 看手相",
+    tagline: "拍张手掌，读懂你的爱情线。",
+    desc: "上传手掌照片，AI 解读感情线、生命线与事业线。生成专属手相报告，可与心动对象交换查看缘分契合度。",
+    players: "1 人 / 双人对照",
+    duration: "1-2 分钟",
+    hotness: 96,
+    color: "coral",
+    icon: Hand,
+    badge: "AI 新玩法",
+    href: "/games/palm",
+  },
   {
     id: "truth",
     title: "真心话 · 心动版",
@@ -65,14 +79,14 @@ const GAMES: Game[] = [
   },
   {
     id: "wouldyou",
-    title: "AI 看手相",
-    tagline: "拍张手掌，读懂你的爱情线。",
-    desc: "上传手掌照片，AI 解读感情线、生命线与事业线。生成专属手相报告，可与心动对象交换查看缘分契合度。",
-    players: "1 人 / 双人对照",
-    duration: "1-2 分钟",
-    hotness: 80,
+    title: "你会怎么选",
+    tagline: "二选一，秒懂三观契合度。",
+    desc: "山或海？早 C 晚 A？50 道犀利二选一，实时比对你们的契合度。",
+    players: "2 人",
+    duration: "3-5 分钟",
+    hotness: 78,
     color: "coral",
-    icon: Hand,
+    icon: Zap,
   },
   {
     id: "story",
@@ -360,10 +374,20 @@ function GameCard({ game }: { game: Game }) {
         </span>
       </div>
 
-      <button className="relative w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-background/60 border border-border text-sm font-semibold hover:bg-foreground hover:text-background transition">
-        立即开玩
-        <ArrowRight className="size-3.5" />
-      </button>
+      {game.href ? (
+        <Link
+          to={game.href}
+          className="relative w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-primary text-primary-foreground text-sm font-semibold glow-coral hover:scale-[1.01] transition"
+        >
+          立即开玩
+          <ArrowRight className="size-3.5" />
+        </Link>
+      ) : (
+        <button className="relative w-full inline-flex items-center justify-center gap-2 h-10 rounded-full bg-background/60 border border-border text-sm font-semibold hover:bg-foreground hover:text-background transition">
+          立即开玩
+          <ArrowRight className="size-3.5" />
+        </button>
+      )}
     </div>
   );
 }
