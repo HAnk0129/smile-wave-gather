@@ -34,7 +34,7 @@ const MODULES = [
   {
     href: "/explore/video" as const,
     title: "视频聊天",
-    desc: "不用露脸,5 分钟轻松视频",
+    desc: "5 分钟视频,露脸或装扮自由选",
     icon: Video,
     grad: "from-sun/30 via-sun/10 to-transparent",
     accent: "text-sun",
@@ -75,7 +75,7 @@ function ExploreLayout() {
           发现 <span className="text-gradient-hero font-serif-display italic">同频</span>
         </h1>
         <p className="mt-3 max-w-xl text-muted-foreground">
-          四种方式打破社恐——附近的人、随机的声音、藏在头像后的视频,或者一个只属于陌生人的树洞。
+          四种方式打破社恐——附近的人、随机的声音、自在出镜的视频,或者一个只属于陌生人的树洞。
         </p>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
