@@ -13,8 +13,8 @@ type Stage = "idle" | "preview" | "matching" | "confirm" | "in_call" | "ended";
 const PROPS = [
   { id: "none", name: "原貌", emoji: "🙂" },
   { id: "mask", name: "口罩", emoji: "😷" },
-  { id: "panda", name: "熊猫头套", emoji: "🐼" },
-  { id: "cat", name: "猫猫头套", emoji: "🐱" },
+  { id: "panda", name: "熊猫", emoji: "🐼" },
+  { id: "cat", name: "猫猫", emoji: "🐱" },
   { id: "alien", name: "外星人", emoji: "👽" },
   { id: "shades", name: "墨镜", emoji: "🕶️" },
 ];
@@ -87,8 +87,8 @@ function VideoChatPage() {
               <div className="mx-auto grid h-44 w-44 place-items-center rounded-full bg-gradient-to-br from-sun to-coral text-background shadow-2xl">
                 <Video className="h-14 w-14" />
               </div>
-              <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight">戴上头套,5 分钟视频</h1>
-              <p className="mt-2 text-sm text-muted-foreground">害羞没关系——你可以选择喜欢的虚拟形象先出场。</p>
+              <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight">先躲在头像后面聊 5 分钟</h1>
+              <p className="mt-2 text-sm text-muted-foreground">不用露脸也能开口——选一个你喜欢的形象，慢慢熟悉就好。</p>
               <button onClick={goPreview} className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-gradient-to-r from-sun to-coral px-7 font-semibold text-background shadow-lg hover:scale-[1.02]">
                 <Sparkles className="h-4 w-4" /> 进入视频预览
               </button>
@@ -136,7 +136,7 @@ function VideoChatPage() {
                   {myProp.emoji}
                 </div>
               </div>
-              <p className="mt-8 font-display text-xl">正在寻找对面的头套…</p>
+              <p className="mt-8 font-display text-xl">正在为你寻找有缘的人…</p>
               <button onClick={reset} className="mt-6 text-sm text-muted-foreground underline-offset-4 hover:underline">取消</button>
             </motion.div>
           )}
