@@ -82,6 +82,102 @@ export const getAdminStats = createServerFn({ method: "GET" })
     };
   });
 
+/** 可视化图表数据 */
+export const getAdminCharts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    const DAYS = 14;
+    const since = new Date();
+    since.setHours(0, 0, 0, 0);
+    since.setDate(since.getDate() - (DAYS - 1));
+    const sinceISO = since.toISOString();
+
+    const fetchDates = async (table: string) => {
+      const { data, error } = await (supabase as any)
+        .from(table)
+        .select("created_at")
+        .gte("created_at", sinceISO)
+        .limit(5000);
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((r: any) => r.created_at as string);
+    };
+
+    const [uDates, mDates, pDates, tDates, cDates] = await Promise.all([
+      fetchDates("profiles"),
+      fetchDates("messages"),
+      fetchDates("community_posts"),
+      fetchDates("treehole_posts"),
+      fetchDates("call_sessions"),
+    ]);
+
+    // 构造每日序列
+    const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+    const series: Record<string, { date: string; users: number; messages: number; posts: number; treehole: number; calls: number }> = {};
+    for (let i = 0; i < DAYS; i++) {
+      const d = new Date(since);
+      d.setDate(since.getDate() + i);
+      const k = dayKey(d);
+      series[k] = { date: k.slice(5), users: 0, messages: 0, posts: 0, treehole: 0, calls: 0 };
+    }
+    const bump = (arr: string[], key: keyof (typeof series)[string]) => {
+      for (const ts of arr) {
+        const k = ts.slice(0, 10);
+        if (series[k]) (series[k][key] as number) += 1;
+      }
+    };
+    bump(uDates, "users");
+    bump(mDates, "messages");
+    bump(pDates, "posts");
+    bump(tDates, "treehole");
+    bump(cDates, "calls");
+    const daily = Object.values(series);
+
+    // 内容分布
+    const contentMix = [
+      { name: "聊天消息", value: mDates.length },
+      { name: "社区帖子", value: pDates.length },
+      { name: "匿名树洞", value: tDates.length },
+      { name: "语音/视频", value: cDates.length },
+    ];
+
+    // 风险等级分布
+    const { data: flagRows } = await (supabase as any)
+      .from("content_flags")
+      .select("severity, status")
+      .limit(2000);
+    const sevMap: Record<string, number> = { low: 0, medium: 0, high: 0 };
+    let openFlags = 0;
+    let resolvedFlags = 0;
+    for (const r of flagRows ?? []) {
+      const s = (r.severity ?? "low") as string;
+      sevMap[s] = (sevMap[s] ?? 0) + 1;
+      if (r.status === "open") openFlags += 1; else resolvedFlags += 1;
+    }
+    const riskBars = [
+      { level: "低危", count: sevMap.low ?? 0 },
+      { level: "中危", count: sevMap.medium ?? 0 },
+      { level: "高危", count: sevMap.high ?? 0 },
+    ];
+
+    // 举报状态
+    const { data: reportRows } = await (supabase as any)
+      .from("reports")
+      .select("status")
+      .limit(2000);
+    const rMap: Record<string, number> = {};
+    for (const r of reportRows ?? []) rMap[r.status] = (rMap[r.status] ?? 0) + 1;
+    const reportPie = [
+      { name: "待处理", value: rMap["pending"] ?? 0 },
+      { name: "已处理", value: rMap["resolved"] ?? 0 },
+      { name: "已驳回", value: rMap["dismissed"] ?? 0 },
+    ];
+
+    return { daily, contentMix, riskBars, reportPie, flagStatus: { open: openFlags, resolved: resolvedFlags } };
+  });
+
 /** 用户列表 */
 export const adminListUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
