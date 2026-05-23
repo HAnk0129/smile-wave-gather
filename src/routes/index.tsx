@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart, MessageCircle, Sparkles, Zap, Globe2, ArrowRight, Star } from "lucide-react";
+import { AuthButtons } from "@/components/AuthButtons";
 
 export const Route = createFileRoute("/")({
   component: Index,
