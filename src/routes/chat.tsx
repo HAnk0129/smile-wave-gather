@@ -53,7 +53,7 @@ function ChatPage() {
   const name = search.name || "晚风";
   const avatar = search.avatar || "from-coral to-sun";
   const city = search.city || "上海";
-  const from = search.from || "match";
+  const from: NonNullable<ChatSearch["from"]> = search.from ?? "match";
 
   const opener = useMemo<Msg[]>(() => {
     const base: Msg[] = [
