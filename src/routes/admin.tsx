@@ -6,9 +6,13 @@ import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
 } from "lucide-react";
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
+  PieChart, Pie, Cell, Legend, BarChart, Bar,
+} from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  checkIsAdmin, claimFirstAdmin, getAdminStats,
+  checkIsAdmin, claimFirstAdmin, getAdminStats, getAdminCharts,
   adminListUsers, adminListMessages, adminListReports, adminUpdateReport,
   adminListTreehole, adminListPosts, adminDeleteMessage,
 } from "@/lib/admin.functions";
