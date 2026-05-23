@@ -1,0 +1,437 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import {
+  Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
+  Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  checkIsAdmin, claimFirstAdmin, getAdminStats,
+  adminListUsers, adminListMessages, adminListReports, adminUpdateReport,
+  adminListTreehole, adminListPosts, adminDeleteMessage,
+} from "@/lib/admin.functions";
+
+export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [
+      { title: "员工内部后台 · Pulse" },
+      { name: "robots", content: "noindex,nofollow" },
+    ],
+  }),
+  component: AdminPage,
+});
+
+type Tab = "overview" | "users" | "messages" | "reports" | "treehole" | "posts";
+
+function AdminPage() {
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const checkFn = useServerFn(checkIsAdmin);
+  const { data: roleData, isLoading: roleLoading, refetch: refetchRole } = useQuery({
+    queryKey: ["is-admin"],
+    queryFn: () => checkFn(),
+    enabled: authed === true,
+  });
+
+  if (authed === false) return <Gate title="请先登录" subtitle="员工内部后台需要登录账号" cta={<Link to="/auth" className="rounded-lg bg-coral px-5 py-2.5 text-white">去登录</Link>} />;
+  if (authed === null || roleLoading) return <Gate title="加载中…" />;
+  if (!roleData?.isAdmin) return <ClaimAdmin onClaimed={() => refetchRole()} />;
+
+  return <AdminConsole />;
+}
+
+function Gate({ title, subtitle, cta }: { title: string; subtitle?: string; cta?: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background grid place-items-center text-foreground">
+      <div className="max-w-sm rounded-2xl border border-border bg-surface/70 p-8 text-center backdrop-blur">
+        <Shield className="mx-auto h-10 w-10 text-coral" />
+        <h1 className="mt-4 text-xl font-semibold">{title}</h1>
+        {subtitle && <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
+        {cta && <div className="mt-5">{cta}</div>}
+      </div>
+    </div>
+  );
+}
+
+function ClaimAdmin({ onClaimed }: { onClaimed: () => void }) {
+  const claim = useServerFn(claimFirstAdmin);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const handle = async () => {
+    setLoading(true); setErr(null);
+    try { await claim(); onClaimed(); }
+    catch (e: any) { setErr(e.message || String(e)); }
+    finally { setLoading(false); }
+  };
+  return (
+    <Gate
+      title="无管理员权限"
+      subtitle="若你是首位员工,可申领成为初始管理员;之后由你授权其他员工。"
+      cta={
+        <div className="space-y-3">
+          <button onClick={handle} disabled={loading} className="rounded-lg bg-coral px-5 py-2.5 text-white disabled:opacity-50">
+            {loading ? "处理中…" : "申领初始管理员"}
+          </button>
+          {err && <p className="text-xs text-red-400">{err}</p>}
+        </div>
+      }
+    />
+  );
+}
+
+function AdminConsole() {
+  const [tab, setTab] = useState<Tab>("overview");
+  const tabs: { key: Tab; label: string; icon: any }[] = [
+    { key: "overview", label: "概览", icon: Shield },
+    { key: "users", label: "用户", icon: Users },
+    { key: "messages", label: "消息", icon: MessageSquare },
+    { key: "treehole", label: "树洞", icon: Trees },
+    { key: "posts", label: "社区", icon: FileText },
+    { key: "reports", label: "举报", icon: Flag },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-2">
+            <div className="grid h-9 w-9 place-items-center rounded-lg bg-coral text-white"><Shield className="h-5 w-5" /></div>
+            <div>
+              <div className="text-sm font-semibold">Pulse 员工后台</div>
+              <div className="text-[11px] text-muted-foreground">internal · v1</div>
+            </div>
+          </div>
+          <Link to="/" className="text-xs text-muted-foreground hover:text-foreground">← 返回 App</Link>
+        </div>
+        <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pb-2">
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.key;
+            return (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition ${active ? "bg-coral text-white" : "text-muted-foreground hover:bg-surface"}`}>
+                <Icon className="h-4 w-4" /> {t.label}
+              </button>
+            );
+          })}
+        </nav>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-6 py-6">
+        {tab === "overview" && <Overview />}
+        {tab === "users" && <UsersTab />}
+        {tab === "messages" && <MessagesTab />}
+        {tab === "treehole" && <TreeholeTab />}
+        {tab === "posts" && <PostsTab />}
+        {tab === "reports" && <ReportsTab />}
+      </main>
+    </div>
+  );
+}
+
+/* -------------------- Overview -------------------- */
+function Overview() {
+  const fn = useServerFn(getAdminStats);
+  const { data, isLoading, refetch } = useQuery({ queryKey: ["admin-stats"], queryFn: () => fn() });
+  const s = data?.stats;
+  const items = [
+    { label: "注册用户", value: s?.users, icon: Users, color: "from-coral to-pink-500" },
+    { label: "聊天消息总数", value: s?.messages, icon: MessageSquare, color: "from-violet-500 to-indigo-500" },
+    { label: "今日新增消息", value: s?.messagesToday, icon: MessageSquare, color: "from-sun to-orange-500" },
+    { label: "社区帖子", value: s?.posts, icon: FileText, color: "from-emerald-500 to-teal-500" },
+    { label: "树洞帖子", value: s?.treehole, icon: Trees, color: "from-green-500 to-lime-500" },
+    { label: "通话记录", value: s?.calls, icon: Mic, color: "from-blue-500 to-cyan-500" },
+    { label: "待处理举报", value: s?.pendingReports, icon: Flag, color: "from-rose-500 to-red-500" },
+    { label: "未关闭风险", value: s?.openFlags, icon: AlertTriangle, color: "from-amber-500 to-red-500" },
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">数据概览</h2>
+        <button onClick={() => refetch()} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <RefreshCw className="h-3 w-3" /> 刷新
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {items.map((it) => {
+          const Icon = it.icon;
+          return (
+            <div key={it.label} className="rounded-2xl border border-border bg-surface/60 p-4">
+              <div className={`mb-3 grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br ${it.color} text-white`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <div className="text-2xl font-semibold">{isLoading ? "—" : (it.value ?? 0).toLocaleString()}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{it.label}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------- Users -------------------- */
+function UsersTab() {
+  const [search, setSearch] = useState("");
+  const fn = useServerFn(adminListUsers);
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin-users", search],
+    queryFn: () => fn({ data: { search: search || undefined, limit: 50, offset: 0 } }),
+  });
+  const users = data?.users ?? [];
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">用户管理 <span className="ml-2 text-sm font-normal text-muted-foreground">共 {data?.total ?? 0}</span></h2>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="昵称搜索"
+              className="rounded-lg border border-border bg-surface/60 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-coral" />
+          </div>
+          <button onClick={() => refetch()} className="rounded-lg border border-border p-2"><RefreshCw className="h-3.5 w-3.5" /></button>
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-surface/60 text-left text-xs text-muted-foreground">
+            <tr><th className="px-4 py-2.5">用户</th><th>性别</th><th>城市</th><th>引导完成</th><th>注册时间</th></tr>
+          </thead>
+          <tbody>
+            {isLoading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">加载中…</td></tr>}
+            {!isLoading && users.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">暂无数据</td></tr>}
+            {users.map((u: any) => {
+              const photos = Array.isArray(u.photos) ? u.photos : [];
+              const avatar = photos[u.main_idx ?? 0] || photos[0];
+              return (
+                <tr key={u.id} className="border-t border-border/60">
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-coral to-pink-500">
+                        {avatar && <img src={avatar} alt="" className="h-full w-full object-cover" />}
+                      </div>
+                      <div>
+                        <div className="font-medium">{u.nickname || "未命名"}</div>
+                        <div className="text-[10px] text-muted-foreground">{u.id.slice(0, 8)}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{u.gender || "—"}</td>
+                  <td>{u.city || "—"}</td>
+                  <td>{u.onboarded ? "✓" : "—"}</td>
+                  <td className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleString()}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+/* -------------------- Messages -------------------- */
+function MessagesTab() {
+  const [search, setSearch] = useState("");
+  const [hasMedia, setHasMedia] = useState(false);
+  const qc = useQueryClient();
+  const fn = useServerFn(adminListMessages);
+  const delFn = useServerFn(adminDeleteMessage);
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin-messages", search, hasMedia],
+    queryFn: () => fn({ data: { search: search || undefined, hasMedia, limit: 80, offset: 0 } }),
+  });
+  const del = useMutation({
+    mutationFn: (id: string) => delFn({ data: { id } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-messages"] }),
+  });
+  const msgs = data?.messages ?? [];
+
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">消息分析 <span className="ml-2 text-sm font-normal text-muted-foreground">共 {data?.total ?? 0}</span></h2>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1 rounded-lg border border-border bg-surface/60 px-3 py-1.5 text-xs">
+            <input type="checkbox" checked={hasMedia} onChange={(e) => setHasMedia(e.target.checked)} />
+            仅含媒体
+          </label>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索内容关键词"
+              className="rounded-lg border border-border bg-surface/60 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-coral" />
+          </div>
+          <button onClick={() => refetch()} className="rounded-lg border border-border p-2"><RefreshCw className="h-3.5 w-3.5" /></button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
+        {!isLoading && msgs.length === 0 && <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">暂无消息</p>}
+        {msgs.map((m: any) => (
+          <div key={m.id} className="rounded-2xl border border-border bg-surface/40 p-4">
+            <div className="flex items-start gap-3">
+              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-coral to-pink-500">
+                {m.sender.avatar && <img src={m.sender.avatar} alt="" className="h-full w-full object-cover" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="font-medium">{m.sender.nickname}</span>
+                  <span className="text-muted-foreground">{m.sender_id.slice(0, 8)}</span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">{new Date(m.created_at).toLocaleString()}</span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">会话 {m.conversation_id.slice(0, 8)}</span>
+                  {m.attachments.length > 0 && (
+                    <span className="rounded bg-coral/20 px-1.5 py-0.5 text-[10px] text-coral">
+                      {m.attachments.length} 个附件
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1.5 whitespace-pre-wrap text-sm">{m.content}</p>
+                {m.attachments.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {m.attachments.map((a: any) => <AttachmentPreview key={a.id} att={a} />)}
+                  </div>
+                )}
+              </div>
+              <button onClick={() => { if (confirm("软删除该消息?")) del.mutate(m.id); }}
+                className="rounded-lg p-2 text-muted-foreground hover:bg-red-500/10 hover:text-red-400">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AttachmentPreview({ att }: { att: any }) {
+  if (att.kind === "image") {
+    return (
+      <a href={att.url} target="_blank" rel="noreferrer" className="block h-24 w-24 overflow-hidden rounded-lg border border-border bg-black/40">
+        <img src={att.url} alt="" className="h-full w-full object-cover" />
+      </a>
+    );
+  }
+  if (att.kind === "video") {
+    return (
+      <video src={att.url} controls className="h-32 w-44 rounded-lg border border-border bg-black object-cover" />
+    );
+  }
+  if (att.kind === "audio") {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-surface/70 px-3 py-2 text-xs">
+        <Mic className="h-3.5 w-3.5 text-coral" />
+        <audio src={att.url} controls className="h-7" />
+      </div>
+    );
+  }
+  return (
+    <a href={att.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border border-border bg-surface/70 px-3 py-2 text-xs">
+      <FileText className="h-3.5 w-3.5" /> 文件
+    </a>
+  );
+}
+
+/* -------------------- Reports -------------------- */
+function ReportsTab() {
+  const qc = useQueryClient();
+  const fn = useServerFn(adminListReports);
+  const upd = useServerFn(adminUpdateReport);
+  const { data, isLoading } = useQuery({ queryKey: ["admin-reports"], queryFn: () => fn() });
+  const reports = data?.reports ?? [];
+  const mut = useMutation({
+    mutationFn: (v: { id: string; status: any }) => upd({ data: v }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-reports"] }),
+  });
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">举报处理</h2>
+      {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
+      {!isLoading && reports.length === 0 && <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">暂无举报</p>}
+      {reports.map((r: any) => (
+        <div key={r.id} className="rounded-2xl border border-border bg-surface/40 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="rounded bg-rose-500/20 px-1.5 py-0.5 text-[10px] text-rose-300">{r.target_type}</span>
+                <span>{r.target_id.slice(0, 8)}</span>
+                <span>·</span>
+                <span>by {r.reporter_id.slice(0, 8)}</span>
+                <span>·</span>
+                <span>{new Date(r.created_at).toLocaleString()}</span>
+              </div>
+              <p className="mt-1.5 text-sm"><span className="font-medium">{r.reason}</span>{r.detail && <span className="ml-2 text-muted-foreground">{r.detail}</span>}</p>
+            </div>
+            <select value={r.status} onChange={(e) => mut.mutate({ id: r.id, status: e.target.value })}
+              className="rounded-lg border border-border bg-surface px-2 py-1 text-xs">
+              <option value="pending">待处理</option>
+              <option value="reviewing">审核中</option>
+              <option value="resolved">已处理</option>
+              <option value="rejected">驳回</option>
+            </select>
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/* -------------------- Treehole / Posts -------------------- */
+function TreeholeTab() {
+  const fn = useServerFn(adminListTreehole);
+  const { data, isLoading } = useQuery({ queryKey: ["admin-treehole"], queryFn: () => fn() });
+  const posts = data?.posts ?? [];
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">树洞内容</h2>
+      {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
+      {posts.map((p: any) => (
+        <div key={p.id} className="rounded-2xl border border-border bg-surface/40 p-4">
+          <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] text-emerald-300">{p.anon_name}</span>
+            {p.mood && <span>{p.mood}</span>}
+            <span>·</span>
+            <span>{new Date(p.created_at).toLocaleString()}</span>
+            <span className="ml-auto text-[10px]">作者:{p.author_id.slice(0, 8)}</span>
+          </div>
+          <p className="whitespace-pre-wrap text-sm">{p.content}</p>
+          {p.media_url && <img src={p.media_url} alt="" className="mt-2 max-h-60 rounded-lg" />}
+          <div className="mt-2 text-xs text-muted-foreground">共鸣 {p.resonance_count} · 抱抱 {p.hug_count}</div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function PostsTab() {
+  const fn = useServerFn(adminListPosts);
+  const { data, isLoading } = useQuery({ queryKey: ["admin-posts"], queryFn: () => fn() });
+  const posts = data?.posts ?? [];
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">社区帖子</h2>
+      {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
+      {posts.map((p: any) => (
+        <div key={p.id} className="rounded-2xl border border-border bg-surface/40 p-4">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] text-violet-300">{p.category}</span>
+            <span>{new Date(p.created_at).toLocaleString()}</span>
+          </div>
+          <h3 className="mt-1 text-sm font-semibold">{p.title}</h3>
+          <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">{p.content}</p>
+          <div className="mt-2 text-[11px] text-muted-foreground">❤ {p.likes_count} · 💬 {p.comments_count} · 🔥 {p.hot}</div>
+        </div>
+      ))}
+    </section>
+  );
+}
