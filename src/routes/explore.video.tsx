@@ -227,6 +227,13 @@ function VideoChatPage() {
                     <UserPlus className="h-4 w-4" /> 加为好友
                   </button>
                 </div>
+                <Link
+                  to="/chat"
+                  search={{ name: match.name, avatar: match.avatar, from: "video", city: match.city }}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-mint to-coral px-4 py-3 text-sm font-semibold text-background"
+                >
+                  继续聊聊 →
+                </Link>
                 <button onClick={startMatch} className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-sun to-coral px-4 py-3 text-sm font-semibold text-background">
                   <RotateCcw className="h-4 w-4" /> 重新匹配
                 </button>
