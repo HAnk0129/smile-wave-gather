@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -257,13 +258,25 @@ function PostCard({ post, onLike }: { post: CommunityPost; onLike: () => void })
       exit={{ opacity: 0 }}
       className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/60 border border-border hover:border-coral/40 transition"
     >
-      <div className={`relative ${heightClass} bg-gradient-to-br ${post.cover}`}>
-        <div className="absolute inset-0 bg-grid opacity-30" />
-        <span className={`absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${meta.color}`}>
+      <div className={`relative ${heightClass} bg-gradient-to-br ${post.cover} overflow-hidden`}>
+        {post.media && post.media[0] ? (
+          post.media[0].type === "image" ? (
+            <img src={post.media[0].url} alt={post.title} className="absolute inset-0 size-full object-cover" loading="lazy" />
+          ) : (
+            <video src={post.media[0].url} className="absolute inset-0 size-full object-cover" muted playsInline />
+          )
+        ) : (
+          <div className="absolute inset-0 bg-grid opacity-30" />
+        )}
+        <span className={`absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border backdrop-blur-md ${meta.color}`}>
           <meta.icon className="size-3" />
           {meta.label}
         </span>
-        <ImageIcon className="absolute bottom-2 right-2 size-4 text-foreground/30" />
+        {post.media && post.media.length > 1 && (
+          <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md bg-background/60 text-[10px] text-foreground/80 backdrop-blur-md">
+            +{post.media.length - 1}
+          </span>
+        )}
       </div>
       <div className="p-3">
         <h3 className="text-sm font-medium leading-snug line-clamp-2">{post.title}</h3>
@@ -360,6 +373,54 @@ function ComposeSheet({
   const [content, setContent] = useState("");
   const createFn = useServerFn(createCommunityPost);
   const [submitting, setSubmitting] = useState(false);
+  const [media, setMedia] = useState<{ url: string; type: "image" | "video"; path: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onPickFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const { data: sess } = await supabase.auth.getSession();
+    const uid = sess.session?.user.id;
+    if (!uid) {
+      toast.error("请先登录后再上传");
+      return;
+    }
+    setUploading(true);
+    try {
+      const next = [...media];
+      for (const file of Array.from(files).slice(0, 9 - next.length)) {
+        if (file.size > 25 * 1024 * 1024) {
+          toast.error(`${file.name} 超过 25MB，已跳过`);
+          continue;
+        }
+        const ext = file.name.split(".").pop() || "bin";
+        const path = `${uid}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error } = await supabase.storage
+          .from("community-media")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (error) {
+          toast.error(`上传失败：${error.message}`);
+          continue;
+        }
+        const { data: pub } = supabase.storage.from("community-media").getPublicUrl(path);
+        next.push({
+          url: pub.publicUrl,
+          type: file.type.startsWith("video") ? "video" : "image",
+          path,
+        });
+      }
+      setMedia(next);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const removeMedia = async (idx: number) => {
+    const item = media[idx];
+    setMedia((m) => m.filter((_, i) => i !== idx));
+    await supabase.storage.from("community-media").remove([item.path]).catch(() => {});
+  };
 
   const submit = async () => {
     if (!title.trim() || !content.trim()) return;
@@ -372,6 +433,7 @@ function ComposeSheet({
           content: content.trim(),
           location,
           tags: [],
+          media: media.map(({ url, type }) => ({ url, type })),
         },
       });
       toast.success("发布成功");
@@ -406,10 +468,54 @@ function ComposeSheet({
           })}
         </div>
 
-        <div className="rounded-xl border border-dashed border-border h-32 flex flex-col items-center justify-center gap-1.5 text-muted-foreground text-xs">
-          <ImageIcon className="size-6" />
-          点击上传图片 / 视频
-        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          className="hidden"
+          onChange={(e) => onPickFiles(e.target.files)}
+        />
+        {media.length === 0 ? (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="w-full rounded-xl border border-dashed border-border h-32 flex flex-col items-center justify-center gap-1.5 text-muted-foreground text-xs hover:border-coral/50 hover:text-coral transition disabled:opacity-50"
+          >
+            <ImageIcon className="size-6" />
+            {uploading ? "上传中…" : "点击上传图片 / 视频"}
+          </button>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {media.map((m, i) => (
+              <div key={m.path} className="relative aspect-square rounded-xl overflow-hidden bg-background/40 border border-border">
+                {m.type === "image" ? (
+                  <img src={m.url} alt="" className="size-full object-cover" />
+                ) : (
+                  <video src={m.url} className="size-full object-cover" muted />
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeMedia(i)}
+                  className="absolute top-1 right-1 size-5 rounded-full bg-background/80 flex items-center justify-center"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ))}
+            {media.length < 9 && (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="aspect-square rounded-xl border border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-coral hover:border-coral/50 transition disabled:opacity-50"
+              >
+                <Plus className="size-5" />
+              </button>
+            )}
+          </div>
+        )}
 
         <input
           value={title}
