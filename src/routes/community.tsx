@@ -71,7 +71,19 @@ function CommunityPage() {
   });
 
   const posts = data?.posts ?? [];
-  const hotRank = useMemo(() => [...posts].sort((a, b) => b.hot - a.hot).slice(0, 5), [posts]);
+
+  // 排行榜独立查询：始终展示全部分类下的热门，不被当前分类筛选影响
+  const hotKey = ["community-posts", "all", location] as const;
+  const { data: hotData } = useQuery({
+    queryKey: hotKey,
+    queryFn: () => listFn({ data: { category: "all", location } }),
+    enabled: activeCat !== "all",
+  });
+  const hotSource = activeCat === "all" ? posts : hotData?.posts ?? [];
+  const hotRank = useMemo(
+    () => [...hotSource].sort((a, b) => b.hot - a.hot).slice(0, 5),
+    [hotSource],
+  );
 
   const likeMut = useMutation({
     mutationFn: (post_id: string) => likeFn({ data: { post_id } }),
