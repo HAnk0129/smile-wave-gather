@@ -13,6 +13,7 @@ const COVER_BY_CATEGORY: Record<z.infer<typeof CATEGORY>, string> = {
 export type CommunityPost = {
   id: string;
   author_id: string;
+  campus_id: string;
   category: z.infer<typeof CATEGORY>;
   title: string;
   content: string;
@@ -29,11 +30,11 @@ export type CommunityPost = {
 
 export const listCommunityPosts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { category?: string; location?: string } | undefined) =>
+  .inputValidator((input: { category?: string; campus_id?: string } | undefined) =>
     z
       .object({
         category: z.union([CATEGORY, z.literal("all")]).optional(),
-        location: z.string().min(1).max(120).optional(),
+        campus_id: z.string().uuid().optional(),
       })
       .parse(input ?? {}),
   )
@@ -46,7 +47,7 @@ export const listCommunityPosts = createServerFn({ method: "GET" })
       .limit(60);
 
     if (data.category && data.category !== "all") query = query.eq("category", data.category);
-    if (data.location) query = query.eq("location", data.location);
+    if (data.campus_id) query = query.eq("campus_id", data.campus_id);
 
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
@@ -66,6 +67,7 @@ export const listCommunityPosts = createServerFn({ method: "GET" })
       posts: (rows ?? []).map<CommunityPost>((r: any) => ({
         id: r.id,
         author_id: r.author_id,
+        campus_id: r.campus_id,
         category: r.category,
         title: r.title,
         content: r.content,
@@ -87,6 +89,7 @@ export const createCommunityPost = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
+        campus_id: z.string().uuid(),
         category: CATEGORY,
         title: z.string().trim().min(1).max(120),
         content: z.string().trim().min(1).max(2000),
@@ -110,6 +113,7 @@ export const createCommunityPost = createServerFn({ method: "POST" })
       .from("community_posts")
       .insert({
         author_id: userId,
+        campus_id: data.campus_id,
         category: data.category,
         title: data.title,
         content: data.content,
