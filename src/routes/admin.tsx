@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
+  ShieldCheck, CheckCircle2, XCircle,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -15,6 +16,8 @@ import {
   claimFirstAdmin, getAdminStats, getAdminCharts,
   adminListUsers, adminListMessages, adminListReports, adminUpdateReport,
   adminListTreehole, adminListPosts, adminDeleteMessage,
+  adminListPhotoQueue, adminReviewPhoto, adminReviewPost, adminReviewTreehole,
+  adminModerationSummary,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
@@ -27,7 +30,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "users" | "messages" | "reports" | "treehole" | "posts";
+type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -110,6 +113,7 @@ function AdminConsole() {
   const [tab, setTab] = useState<Tab>("overview");
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "overview", label: "概览", icon: Shield },
+    { key: "moderation", label: "内容审核", icon: ShieldCheck },
     { key: "users", label: "用户", icon: Users },
     { key: "messages", label: "消息", icon: MessageSquare },
     { key: "treehole", label: "树洞", icon: Trees },
@@ -146,6 +150,7 @@ function AdminConsole() {
 
       <main className="mx-auto max-w-7xl px-6 py-6">
         {tab === "overview" && <Overview />}
+        {tab === "moderation" && <ModerationTab />}
         {tab === "users" && <UsersTab />}
         {tab === "messages" && <MessagesTab />}
         {tab === "treehole" && <TreeholeTab />}
