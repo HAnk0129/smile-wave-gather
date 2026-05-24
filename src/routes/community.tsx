@@ -809,11 +809,11 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
 
 function ComposeSheet({
   onClose,
-  location,
+  campus,
   onPublished,
 }: {
   onClose: () => void;
-  location: string;
+  campus: Campus;
   onPublished: () => void;
 }) {
   const [cat, setCat] = useState<Exclude<Category, "all">>("second");
@@ -876,10 +876,11 @@ function ComposeSheet({
     try {
       await createFn({
         data: {
+          campus_id: campus.id,
           category: cat,
           title: title.trim(),
           content: content.trim(),
-          location,
+          location: campus.name,
           tags: [],
           media: media.map(({ url, type }) => ({ url, type })),
         },
@@ -888,7 +889,10 @@ function ComposeSheet({
       onPublished();
       onClose();
     } catch (e: any) {
-      toast.error(e?.message?.includes("Unauthorized") ? "请先登录" : "发布失败，请稍后再试");
+      const msg = e?.message ?? "";
+      if (msg.includes("Unauthorized")) toast.error("请先登录");
+      else if (msg.includes("row-level security")) toast.error("你还不是该园区的成员");
+      else toast.error("发布失败，请稍后再试");
     } finally {
       setSubmitting(false);
     }
@@ -981,7 +985,7 @@ function ComposeSheet({
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            <MapPin className="size-3 text-coral" /> {location}
+            <School className="size-3 text-coral" /> {campus.name}
           </span>
           <span className="inline-flex items-center gap-1">
             <Tag className="size-3" /> 添加话题
