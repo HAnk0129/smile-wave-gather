@@ -99,7 +99,6 @@ function VideoChatPage() {
         <Link to="/explore" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> 发现
         </Link>
-        <span className="text-xs text-muted-foreground">视频聊天 · 5min</span>
       </header>
 
       <main className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center px-5 pb-20 pt-10">
