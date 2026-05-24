@@ -55,11 +55,13 @@ export function AuthButtons() {
     const load = async (uid: string) => {
       const { data } = await supabase
         .from("profiles")
-        .select("avatar_url, nickname, username")
+        .select("photos, main_idx, nickname")
         .eq("id", uid)
         .maybeSingle();
       if (!active) return;
-      setUser({ id: uid, avatar: data?.avatar_url ?? null, name: data?.nickname ?? data?.username ?? null });
+      const photos = Array.isArray(data?.photos) ? (data!.photos as string[]) : [];
+      const idx = data?.main_idx ?? 0;
+      setUser({ id: uid, avatar: photos[idx] ?? photos[0] ?? null, name: data?.nickname ?? null });
     };
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) load(data.session.user.id);
