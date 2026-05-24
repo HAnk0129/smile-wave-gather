@@ -258,13 +258,25 @@ function PostCard({ post, onLike }: { post: CommunityPost; onLike: () => void })
       exit={{ opacity: 0 }}
       className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/60 border border-border hover:border-coral/40 transition"
     >
-      <div className={`relative ${heightClass} bg-gradient-to-br ${post.cover}`}>
-        <div className="absolute inset-0 bg-grid opacity-30" />
-        <span className={`absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${meta.color}`}>
+      <div className={`relative ${heightClass} bg-gradient-to-br ${post.cover} overflow-hidden`}>
+        {post.media && post.media[0] ? (
+          post.media[0].type === "image" ? (
+            <img src={post.media[0].url} alt={post.title} className="absolute inset-0 size-full object-cover" loading="lazy" />
+          ) : (
+            <video src={post.media[0].url} className="absolute inset-0 size-full object-cover" muted playsInline />
+          )
+        ) : (
+          <div className="absolute inset-0 bg-grid opacity-30" />
+        )}
+        <span className={`absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border backdrop-blur-md ${meta.color}`}>
           <meta.icon className="size-3" />
           {meta.label}
         </span>
-        <ImageIcon className="absolute bottom-2 right-2 size-4 text-foreground/30" />
+        {post.media && post.media.length > 1 && (
+          <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md bg-background/60 text-[10px] text-foreground/80 backdrop-blur-md">
+            +{post.media.length - 1}
+          </span>
+        )}
       </div>
       <div className="p-3">
         <h3 className="text-sm font-medium leading-snug line-clamp-2">{post.title}</h3>
