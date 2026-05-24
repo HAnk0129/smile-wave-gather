@@ -332,106 +332,106 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end md:items-center justify-center"
+      className="fixed inset-0 z-50 bg-background/85 backdrop-blur-sm flex items-end md:items-center justify-center md:p-6"
       onClick={onClose}
     >
       <motion.div
         initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
-        className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl md:rounded-3xl bg-surface border border-border"
+        className="w-full md:max-w-5xl max-h-[95vh] md:h-[88vh] rounded-t-3xl md:rounded-3xl bg-surface border border-border overflow-hidden flex flex-col md:flex-row"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Media gallery */}
-        <div className={`relative ${media.length > 0 ? "aspect-square" : "h-32"} bg-gradient-to-br ${post.cover}`}>
+        {/* Left: media */}
+        <div className={`relative bg-black md:w-[58%] md:h-full shrink-0 ${media.length > 0 ? "aspect-square md:aspect-auto" : "h-40 md:h-full"} bg-gradient-to-br ${post.cover}`}>
           {media.length > 0 ? (
             media[idx].type === "image" ? (
-              <img src={media[idx].url} alt={post.title} className="absolute inset-0 size-full object-cover" />
+              <img src={media[idx].url} alt={post.title} className="absolute inset-0 size-full object-contain" />
             ) : (
-              <video src={media[idx].url} controls className="absolute inset-0 size-full object-cover" />
+              <video src={media[idx].url} controls className="absolute inset-0 size-full object-contain" />
             )
           ) : (
             <div className="absolute inset-0 bg-grid opacity-30" />
           )}
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 size-9 rounded-full bg-background/70 backdrop-blur-md flex items-center justify-center"
-          >
-            <X className="size-4" />
-          </button>
           <span className={`absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border backdrop-blur-md ${meta.color}`}>
             <meta.icon className="size-3" /> {meta.label}
           </span>
           {media.length > 1 && (
-            <span className="absolute bottom-3 right-3 px-2 py-0.5 rounded-md bg-background/70 text-xs backdrop-blur-md">
-              {idx + 1} / {media.length}
-            </span>
+            <>
+              <button
+                onClick={() => setIdx((idx - 1 + media.length) % media.length)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-background/60 backdrop-blur-md flex items-center justify-center text-foreground hover:bg-background/80"
+                aria-label="上一张"
+              >‹</button>
+              <button
+                onClick={() => setIdx((idx + 1) % media.length)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-background/60 backdrop-blur-md flex items-center justify-center text-foreground hover:bg-background/80"
+                aria-label="下一张"
+              >›</button>
+              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md bg-background/70 text-xs backdrop-blur-md">
+                {idx + 1} / {media.length}
+              </span>
+            </>
           )}
         </div>
-        {media.length > 1 && (
-          <div className="flex gap-2 p-3 overflow-x-auto scrollbar-none border-b border-border">
-            {media.map((m, i) => (
-              <button
-                key={i}
-                onClick={() => setIdx(i)}
-                className={`shrink-0 size-14 rounded-lg overflow-hidden border-2 ${i === idx ? "border-coral" : "border-transparent opacity-60"}`}
-              >
-                {m.type === "image" ? (
-                  <img src={m.url} className="size-full object-cover" />
-                ) : (
-                  <video src={m.url} className="size-full object-cover" muted />
-                )}
-              </button>
-            ))}
-          </div>
-        )}
 
-        {/* Body */}
-        <div className="p-5 space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="size-10 rounded-full bg-gradient-to-br from-coral/40 to-mint/40 flex items-center justify-center text-sm font-bold">{avatar}</span>
+        {/* Right: author + content + comments + actions */}
+        <div className="flex-1 flex flex-col min-h-0 min-w-0">
+          {/* Author header */}
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border">
+            <span className="size-9 rounded-full bg-gradient-to-br from-coral/50 to-mint/40 flex items-center justify-center text-sm font-bold">{avatar}</span>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate">同学 {avatar}</div>
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
-                <MapPin className="size-3" /> {post.location}
+              <div className="text-[11px] text-muted-foreground">Pulse 用户</div>
+            </div>
+            <button className="h-8 px-4 rounded-full bg-coral text-background text-xs font-medium">关注</button>
+            <button onClick={onClose} className="size-8 rounded-full bg-surface/70 flex items-center justify-center md:bg-transparent">
+              <X className="size-4" />
+            </button>
+          </div>
+
+          {/* Scrollable content + comments */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+            <h2 className="text-lg font-display font-bold leading-snug">{post.title}</h2>
+            <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">{post.content}</p>
+            {post.tags && post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {post.tags.map((t) => (
+                  <span key={t} className="text-xs text-mint">#{t}</span>
+                ))}
               </div>
+            )}
+            <div className="text-xs text-muted-foreground flex items-center gap-2 pt-1">
+              <span>{new Date(post.created_at).toLocaleDateString("zh-CN")}</span>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1"><MapPin className="size-3" />{post.location}</span>
             </div>
-            <button className="h-8 px-3 rounded-full bg-coral text-background text-xs font-medium">关注</button>
-          </div>
 
-          <h2 className="text-xl font-display font-bold leading-tight">{post.title}</h2>
-          <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">{post.content}</p>
-
-          {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {post.tags.map((t) => (
-                <span key={t} className="text-xs text-mint bg-mint/10 px-2 py-0.5 rounded-full">#{t}</span>
-              ))}
+            <div className="pt-4 mt-2 border-t border-border text-xs text-muted-foreground">
+              共 {post.comments_count} 条评论
             </div>
-          )}
-
-          <div className="text-xs text-muted-foreground">
-            {new Date(post.created_at).toLocaleString("zh-CN")}
+            {post.comments_count === 0 && (
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                还没有评论，来抢沙发吧～
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Action bar */}
-        <div className="sticky bottom-0 backdrop-blur-xl bg-background/85 border-t border-border px-4 py-3 flex items-center gap-3">
-          <div className="flex-1 h-10 px-4 rounded-full bg-surface/80 border border-border text-sm text-muted-foreground flex items-center">
-            说点什么…
+          {/* Bottom action bar */}
+          <div className="border-t border-border bg-background/85 backdrop-blur-xl px-4 py-2.5 flex items-center gap-3">
+            <div className="flex-1 h-9 px-4 rounded-full bg-surface/80 border border-border text-sm text-muted-foreground flex items-center">
+              说点什么…
+            </div>
+            <button onClick={onLike} className={`inline-flex items-center gap-1 text-xs ${post.liked_by_me ? "text-coral" : "text-muted-foreground"}`}>
+              <Heart className={`size-5 ${post.liked_by_me ? "fill-coral" : ""}`} />
+              {post.likes_count}
+            </button>
+            <button className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Bookmark className="size-5" />
+            </button>
+            <button className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <MessageCircle className="size-5" />
+              {post.comments_count}
+            </button>
           </div>
-          <button
-            onClick={onLike}
-            className={`flex flex-col items-center text-[10px] ${post.liked_by_me ? "text-coral" : "text-muted-foreground"}`}
-          >
-            <Heart className={`size-5 ${post.liked_by_me ? "fill-coral" : ""}`} />
-            {post.likes_count}
-          </button>
-          <button className="flex flex-col items-center text-[10px] text-muted-foreground">
-            <MessageCircle className="size-5" />
-            {post.comments_count}
-          </button>
-          <button className="flex flex-col items-center text-[10px] text-muted-foreground">
-            <Bookmark className="size-5" />
-          </button>
         </div>
       </motion.div>
     </motion.div>
