@@ -2,6 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { Heart, X, Star, Sparkles, MapPin, Undo2, MessageCircle, Flame, Radar, Mic, Ghost } from "lucide-react";
+import profile1 from "@/assets/profile-1.jpg";
+import profile2 from "@/assets/profile-2.jpg";
+import profile3 from "@/assets/profile-3.jpg";
+import profile4 from "@/assets/profile-4.jpg";
+import profile5 from "@/assets/profile-5.jpg";
 
 export const Route = createFileRoute("/discover")({
   head: () => ({
@@ -25,6 +30,7 @@ type Profile = {
   tags: string[];
   gradient: string;
   match: number;
+  photo: string;
 };
 
 const PROFILES: Profile[] = [
@@ -35,6 +41,7 @@ const PROFILES: Profile[] = [
     tags: ["独立音乐", "电影", "City Walk", "猫"],
     gradient: "from-[#ff8a7a] via-[#ff5a6e] to-[#7a4bff]",
     match: 96,
+    photo: profile1,
   },
   {
     id: 2, name: "陈一然", age: 27, city: "北京 · 朝阳",
@@ -43,6 +50,7 @@ const PROFILES: Profile[] = [
     tags: ["冲浪", "陶艺", "代码", "旅行"],
     gradient: "from-[#5eead4] via-[#38bdf8] to-[#6366f1]",
     match: 92,
+    photo: profile2,
   },
   {
     id: 3, name: "Luna 林", age: 23, city: "成都 · 锦江",
@@ -51,6 +59,7 @@ const PROFILES: Profile[] = [
     tags: ["插画", "爵士", "猫奴", "小酒馆"],
     gradient: "from-[#fde68a] via-[#fb923c] to-[#ef4444]",
     match: 89,
+    photo: profile3,
   },
   {
     id: 4, name: "周野", age: 29, city: "杭州 · 西湖",
@@ -59,6 +68,7 @@ const PROFILES: Profile[] = [
     tags: ["登山", "摄影", "露营", "滑雪"],
     gradient: "from-[#a7f3d0] via-[#34d399] to-[#0f766e]",
     match: 87,
+    photo: profile4,
   },
   {
     id: 5, name: "夏季限定", age: 25, city: "广州 · 天河",
@@ -67,6 +77,7 @@ const PROFILES: Profile[] = [
     tags: ["写作", "诗歌", "美食", "瑜伽"],
     gradient: "from-[#fbcfe8] via-[#f472b6] to-[#7c3aed]",
     match: 84,
+    photo: profile5,
   },
 ];
 
@@ -263,7 +274,7 @@ function StaticCard({ profile, offset }: { profile: Profile; offset: number }) {
       className="absolute inset-0 overflow-hidden rounded-3xl border border-border bg-surface shadow-2xl"
       style={{ transform: `translateY(${y}px) scale(${scale})`, opacity: 1 - offset * 0.25, zIndex: 10 - offset }}
     >
-      <div className={`h-full w-full bg-gradient-to-br ${profile.gradient}`} />
+      <img src={profile.photo} alt="" className="h-full w-full object-cover" loading="lazy" />
     </div>
   );
 }
@@ -301,13 +312,9 @@ function SwipeCard({ profile, onSwipe }: { profile: Profile; onSwipe: (d: "left"
       }}
       whileTap={{ cursor: "grabbing" }}
     >
-      <div className={`relative h-full w-full bg-gradient-to-br ${profile.gradient}`}>
-        {/* avatar mark */}
-        <div className="absolute inset-0 grid place-items-center">
-          <div className="font-serif-display text-[14rem] leading-none text-white/15 select-none">
-            {profile.name.slice(0, 1)}
-          </div>
-        </div>
+      <div className="relative h-full w-full">
+        <img src={profile.photo} alt={profile.name} className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" />
 
         {/* Top badges */}
         <div className="absolute left-4 right-4 top-4 flex items-start justify-between">
