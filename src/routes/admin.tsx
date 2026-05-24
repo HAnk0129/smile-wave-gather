@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
-  ShieldCheck, CheckCircle2, XCircle, KeyRound, UserPlus, X,
+  ShieldCheck, CheckCircle2, XCircle, KeyRound, UserPlus, X, School, Copy, Check,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -20,6 +20,10 @@ import {
   adminModerationSummary,
   adminListRoleMembers, adminFindUser, adminAssignRole, adminRevokeRole,
 } from "@/lib/admin.functions";
+import {
+  adminListCampuses, adminCreateCampus, adminListCampusInvites,
+  createCampusInvite,
+} from "@/lib/campus.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -31,7 +35,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "roles";
+type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "roles" | "campuses";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -121,6 +125,7 @@ function AdminConsole() {
     { key: "posts", label: "社区", icon: FileText },
     { key: "reports", label: "举报", icon: Flag },
     { key: "roles", label: "权限", icon: KeyRound },
+    { key: "campuses", label: "园区", icon: School },
   ];
 
   return (
@@ -159,6 +164,7 @@ function AdminConsole() {
         {tab === "posts" && <PostsTab />}
         {tab === "reports" && <ReportsTab />}
         {tab === "roles" && <RolesTab />}
+        {tab === "campuses" && <CampusesTab />}
       </main>
     </div>
   );
