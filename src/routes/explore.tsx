@@ -100,13 +100,6 @@ function ExploreLayout() {
                 <div className="relative mt-5">
                   <div className="font-display text-2xl font-semibold tracking-tight">{m.title}</div>
                   <p className="mt-1.5 text-sm text-muted-foreground">{m.desc}</p>
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {m.tags.map((t) => (
-                      <span key={t} className="rounded-full border border-border bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground">
-                        #{t}
-                      </span>
-                    ))}
-                  </div>
                 </div>
               </Link>
             </motion.div>
