@@ -52,6 +52,7 @@ function CommunityPage() {
   const [location, setLocation] = useState(LOCATIONS[0]);
   const [locOpen, setLocOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [activePost, setActivePost] = useState<CommunityPost | null>(null);
 
   const listFn = useServerFn(listCommunityPosts);
   const likeFn = useServerFn(toggleCommunityLike);
@@ -187,6 +188,7 @@ function CommunityPage() {
                   key={post.id}
                   post={post}
                   onLike={() => likeMut.mutate(post.id)}
+                  onOpen={() => setActivePost(post)}
                 />
               ))}
             </AnimatePresence>
@@ -239,11 +241,22 @@ function CommunityPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Post detail */}
+      <AnimatePresence>
+        {activePost && (
+          <PostDetail
+            post={activePost}
+            onClose={() => setActivePost(null)}
+            onLike={() => likeMut.mutate(activePost.id)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function PostCard({ post, onLike }: { post: CommunityPost; onLike: () => void }) {
+function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () => void; onOpen: () => void }) {
   const meta = CATEGORY_META[post.category];
   const h = heightFor(post.id);
   const heightClass =
@@ -255,7 +268,8 @@ function PostCard({ post, onLike }: { post: CommunityPost; onLike: () => void })
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/60 border border-border hover:border-coral/40 transition"
+      onClick={onOpen}
+      className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/60 border border-border hover:border-coral/40 transition cursor-pointer active:scale-[0.99]"
     >
       <div className={`relative ${heightClass} bg-gradient-to-br ${post.cover} overflow-hidden`}>
         {post.media && post.media[0] ? (
@@ -307,6 +321,124 @@ function PostCard({ post, onLike }: { post: CommunityPost; onLike: () => void })
 }
 
 function BottomNav() {
+  return _BottomNav();
+}
+
+function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: () => void; onLike: () => void }) {
+  const meta = CATEGORY_META[post.category];
+  const avatar = post.author_id.slice(0, 2).toUpperCase();
+  const media = post.media ?? [];
+  const [idx, setIdx] = useState(0);
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end md:items-center justify-center"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+        className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl md:rounded-3xl bg-surface border border-border"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Media gallery */}
+        <div className={`relative ${media.length > 0 ? "aspect-square" : "h-32"} bg-gradient-to-br ${post.cover}`}>
+          {media.length > 0 ? (
+            media[idx].type === "image" ? (
+              <img src={media[idx].url} alt={post.title} className="absolute inset-0 size-full object-cover" />
+            ) : (
+              <video src={media[idx].url} controls className="absolute inset-0 size-full object-cover" />
+            )
+          ) : (
+            <div className="absolute inset-0 bg-grid opacity-30" />
+          )}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 size-9 rounded-full bg-background/70 backdrop-blur-md flex items-center justify-center"
+          >
+            <X className="size-4" />
+          </button>
+          <span className={`absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border backdrop-blur-md ${meta.color}`}>
+            <meta.icon className="size-3" /> {meta.label}
+          </span>
+          {media.length > 1 && (
+            <span className="absolute bottom-3 right-3 px-2 py-0.5 rounded-md bg-background/70 text-xs backdrop-blur-md">
+              {idx + 1} / {media.length}
+            </span>
+          )}
+        </div>
+        {media.length > 1 && (
+          <div className="flex gap-2 p-3 overflow-x-auto scrollbar-none border-b border-border">
+            {media.map((m, i) => (
+              <button
+                key={i}
+                onClick={() => setIdx(i)}
+                className={`shrink-0 size-14 rounded-lg overflow-hidden border-2 ${i === idx ? "border-coral" : "border-transparent opacity-60"}`}
+              >
+                {m.type === "image" ? (
+                  <img src={m.url} className="size-full object-cover" />
+                ) : (
+                  <video src={m.url} className="size-full object-cover" muted />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="p-5 space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="size-10 rounded-full bg-gradient-to-br from-coral/40 to-mint/40 flex items-center justify-center text-sm font-bold">{avatar}</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">同学 {avatar}</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <MapPin className="size-3" /> {post.location}
+              </div>
+            </div>
+            <button className="h-8 px-3 rounded-full bg-coral text-background text-xs font-medium">关注</button>
+          </div>
+
+          <h2 className="text-xl font-display font-bold leading-tight">{post.title}</h2>
+          <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">{post.content}</p>
+
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {post.tags.map((t) => (
+                <span key={t} className="text-xs text-mint bg-mint/10 px-2 py-0.5 rounded-full">#{t}</span>
+              ))}
+            </div>
+          )}
+
+          <div className="text-xs text-muted-foreground">
+            {new Date(post.created_at).toLocaleString("zh-CN")}
+          </div>
+        </div>
+
+        {/* Action bar */}
+        <div className="sticky bottom-0 backdrop-blur-xl bg-background/85 border-t border-border px-4 py-3 flex items-center gap-3">
+          <div className="flex-1 h-10 px-4 rounded-full bg-surface/80 border border-border text-sm text-muted-foreground flex items-center">
+            说点什么…
+          </div>
+          <button
+            onClick={onLike}
+            className={`flex flex-col items-center text-[10px] ${post.liked_by_me ? "text-coral" : "text-muted-foreground"}`}
+          >
+            <Heart className={`size-5 ${post.liked_by_me ? "fill-coral" : ""}`} />
+            {post.likes_count}
+          </button>
+          <button className="flex flex-col items-center text-[10px] text-muted-foreground">
+            <MessageCircle className="size-5" />
+            {post.comments_count}
+          </button>
+          <button className="flex flex-col items-center text-[10px] text-muted-foreground">
+            <Bookmark className="size-5" />
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function _BottomNav() {
   const items = [
     { to: "/", icon: Home, label: "首页" },
     { to: "/explore", icon: Compass, label: "发现" },
