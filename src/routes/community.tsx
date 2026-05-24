@@ -147,7 +147,8 @@ function CommunityPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pt-4 space-y-6">
-        {/* Hot ranking */}
+        {/* Hot ranking - 仅在「全部」分类下显示 */}
+        {activeCat === "all" && (
         <section className="rounded-3xl border border-border bg-gradient-to-br from-coral/10 via-surface/40 to-mint/10 p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -188,6 +189,7 @@ function CommunityPage() {
             })}
           </ol>
         </section>
+        )}
 
         {/* Posts feed - Xiaohongshu masonry */}
         <section>
