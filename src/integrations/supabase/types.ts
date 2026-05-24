@@ -144,6 +144,7 @@ export type Database = {
           id: string
           likes_count: number
           location: string
+          media: Json
           tags: Json
           title: string
           updated_at: string
@@ -159,6 +160,7 @@ export type Database = {
           id?: string
           likes_count?: number
           location?: string
+          media?: Json
           tags?: Json
           title: string
           updated_at?: string
@@ -174,6 +176,7 @@ export type Database = {
           id?: string
           likes_count?: number
           location?: string
+          media?: Json
           tags?: Json
           title?: string
           updated_at?: string
