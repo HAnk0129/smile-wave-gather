@@ -30,7 +30,6 @@ function Nav() {
           <span className="font-display font-bold text-lg tracking-tight">Pulse</span>
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-          <Link to="/games" className="hover:text-foreground transition">破冰</Link>
           <Link to="/explore" className="hover:text-foreground transition">发现</Link>
           <Link to="/community" className="hover:text-foreground transition">社区</Link>
         </nav>
