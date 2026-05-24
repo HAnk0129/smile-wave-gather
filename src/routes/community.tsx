@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +15,12 @@ import {
   createCommunityPost,
   toggleCommunityLike,
   type CommunityPost,
+} from "@/lib/community.functions";
+import {
+  listCommunityComments,
+  addCommunityComment,
+  deleteCommunityComment,
+  type CommunityComment,
 } from "@/lib/community.functions";
 
 export const Route = createFileRoute("/community")({
@@ -329,6 +335,58 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
   const avatar = post.author_id.slice(0, 2).toUpperCase();
   const media = post.media ?? [];
   const [idx, setIdx] = useState(0);
+  const [draft, setDraft] = useState("");
+  const [meId, setMeId] = useState<string | null>(null);
+  const qc = useQueryClient();
+  const listFn = useServerFn(listCommunityComments);
+  const addFn = useServerFn(addCommunityComment);
+  const delFn = useServerFn(deleteCommunityComment);
+
+  const commentsKey = ["community-comments", post.id] as const;
+  const { data: cData } = useQuery({
+    queryKey: commentsKey,
+    queryFn: () => listFn({ data: { post_id: post.id } }),
+  });
+  const comments = cData?.comments ?? [];
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMeId(data.user?.id ?? null));
+  }, []);
+
+  const addMut = useMutation({
+    mutationFn: (content: string) => addFn({ data: { post_id: post.id, content } }),
+    onSuccess: ({ comment }) => {
+      qc.setQueryData<{ comments: CommunityComment[] }>(commentsKey, (prev) => ({
+        comments: [...(prev?.comments ?? []), comment],
+      }));
+      qc.invalidateQueries({ queryKey: ["community-posts"] });
+      setDraft("");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "评论失败"),
+  });
+
+  const delMut = useMutation({
+    mutationFn: (comment_id: string) => delFn({ data: { comment_id } }),
+    onSuccess: (_r, comment_id) => {
+      qc.setQueryData<{ comments: CommunityComment[] }>(commentsKey, (prev) => ({
+        comments: (prev?.comments ?? []).filter((c) => c.id !== comment_id),
+      }));
+      qc.invalidateQueries({ queryKey: ["community-posts"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "删除失败"),
+  });
+
+  const handleSubmit = () => {
+    const text = draft.trim();
+    if (!text) return;
+    if (text.length > 500) {
+      toast.error("评论最多 500 字");
+      return;
+    }
+    addMut.mutate(text);
+  };
+
+  const commentCount = comments.length || post.comments_count;
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -406,20 +464,69 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
             </div>
 
             <div className="pt-4 mt-2 border-t border-border text-xs text-muted-foreground">
-              共 {post.comments_count} 条评论
+              共 {commentCount} 条评论
             </div>
-            {post.comments_count === 0 && (
+            {comments.length === 0 ? (
               <div className="py-8 text-center text-xs text-muted-foreground">
                 还没有评论，来抢沙发吧～
               </div>
+            ) : (
+              <ul className="space-y-3 pt-1">
+                {comments.map((c) => {
+                  const name = c.author_nickname || `同学 ${c.author_id.slice(0, 2).toUpperCase()}`;
+                  const ini = (c.author_nickname ?? c.author_id).slice(0, 2).toUpperCase();
+                  return (
+                    <li key={c.id} className="flex gap-2.5">
+                      <span className="size-8 shrink-0 rounded-full bg-gradient-to-br from-mint/50 to-coral/40 flex items-center justify-center text-xs font-bold">
+                        {ini}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          <span className="font-medium text-foreground/90 truncate">{name}</span>
+                          <span>·</span>
+                          <span>{new Date(c.created_at).toLocaleDateString("zh-CN")}</span>
+                          {meId === c.author_id && (
+                            <button
+                              onClick={() => delMut.mutate(c.id)}
+                              className="ml-auto text-[11px] text-muted-foreground hover:text-coral"
+                            >
+                              删除
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-sm leading-relaxed mt-0.5 whitespace-pre-wrap break-words">{c.content}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
 
           {/* Bottom action bar */}
           <div className="border-t border-border bg-background/85 backdrop-blur-xl px-4 py-2.5 flex items-center gap-3">
-            <div className="flex-1 h-9 px-4 rounded-full bg-surface/80 border border-border text-sm text-muted-foreground flex items-center">
-              说点什么…
-            </div>
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              maxLength={500}
+              placeholder="说点什么…"
+              className="flex-1 h-9 px-4 rounded-full bg-surface/80 border border-border text-sm placeholder:text-muted-foreground outline-none focus:border-coral/50"
+            />
+            {draft.trim() ? (
+              <button
+                onClick={handleSubmit}
+                disabled={addMut.isPending}
+                className="h-9 px-4 rounded-full bg-coral text-background text-xs font-medium disabled:opacity-60"
+              >
+                {addMut.isPending ? "发送中" : "发送"}
+              </button>
+            ) : null}
             <button onClick={onLike} className={`inline-flex items-center gap-1 text-xs ${post.liked_by_me ? "text-coral" : "text-muted-foreground"}`}>
               <Heart className={`size-5 ${post.liked_by_me ? "fill-coral" : ""}`} />
               {post.likes_count}
@@ -429,7 +536,7 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
             </button>
             <button className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <MessageCircle className="size-5" />
-              {post.comments_count}
+              {commentCount}
             </button>
           </div>
         </div>
