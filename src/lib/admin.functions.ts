@@ -378,3 +378,181 @@ export const adminFlagContent = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ==================== 审核模块 ==================== */
+
+/** 审核队列:用户照片(头像 + 相册) */
+export const adminListPhotoQueue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      onlyFlagged: z.boolean().default(false),
+      limit: z.number().min(1).max(100).default(40),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    const { data: profs, error } = await supabase
+      .from("profiles")
+      .select("id, nickname, gender, city, photos, main_idx, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (error) throw new Error(error.message);
+
+    const items: any[] = [];
+    for (const p of profs ?? []) {
+      const photos = Array.isArray(p.photos) ? (p.photos as string[]) : [];
+      photos.forEach((url, idx) => {
+        items.push({
+          profileId: p.id,
+          nickname: p.nickname,
+          gender: p.gender,
+          city: p.city,
+          idx,
+          isMain: (p.main_idx ?? 0) === idx,
+          url,
+        });
+      });
+    }
+
+    // 已审核记录
+    const { data: actions } = await supabaseAdmin
+      .from("moderation_actions")
+      .select("target_id, action, note")
+      .eq("target_type", "profile_photo")
+      .limit(2000);
+    const decided = new Map<string, string>();
+    (actions ?? []).forEach((a: any) => {
+      const key = `${a.target_id}:${a.note}`;
+      decided.set(key, a.action);
+    });
+
+    const decorated = items.map((it) => ({
+      ...it,
+      decision: decided.get(`${it.profileId}:${it.idx}`) ?? "pending",
+    }));
+    const queue = data.onlyFlagged ? decorated.filter((x) => x.decision === "pending") : decorated;
+    return { items: queue };
+  });
+
+/** 通过/拒绝某张用户照片;拒绝会从 profile.photos 中移除该照片 */
+export const adminReviewPhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      profileId: z.string().uuid(),
+      idx: z.number().int().min(0).max(20),
+      action: z.enum(["approve", "reject"]),
+      reason: z.string().max(200).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    if (data.action === "reject") {
+      const { data: prof, error: pErr } = await supabaseAdmin
+        .from("profiles")
+        .select("photos, main_idx")
+        .eq("id", data.profileId)
+        .single();
+      if (pErr) throw new Error(pErr.message);
+      const photos = Array.isArray(prof?.photos) ? (prof!.photos as string[]) : [];
+      const next = photos.filter((_, i) => i !== data.idx);
+      let mainIdx = prof?.main_idx ?? 0;
+      if (mainIdx >= next.length) mainIdx = 0;
+      const { error: uErr } = await supabaseAdmin
+        .from("profiles")
+        .update({ photos: next, main_idx: mainIdx } as never)
+        .eq("id", data.profileId);
+      if (uErr) throw new Error(uErr.message);
+
+      await supabaseAdmin.from("content_flags").insert({
+        target_type: "profile", target_id: data.profileId,
+        reason: data.reason || "照片不合规", severity: "medium", source: "admin", status: "resolved",
+      } as never);
+    }
+
+    await supabaseAdmin.from("moderation_actions").insert({
+      admin_id: userId, target_type: "profile_photo", target_id: data.profileId,
+      action: data.action, note: String(data.idx),
+    } as never);
+    return { ok: true };
+  });
+
+/** 审核:社区帖子(支持删除 + 标记) */
+export const adminReviewPost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      action: z.enum(["approve", "remove"]),
+      reason: z.string().max(200).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    if (data.action === "remove") {
+      const { error } = await supabaseAdmin.from("community_posts").delete().eq("id", data.id);
+      if (error) throw new Error(error.message);
+      await supabaseAdmin.from("content_flags").insert({
+        target_type: "post", target_id: data.id,
+        reason: data.reason || "已被管理员移除", severity: "high", source: "admin", status: "resolved",
+      } as never);
+    }
+    await supabaseAdmin.from("moderation_actions").insert({
+      admin_id: userId, target_type: "post", target_id: data.id, action: data.action, note: data.reason ?? null,
+    } as never);
+    return { ok: true };
+  });
+
+/** 审核:树洞帖子 */
+export const adminReviewTreehole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      action: z.enum(["approve", "remove"]),
+      reason: z.string().max(200).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    if (data.action === "remove") {
+      const { error } = await supabaseAdmin.from("treehole_posts").delete().eq("id", data.id);
+      if (error) throw new Error(error.message);
+      await supabaseAdmin.from("content_flags").insert({
+        target_type: "treehole", target_id: data.id,
+        reason: data.reason || "已被管理员移除", severity: "high", source: "admin", status: "resolved",
+      } as never);
+    }
+    await supabaseAdmin.from("moderation_actions").insert({
+      admin_id: userId, target_type: "treehole", target_id: data.id, action: data.action, note: data.reason ?? null,
+    } as never);
+    return { ok: true };
+  });
+
+/** 审核队列汇总数据(给审核 tab 顶部) */
+export const adminModerationSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const countOf = async (table: string, filter?: (q: any) => any) => {
+      let q: any = (supabase as any).from(table).select("*", { count: "exact", head: true });
+      if (filter) q = filter(q);
+      const { count } = await q;
+      return count ?? 0;
+    };
+    const [posts, treehole, flagsOpen, reportsPending] = await Promise.all([
+      countOf("community_posts"),
+      countOf("treehole_posts"),
+      countOf("content_flags", (q) => q.eq("status", "open")),
+      countOf("reports", (q) => q.eq("status", "pending")),
+    ]);
+    return { posts, treehole, flagsOpen, reportsPending };
+  });

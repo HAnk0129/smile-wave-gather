@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
+  ShieldCheck, CheckCircle2, XCircle,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -15,6 +16,8 @@ import {
   claimFirstAdmin, getAdminStats, getAdminCharts,
   adminListUsers, adminListMessages, adminListReports, adminUpdateReport,
   adminListTreehole, adminListPosts, adminDeleteMessage,
+  adminListPhotoQueue, adminReviewPhoto, adminReviewPost, adminReviewTreehole,
+  adminModerationSummary,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
@@ -27,7 +30,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "users" | "messages" | "reports" | "treehole" | "posts";
+type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -110,6 +113,7 @@ function AdminConsole() {
   const [tab, setTab] = useState<Tab>("overview");
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "overview", label: "概览", icon: Shield },
+    { key: "moderation", label: "内容审核", icon: ShieldCheck },
     { key: "users", label: "用户", icon: Users },
     { key: "messages", label: "消息", icon: MessageSquare },
     { key: "treehole", label: "树洞", icon: Trees },
@@ -146,6 +150,7 @@ function AdminConsole() {
 
       <main className="mx-auto max-w-7xl px-6 py-6">
         {tab === "overview" && <Overview />}
+        {tab === "moderation" && <ModerationTab />}
         {tab === "users" && <UsersTab />}
         {tab === "messages" && <MessagesTab />}
         {tab === "treehole" && <TreeholeTab />}
@@ -557,5 +562,261 @@ function PostsTab() {
         </div>
       ))}
     </section>
+  );
+}
+
+/* -------------------- Moderation -------------------- */
+type ModSub = "photos" | "posts" | "treehole";
+
+function ModerationTab() {
+  const [sub, setSub] = useState<ModSub>("photos");
+  const sumFn = useServerFn(adminModerationSummary);
+  const { data: sum } = useQuery({ queryKey: ["mod-summary"], queryFn: () => sumFn() });
+
+  const subs: { key: ModSub; label: string; count?: number }[] = [
+    { key: "photos", label: "用户照片 / 头像" },
+    { key: "posts", label: "社区帖子", count: sum?.posts },
+    { key: "treehole", label: "匿名树洞", count: sum?.treehole },
+  ];
+
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">内容审核中心</h2>
+          <p className="text-xs text-muted-foreground">
+            待处理风险 {sum?.flagsOpen ?? 0} · 待处理举报 {sum?.reportsPending ?? 0}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 border-b border-border pb-2">
+        {subs.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setSub(s.key)}
+            className={`rounded-lg px-3 py-1.5 text-sm transition ${
+              sub === s.key ? "bg-coral text-white" : "text-muted-foreground hover:bg-surface"
+            }`}
+          >
+            {s.label}
+            {typeof s.count === "number" && (
+              <span className="ml-1.5 rounded bg-black/30 px-1.5 py-0.5 text-[10px]">{s.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+      {sub === "photos" && <PhotoModeration />}
+      {sub === "posts" && <PostModeration />}
+      {sub === "treehole" && <TreeholeModeration />}
+    </section>
+  );
+}
+
+function PhotoModeration() {
+  const [onlyPending, setOnlyPending] = useState(true);
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListPhotoQueue);
+  const reviewFn = useServerFn(adminReviewPhoto);
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["mod-photos", onlyPending],
+    queryFn: () => listFn({ data: { onlyFlagged: onlyPending, limit: 60 } }),
+  });
+  const mut = useMutation({
+    mutationFn: (v: { profileId: string; idx: number; action: "approve" | "reject" }) =>
+      reviewFn({ data: v }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["mod-photos"] }),
+  });
+  const items = data?.items ?? [];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <input type="checkbox" checked={onlyPending} onChange={(e) => setOnlyPending(e.target.checked)} />
+          仅显示未审核
+        </label>
+        <button onClick={() => refetch()} className="rounded-lg border border-border p-2">
+          <RefreshCw className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
+      {!isLoading && items.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          暂无待审核的照片
+        </p>
+      )}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+        {items.map((it: any) => (
+          <div key={`${it.profileId}:${it.idx}`} className="overflow-hidden rounded-2xl border border-border bg-surface/40">
+            <div className="relative aspect-[3/4] w-full bg-black/40">
+              {it.url ? (
+                <img src={it.url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="grid h-full place-items-center text-muted-foreground">
+                  <ImageIcon className="h-6 w-6" />
+                </div>
+              )}
+              {it.isMain && (
+                <span className="absolute left-2 top-2 rounded bg-coral px-1.5 py-0.5 text-[10px] text-white">主头像</span>
+              )}
+              <span
+                className={`absolute right-2 top-2 rounded px-1.5 py-0.5 text-[10px] ${
+                  it.decision === "approve"
+                    ? "bg-emerald-500/80 text-white"
+                    : it.decision === "reject"
+                      ? "bg-rose-500/80 text-white"
+                      : "bg-black/60 text-white/80"
+                }`}
+              >
+                {it.decision === "approve" ? "已通过" : it.decision === "reject" ? "已驳回" : "待审"}
+              </span>
+            </div>
+            <div className="p-3">
+              <div className="truncate text-sm font-medium">{it.nickname || "未命名"}</div>
+              <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                {it.gender || "—"} · {it.city || "—"} · #{it.idx}
+              </div>
+              <div className="mt-2 flex gap-1.5">
+                <button
+                  disabled={mut.isPending}
+                  onClick={() => mut.mutate({ profileId: it.profileId, idx: it.idx, action: "approve" })}
+                  className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 py-1.5 text-xs text-emerald-300 hover:bg-emerald-500/20"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" /> 通过
+                </button>
+                <button
+                  disabled={mut.isPending}
+                  onClick={() => {
+                    if (confirm("驳回并从用户资料中移除该照片?")) {
+                      mut.mutate({ profileId: it.profileId, idx: it.idx, action: "reject" });
+                    }
+                  }}
+                  className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-rose-500/40 bg-rose-500/10 py-1.5 text-xs text-rose-300 hover:bg-rose-500/20"
+                >
+                  <XCircle className="h-3.5 w-3.5" /> 驳回
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PostModeration() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListPosts);
+  const reviewFn = useServerFn(adminReviewPost);
+  const { data, isLoading } = useQuery({ queryKey: ["mod-posts"], queryFn: () => listFn() });
+  const posts = data?.posts ?? [];
+  const mut = useMutation({
+    mutationFn: (v: { id: string; action: "approve" | "remove"; reason?: string }) => reviewFn({ data: v }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["mod-posts"] });
+      qc.invalidateQueries({ queryKey: ["mod-summary"] });
+    },
+  });
+
+  return (
+    <div className="space-y-3">
+      {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
+      {!isLoading && posts.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">暂无社区帖子</p>
+      )}
+      {posts.map((p: any) => (
+        <div key={p.id} className="rounded-2xl border border-border bg-surface/40 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] text-violet-300">{p.category}</span>
+                <span>作者 {p.author_id.slice(0, 8)}</span>
+                <span>·</span>
+                <span>{new Date(p.created_at).toLocaleString()}</span>
+              </div>
+              <h3 className="mt-1.5 text-sm font-semibold">{p.title}</h3>
+              <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">{p.content}</p>
+              <div className="mt-1.5 text-[11px] text-muted-foreground">❤ {p.likes_count} · 💬 {p.comments_count} · 🔥 {p.hot}</div>
+            </div>
+            <div className="flex shrink-0 flex-col gap-1.5">
+              <button
+                onClick={() => mut.mutate({ id: p.id, action: "approve" })}
+                className="flex items-center justify-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-300 hover:bg-emerald-500/20"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" /> 通过
+              </button>
+              <button
+                onClick={() => {
+                  const r = prompt("请输入移除原因(可选)") || undefined;
+                  if (confirm("确认删除该帖子?")) mut.mutate({ id: p.id, action: "remove", reason: r });
+                }}
+                className="flex items-center justify-center gap-1 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-300 hover:bg-rose-500/20"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> 移除
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TreeholeModeration() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListTreehole);
+  const reviewFn = useServerFn(adminReviewTreehole);
+  const { data, isLoading } = useQuery({ queryKey: ["mod-treehole"], queryFn: () => listFn() });
+  const posts = data?.posts ?? [];
+  const mut = useMutation({
+    mutationFn: (v: { id: string; action: "approve" | "remove"; reason?: string }) => reviewFn({ data: v }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["mod-treehole"] });
+      qc.invalidateQueries({ queryKey: ["mod-summary"] });
+    },
+  });
+
+  return (
+    <div className="space-y-3">
+      {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
+      {!isLoading && posts.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">暂无树洞内容</p>
+      )}
+      {posts.map((p: any) => (
+        <div key={p.id} className="rounded-2xl border border-border bg-surface/40 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] text-emerald-300">{p.anon_name}</span>
+                {p.mood && <span>{p.mood}</span>}
+                <span>·</span>
+                <span>{new Date(p.created_at).toLocaleString()}</span>
+                <span className="ml-auto text-[10px]">作者 {p.author_id.slice(0, 8)}</span>
+              </div>
+              <p className="mt-1.5 whitespace-pre-wrap text-sm">{p.content}</p>
+              {p.media_url && <img src={p.media_url} alt="" className="mt-2 max-h-60 rounded-lg" />}
+              <div className="mt-1.5 text-xs text-muted-foreground">共鸣 {p.resonance_count} · 抱抱 {p.hug_count}</div>
+            </div>
+            <div className="flex shrink-0 flex-col gap-1.5">
+              <button
+                onClick={() => mut.mutate({ id: p.id, action: "approve" })}
+                className="flex items-center justify-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-300 hover:bg-emerald-500/20"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" /> 通过
+              </button>
+              <button
+                onClick={() => {
+                  const r = prompt("请输入移除原因(可选)") || undefined;
+                  if (confirm("确认删除该树洞?")) mut.mutate({ id: p.id, action: "remove", reason: r });
+                }}
+                className="flex items-center justify-center gap-1 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-300 hover:bg-rose-500/20"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> 移除
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
