@@ -8,7 +8,7 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     mode: (s.mode as string) === "signup" ? "signup" : "login",
-    redirect: (s.redirect as string) || "/discover",
+    redirect: (s.redirect as string) || "/community",
   }),
   component: AuthPage,
 });
