@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
-  ShieldCheck, CheckCircle2, XCircle,
+  ShieldCheck, CheckCircle2, XCircle, KeyRound, UserPlus, X,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -18,6 +18,7 @@ import {
   adminListTreehole, adminListPosts, adminDeleteMessage,
   adminListPhotoQueue, adminReviewPhoto, adminReviewPost, adminReviewTreehole,
   adminModerationSummary,
+  adminListRoleMembers, adminFindUser, adminAssignRole, adminRevokeRole,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts";
+type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "roles";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -119,6 +120,7 @@ function AdminConsole() {
     { key: "treehole", label: "树洞", icon: Trees },
     { key: "posts", label: "社区", icon: FileText },
     { key: "reports", label: "举报", icon: Flag },
+    { key: "roles", label: "权限", icon: KeyRound },
   ];
 
   return (
@@ -156,6 +158,7 @@ function AdminConsole() {
         {tab === "treehole" && <TreeholeTab />}
         {tab === "posts" && <PostsTab />}
         {tab === "reports" && <ReportsTab />}
+        {tab === "roles" && <RolesTab />}
       </main>
     </div>
   );
@@ -758,6 +761,243 @@ function PostModeration() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* -------------------- Roles -------------------- */
+const ROLE_META: Record<string, { label: string; color: string; desc: string }> = {
+  admin: { label: "管理员", color: "bg-rose-500/15 text-rose-300 border-rose-500/40", desc: "可访问全部后台功能,可分配/撤销角色" },
+  moderator: { label: "审核员", color: "bg-amber-500/15 text-amber-300 border-amber-500/40", desc: "可处理举报和审核内容" },
+  user: { label: "普通用户", color: "bg-white/10 text-white/70 border-white/20", desc: "默认角色,无后台权限" },
+};
+const ALL_ROLES = ["admin", "moderator"] as const;
+
+function RolesTab() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListRoleMembers);
+  const assignFn = useServerFn(adminAssignRole);
+  const revokeFn = useServerFn(adminRevokeRole);
+
+  const [search, setSearch] = useState("");
+  const [onlyStaff, setOnlyStaff] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin-roles", search, onlyStaff],
+    queryFn: () => listFn({ data: { search: search || undefined, onlyStaff, limit: 80 } }),
+  });
+  const members: any[] = data?.members ?? [];
+
+  const assign = useMutation({
+    mutationFn: (v: { targetUserId: string; role: "admin" | "moderator" }) => assignFn({ data: v }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-roles"] }),
+  });
+  const revoke = useMutation({
+    mutationFn: (v: { targetUserId: string; role: "admin" | "moderator" }) => revokeFn({ data: v }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-roles"] }),
+  });
+
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">角色权限</h2>
+          <p className="text-xs text-muted-foreground">为员工授予 admin 或 moderator 权限,可随时调整</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input type="checkbox" checked={onlyStaff} onChange={(e) => setOnlyStaff(e.target.checked)} />
+            仅显示有角色的员工
+          </label>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="按昵称搜索"
+              className="rounded-lg border border-border bg-surface/60 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-coral" />
+          </div>
+          <button onClick={() => refetch()} className="rounded-lg border border-border p-2"><RefreshCw className="h-3.5 w-3.5" /></button>
+          <button onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1 rounded-lg bg-coral px-3 py-1.5 text-xs text-white hover:opacity-90">
+            <UserPlus className="h-3.5 w-3.5" /> 添加员工
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {(["admin", "moderator", "user"] as const).map((r) => (
+          <div key={r} className={`rounded-2xl border p-3 text-xs ${ROLE_META[r].color}`}>
+            <div className="text-sm font-semibold">{ROLE_META[r].label}</div>
+            <div className="mt-1 opacity-80">{ROLE_META[r].desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-surface/60 text-left text-xs text-muted-foreground">
+            <tr>
+              <th className="px-4 py-2.5">员工</th>
+              <th>邮箱</th>
+              <th>当前角色</th>
+              <th className="text-right pr-4">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading && <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">加载中…</td></tr>}
+            {!isLoading && members.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
+                暂无{onlyStaff ? "员工" : "用户"},点击右上角「添加员工」分配权限
+              </td></tr>
+            )}
+            {members.map((m) => (
+              <tr key={m.id} className="border-t border-border/60 align-middle">
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-coral to-pink-500">
+                      {m.avatar && <img src={m.avatar} alt="" className="h-full w-full object-cover" />}
+                    </div>
+                    <div>
+                      <div className="font-medium">{m.nickname || "未命名"}</div>
+                      <div className="text-[10px] text-muted-foreground">{m.id.slice(0, 8)}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="text-xs text-muted-foreground">{m.email || "—"}</td>
+                <td>
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.roles.length === 0 && <span className="text-xs text-muted-foreground">无</span>}
+                    {m.roles.map((r: string) => (
+                      <span key={r} className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${ROLE_META[r]?.color ?? ""}`}>
+                        {ROLE_META[r]?.label ?? r}
+                        {(r === "admin" || r === "moderator") && (
+                          <button
+                            title="撤销该角色"
+                            onClick={() => {
+                              if (confirm(`确认撤销 ${m.nickname || m.email} 的「${ROLE_META[r].label}」?`)) {
+                                revoke.mutate({ targetUserId: m.id, role: r as any });
+                              }
+                            }}
+                            className="opacity-70 hover:opacity-100"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+                <td className="pr-4 text-right">
+                  <div className="inline-flex gap-1.5">
+                    {ALL_ROLES.map((r) => {
+                      const has = m.roles.includes(r);
+                      return (
+                        <button
+                          key={r}
+                          disabled={has || assign.isPending}
+                          onClick={() => assign.mutate({ targetUserId: m.id, role: r })}
+                          className={`rounded-lg border px-2.5 py-1 text-[11px] transition ${
+                            has
+                              ? "cursor-not-allowed border-border bg-surface/40 text-muted-foreground"
+                              : "border-coral/40 bg-coral/10 text-coral hover:bg-coral/20"
+                          }`}
+                        >
+                          {has ? `已是${ROLE_META[r].label}` : `设为${ROLE_META[r].label}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showAdd && (
+        <AddStaffDialog
+          onClose={() => setShowAdd(false)}
+          onAssigned={() => qc.invalidateQueries({ queryKey: ["admin-roles"] })}
+        />
+      )}
+    </section>
+  );
+}
+
+function AddStaffDialog({ onClose, onAssigned }: { onClose: () => void; onAssigned: () => void }) {
+  const findFn = useServerFn(adminFindUser);
+  const assignFn = useServerFn(adminAssignRole);
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [role, setRole] = useState<"admin" | "moderator">("moderator");
+  const [err, setErr] = useState<string | null>(null);
+
+  const doSearch = async () => {
+    if (!q.trim()) return;
+    setSearching(true); setErr(null);
+    try {
+      const r = await findFn({ data: { query: q.trim() } });
+      setResults(r.users ?? []);
+      if ((r.users ?? []).length === 0) setErr("没有找到匹配的用户");
+    } catch (e: any) { setErr(e.message || String(e)); }
+    finally { setSearching(false); }
+  };
+
+  const assign = async (uid: string) => {
+    setErr(null);
+    try {
+      await assignFn({ data: { targetUserId: uid, role } });
+      onAssigned();
+      onClose();
+    } catch (e: any) { setErr(e.message || String(e)); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-background p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-3 flex items-center justify-between">
+          <div className="text-base font-semibold">添加员工权限</div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground">输入对方注册邮箱或昵称查找,然后选择要授予的角色。</p>
+        <div className="flex gap-2">
+          <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && doSearch()}
+            placeholder="邮箱 或 昵称"
+            className="flex-1 rounded-lg border border-border bg-surface/60 px-3 py-2 text-sm outline-none focus:border-coral" />
+          <button onClick={doSearch} disabled={searching}
+            className="rounded-lg bg-coral px-3 py-2 text-sm text-white disabled:opacity-50">
+            {searching ? "查找中…" : "查找"}
+          </button>
+        </div>
+        <div className="mt-3 flex gap-2">
+          {ALL_ROLES.map((r) => (
+            <button key={r} onClick={() => setRole(r)}
+              className={`rounded-lg border px-3 py-1.5 text-xs ${role === r ? "border-coral bg-coral/10 text-coral" : "border-border text-muted-foreground"}`}>
+              {ROLE_META[r].label}
+            </button>
+          ))}
+        </div>
+        {err && <div className="mt-3 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{err}</div>}
+        <div className="mt-3 max-h-72 space-y-1.5 overflow-auto">
+          {results.map((u) => (
+            <div key={u.id} className="flex items-center justify-between rounded-lg border border-border bg-surface/40 p-2.5">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-coral to-pink-500">
+                  {u.avatar && <img src={u.avatar} alt="" className="h-full w-full object-cover" />}
+                </div>
+                <div>
+                  <div className="text-sm font-medium">{u.nickname}</div>
+                  <div className="text-[10px] text-muted-foreground">{u.email || u.id.slice(0, 8)}</div>
+                </div>
+              </div>
+              <button onClick={() => assign(u.id)}
+                className="rounded-lg bg-coral px-2.5 py-1 text-xs text-white hover:opacity-90">
+                设为{ROLE_META[role].label}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
