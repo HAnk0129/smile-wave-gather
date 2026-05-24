@@ -74,6 +74,109 @@ export type Database = {
         }
         Relationships: []
       }
+      campus_invites: {
+        Row: {
+          campus_id: string
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          inviter_id: string
+          max_uses: number
+          status: string
+          uses: number
+        }
+        Insert: {
+          campus_id: string
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          inviter_id: string
+          max_uses?: number
+          status?: string
+          uses?: number
+        }
+        Update: {
+          campus_id?: string
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          inviter_id?: string
+          max_uses?: number
+          status?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campus_invites_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campus_memberships: {
+        Row: {
+          campus_id: string
+          invited_by: string | null
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          campus_id: string
+          invited_by?: string | null
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          campus_id?: string
+          invited_by?: string | null
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campus_memberships_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campuses: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       community_comments: {
         Row: {
           author_id: string
@@ -135,6 +238,7 @@ export type Database = {
       community_posts: {
         Row: {
           author_id: string
+          campus_id: string
           category: string
           comments_count: number
           content: string
@@ -151,6 +255,7 @@ export type Database = {
         }
         Insert: {
           author_id: string
+          campus_id: string
           category: string
           comments_count?: number
           content: string
@@ -167,6 +272,7 @@ export type Database = {
         }
         Update: {
           author_id?: string
+          campus_id?: string
           category?: string
           comments_count?: number
           content?: string
@@ -181,7 +287,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_flags: {
         Row: {
@@ -844,6 +958,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_campus_invite: {
+        Args: {
+          p_campus_id: string
+          p_expires_in_hours?: number
+          p_max_uses?: number
+        }
+        Returns: {
+          campus_id: string
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          inviter_id: string
+          max_uses: number
+          status: string
+          uses: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "campus_invites"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -851,6 +989,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_campus_member: {
+        Args: { _campus_id: string; _user_id: string }
+        Returns: boolean
+      }
+      redeem_campus_invite: { Args: { p_code: string }; Returns: string }
       start_conversation: {
         Args: { partner_id: string; source?: string }
         Returns: string
