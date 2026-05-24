@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { forwardRef, type ReactNode, type ComponentPropsWithoutRef } from "react";
+import { forwardRef, useEffect, useState, type ReactNode, type ComponentPropsWithoutRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 /** 统一霓虹机能风按钮：玻璃描边（ghost） + 珊瑚红硬投影（coral）。
  *  作为 <button> 使用；如需 <Link>，用 NeonLinkButton。 */
@@ -47,6 +48,50 @@ export const NeonButton = forwardRef<HTMLButtonElement, ComponentPropsWithoutRef
 NeonButton.displayName = "NeonButton";
 
 export function AuthButtons() {
+  const [user, setUser] = useState<{ id: string; avatar?: string | null; name?: string | null } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const load = async (uid: string) => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url, nickname, username")
+        .eq("id", uid)
+        .maybeSingle();
+      if (!active) return;
+      setUser({ id: uid, avatar: data?.avatar_url ?? null, name: data?.nickname ?? data?.username ?? null });
+    };
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) load(data.session.user.id);
+      else setUser(null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session) load(session.user.id);
+      else setUser(null);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  if (user) {
+    const initial = (user.name ?? "我").slice(0, 1).toUpperCase();
+    return (
+      <Link
+        to="/me"
+        aria-label="个人主页"
+        className="group relative inline-flex h-11 w-11 items-center justify-center rounded-full overflow-hidden border-2 border-[#7F77DD]/60 bg-gradient-to-br from-[#E54848] to-[#7F77DD] text-white font-semibold transition hover:scale-105"
+      >
+        {user.avatar ? (
+          <img src={user.avatar} alt="头像" className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-sm">{initial}</span>
+        )}
+      </Link>
+    );
+  }
+
   return (
     <div className="flex items-center gap-5">
       <Link
