@@ -141,23 +141,6 @@ function MockChat() {
         </div>
       </header>
 
-      {/* match banner */}
-      {(from === "match" || from === "voice" || from === "video") && (
-        <div className="mx-auto w-full max-w-md px-4 pt-3">
-          <div className="overflow-hidden rounded-2xl border border-coral/30 bg-gradient-to-r from-coral/15 via-sun/10 to-mint/15 p-3">
-            <div className="flex items-center gap-2 text-xs">
-              <div className="grid h-7 w-7 place-items-center rounded-full bg-coral/20 text-coral"><Heart className="h-3.5 w-3.5 fill-current" /></div>
-              <div className="flex-1">
-                <div className="font-display text-sm font-semibold">
-                  {from === "match" ? "你们互相喜欢" : from === "voice" ? "想继续聊聊" : "彼此心动"} · 现在可以发消息啦
-                </div>
-                <div className="text-[11px] text-muted-foreground">前 3 条消息免费 · 互相回复后可解锁更多互动</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* messages */}
       <div ref={scrollerRef} className="mx-auto w-full max-w-md flex-1 space-y-3 overflow-y-auto px-4 py-4">
         <AnimatePresence initial={false}>
