@@ -556,3 +556,166 @@ export const adminModerationSummary = createServerFn({ method: "GET" })
     ]);
     return { posts, treehole, flagsOpen, reportsPending };
   });
+
+/* ==================== 角色权限管理 ==================== */
+
+const ROLE_ENUM = ["admin", "moderator", "user"] as const;
+
+/** 列出员工/角色:支持邮箱/昵称搜索,返回 profile + 角色 + 邮箱 */
+export const adminListRoleMembers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      search: z.string().max(200).optional(),
+      onlyStaff: z.boolean().default(false),
+      limit: z.number().min(1).max(100).default(50),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    // 拉取角色映射
+    const { data: roleRows, error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role, created_at");
+    if (rErr) throw new Error(rErr.message);
+    const roleMap = new Map<string, { role: string; created_at: string }[]>();
+    (roleRows ?? []).forEach((r: any) => {
+      const arr = roleMap.get(r.user_id) ?? [];
+      arr.push({ role: r.role, created_at: r.created_at });
+      roleMap.set(r.user_id, arr);
+    });
+
+    // 候选用户:onlyStaff 则只取已有角色的用户
+    let candidateIds: string[] | null = null;
+    if (data.onlyStaff) {
+      candidateIds = Array.from(roleMap.keys());
+      if (candidateIds.length === 0) return { members: [] };
+    }
+
+    let q = supabaseAdmin
+      .from("profiles")
+      .select("id, nickname, photos, main_idx, city, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (candidateIds) q = q.in("id", candidateIds);
+    if (data.search) q = q.ilike("nickname", `%${data.search}%`);
+    const { data: profs, error: pErr } = await q;
+    if (pErr) throw new Error(pErr.message);
+
+    // 邮箱:逐个查 auth.admin.getUserById(限量,避免 listUsers 全表扫)
+    const members = await Promise.all(
+      (profs ?? []).map(async (p: any) => {
+        let email: string | null = null;
+        try {
+          const { data: u } = await supabaseAdmin.auth.admin.getUserById(p.id);
+          email = u?.user?.email ?? null;
+        } catch {}
+        const photos = Array.isArray(p.photos) ? p.photos : [];
+        return {
+          id: p.id,
+          nickname: p.nickname,
+          email,
+          city: p.city,
+          avatar: photos[p.main_idx ?? 0] || photos[0] || null,
+          created_at: p.created_at,
+          roles: (roleMap.get(p.id) ?? []).map((r) => r.role),
+        };
+      }),
+    );
+    return { members };
+  });
+
+/** 通过邮箱/昵称查找用户(给授权弹窗用) */
+export const adminFindUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ query: z.string().min(1).max(200) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const q = data.query.trim();
+    // 尝试邮箱
+    if (q.includes("@")) {
+      const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const u = list?.users?.find((x) => (x.email || "").toLowerCase() === q.toLowerCase());
+      if (!u) return { users: [] };
+      const { data: prof } = await supabaseAdmin
+        .from("profiles").select("id, nickname, photos, main_idx").eq("id", u.id).maybeSingle();
+      const photos = Array.isArray(prof?.photos) ? (prof!.photos as string[]) : [];
+      return {
+        users: [{
+          id: u.id, email: u.email, nickname: prof?.nickname ?? u.email,
+          avatar: photos[prof?.main_idx ?? 0] || photos[0] || null,
+        }],
+      };
+    }
+    // 否则按昵称
+    const { data: profs } = await supabaseAdmin
+      .from("profiles").select("id, nickname, photos, main_idx").ilike("nickname", `%${q}%`).limit(20);
+    return {
+      users: (profs ?? []).map((p: any) => {
+        const photos = Array.isArray(p.photos) ? p.photos : [];
+        return { id: p.id, email: null, nickname: p.nickname, avatar: photos[p.main_idx ?? 0] || photos[0] || null };
+      }),
+    };
+  });
+
+/** 授予角色 */
+export const adminAssignRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      targetUserId: z.string().uuid(),
+      role: z.enum(ROLE_ENUM),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: data.targetUserId, role: data.role } as never);
+    if (error && !/duplicate key/i.test(error.message)) throw new Error(error.message);
+    await supabaseAdmin.from("moderation_actions").insert({
+      admin_id: userId, target_type: "user_role", target_id: data.targetUserId,
+      action: `grant:${data.role}`,
+    } as never);
+    return { ok: true };
+  });
+
+/** 撤销角色 */
+export const adminRevokeRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      targetUserId: z.string().uuid(),
+      role: z.enum(ROLE_ENUM),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    // 防止移除最后一个 admin
+    if (data.role === "admin") {
+      const { count } = await supabaseAdmin
+        .from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "admin");
+      if ((count ?? 0) <= 1) throw new Error("不能移除最后一位管理员");
+      if (data.targetUserId === userId) {
+        // 允许移除自己,只要还有其他管理员
+      }
+    }
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.targetUserId)
+      .eq("role", data.role);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("moderation_actions").insert({
+      admin_id: userId, target_type: "user_role", target_id: data.targetUserId,
+      action: `revoke:${data.role}`,
+    } as never);
+    return { ok: true };
+  });
