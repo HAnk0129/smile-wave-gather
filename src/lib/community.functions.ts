@@ -24,6 +24,7 @@ export type CommunityPost = {
   hot: number;
   created_at: string;
   liked_by_me: boolean;
+  media: { url: string; type: "image" | "video" }[];
 };
 
 export const listCommunityPosts = createServerFn({ method: "GET" })
@@ -76,6 +77,7 @@ export const listCommunityPosts = createServerFn({ method: "GET" })
         hot: r.hot,
         created_at: r.created_at,
         liked_by_me: likedSet.has(r.id),
+        media: Array.isArray(r.media) ? (r.media as any) : [],
       })),
     };
   });
@@ -90,6 +92,15 @@ export const createCommunityPost = createServerFn({ method: "POST" })
         content: z.string().trim().min(1).max(2000),
         tags: z.array(z.string().trim().min(1).max(20)).max(6).optional(),
         location: z.string().min(1).max(120),
+        media: z
+          .array(
+            z.object({
+              url: z.string().url().max(500),
+              type: z.enum(["image", "video"]),
+            }),
+          )
+          .max(9)
+          .optional(),
       })
       .parse(input),
   )
@@ -105,6 +116,7 @@ export const createCommunityPost = createServerFn({ method: "POST" })
         cover: COVER_BY_CATEGORY[data.category],
         tags: data.tags ?? [],
         location: data.location,
+        media: data.media ?? [],
       })
       .select("*")
       .single();
