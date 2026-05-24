@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useLocation, Link } from "@tanstack/react-router";
-import { Radar, Mic, Video, Trees, ArrowLeft, Flame } from "lucide-react";
+import { Radar, Mic, Video, Trees, ArrowLeft, Flame, Gamepad2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const Route = createFileRoute("/explore")({
@@ -49,6 +49,15 @@ const MODULES = [
     accent: "text-[#c4b5fd]",
     tags: ["匿名", "倾诉", "共鸣"],
   },
+  {
+    href: "/games" as const,
+    title: "小游戏",
+    desc: "AI 看手相、真心话、心动盲盒，破冰从此不尴尬",
+    icon: Gamepad2,
+    grad: "from-coral/30 via-sun/10 to-transparent",
+    accent: "text-coral",
+    tags: ["破冰", "趣味", "互动"],
+  },
 ];
 
 function ExploreLayout() {
@@ -75,7 +84,7 @@ function ExploreLayout() {
           发现 <span className="text-gradient-hero font-serif-display italic">同频</span>
         </h1>
         <p className="mt-3 max-w-xl text-muted-foreground">
-          四种方式打破社恐——附近的人、随机的声音、自在出镜的视频,或者一个只属于陌生人的树洞。
+          多种方式打破社恐——附近的人、随机的声音、自在出镜的视频、匿名树洞，还有一起玩的小游戏。
         </p>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
