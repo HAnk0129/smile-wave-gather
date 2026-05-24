@@ -137,7 +137,6 @@ function CommunityPage() {
               </div>
               <div>
                 <h2 className="font-display font-bold text-base">热点排行榜</h2>
-                <p className="text-xs text-muted-foreground">每 30 分钟更新 · 基于互动热度</p>
               </div>
             </div>
             <span className="inline-flex items-center gap-1 text-xs text-mint">
