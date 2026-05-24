@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, MessageCircle, Bookmark, Share2, MapPin, ChevronDown, Plus,
   Flame, TrendingUp, Search, Home, Compass, Trophy, User, X, Image as ImageIcon,
-  Tag, ShoppingBag, MessageSquare, HelpCircle,
+  Tag, ShoppingBag, MessageSquare, HelpCircle, KeyRound, Copy, Check, School,
 } from "lucide-react";
 import {
   listCommunityPosts,
@@ -22,6 +22,12 @@ import {
   deleteCommunityComment,
   type CommunityComment,
 } from "@/lib/community.functions";
+import {
+  listMyCampuses,
+  redeemCampusInvite,
+  createCampusInvite,
+  type Campus,
+} from "@/lib/campus.functions";
 
 export const Route = createFileRoute("/community")({
   head: () => ({
@@ -41,22 +47,55 @@ const CATEGORY_META: Record<Exclude<Category, "all">, { label: string; color: st
   ask: { label: "发帖求助", color: "bg-sun/20 text-sun border-sun/30", icon: HelpCircle },
 };
 
-const LOCATIONS = [
-  "陵水黎安国际教育创新试验区",
-  "三亚 · 海棠湾",
-  "海口 · 江东新区",
-  "陵水 · 清水湾",
-];
-
 function heightFor(id: string): "tall" | "mid" | "short" {
   const n = id.charCodeAt(0) + id.charCodeAt(id.length - 1);
   return n % 3 === 0 ? "tall" : n % 3 === 1 ? "mid" : "short";
 }
 
 function CommunityPage() {
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const myCampusesFn = useServerFn(listMyCampuses);
+  const { data: campusData, isLoading: campusLoading, refetch: refetchCampuses } = useQuery({
+    queryKey: ["my-campuses"],
+    queryFn: () => myCampusesFn(),
+    enabled: authed === true,
+  });
+  const myCampuses = campusData?.campuses ?? [];
+
+  if (authed === false) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+        <div className="max-w-sm w-full text-center space-y-4">
+          <School className="size-12 mx-auto text-coral" />
+          <h1 className="font-display text-xl font-bold">登录后加入校园社区</h1>
+          <p className="text-sm text-muted-foreground">每个学校/园区都是一个独立的同频圈子，登录后用邀请码加入。</p>
+          <Link to="/auth" className="inline-block h-11 px-6 rounded-full bg-coral text-background font-semibold leading-[44px]">
+            去登录
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  if (authed === null || campusLoading) {
+    return <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">加载中…</div>;
+  }
+  if (myCampuses.length === 0) {
+    return <JoinCampusGate onJoined={() => refetchCampuses()} />;
+  }
+  return <CampusFeed campuses={myCampuses} />;
+}
+
+function CampusFeed({ campuses }: { campuses: Campus[] }) {
+  const [campus, setCampus] = useState<Campus>(campuses[0]);
   const [activeCat, setActiveCat] = useState<Category>("all");
-  const [location, setLocation] = useState(LOCATIONS[0]);
-  const [locOpen, setLocOpen] = useState(false);
+  const [campusOpen, setCampusOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [activePost, setActivePost] = useState<CommunityPost | null>(null);
 
@@ -64,19 +103,19 @@ function CommunityPage() {
   const likeFn = useServerFn(toggleCommunityLike);
   const qc = useQueryClient();
 
-  const queryKey = ["community-posts", activeCat, location] as const;
+  const queryKey = ["community-posts", campus.id, activeCat] as const;
   const { data, isLoading } = useQuery({
     queryKey,
-    queryFn: () => listFn({ data: { category: activeCat, location } }),
+    queryFn: () => listFn({ data: { category: activeCat, campus_id: campus.id } }),
   });
 
   const posts = data?.posts ?? [];
 
   // 排行榜独立查询：始终展示全部分类下的热门，不被当前分类筛选影响
-  const hotKey = ["community-posts", "all", location] as const;
+  const hotKey = ["community-posts", campus.id, "all"] as const;
   const { data: hotData } = useQuery({
     queryKey: hotKey,
-    queryFn: () => listFn({ data: { category: "all", location } }),
+    queryFn: () => listFn({ data: { category: "all", campus_id: campus.id } }),
     enabled: activeCat !== "all",
   });
   const hotSource = activeCat === "all" ? posts : hotData?.posts ?? [];
@@ -111,17 +150,20 @@ function CommunityPage() {
       <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/80 border-b border-border">
         <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => setLocOpen(true)}
+            onClick={() => setCampusOpen(true)}
             className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-surface/80 border border-border text-sm font-medium max-w-[55%]"
           >
-            <MapPin className="size-3.5 text-coral shrink-0" />
-            <span className="truncate">{location}</span>
+            <School className="size-3.5 text-coral shrink-0" />
+            <span className="truncate">{campus.name}</span>
             <ChevronDown className="size-3.5 text-muted-foreground shrink-0" />
           </button>
-          <div className="flex-1 flex items-center gap-2 h-9 px-3 rounded-full bg-surface/60 border border-border text-sm text-muted-foreground">
-            <Search className="size-4" />
-            <span className="truncate">搜索同学、话题、好物…</span>
-          </div>
+          <button
+            onClick={() => setInviteOpen(true)}
+            className="ml-auto h-9 px-3 rounded-full bg-surface/80 border border-border text-xs inline-flex items-center gap-1.5 hover:border-coral/40"
+            title="生成邀请码"
+          >
+            <KeyRound className="size-3.5 text-coral" /> 邀请
+          </button>
         </div>
 
         {/* Category tabs */}
@@ -228,26 +270,45 @@ function CommunityPage() {
       {/* Bottom nav */}
       <BottomNav />
 
-      {/* Location picker */}
+      {/* Campus picker */}
       <AnimatePresence>
-        {locOpen && (
-          <Modal onClose={() => setLocOpen(false)} title="选择地区">
+        {campusOpen && (
+          <Modal onClose={() => setCampusOpen(false)} title="切换校园 / 园区">
             <ul className="space-y-1">
-              {LOCATIONS.map((l) => (
-                <li key={l}>
+              {campuses.map((c) => (
+                <li key={c.id}>
                   <button
-                    onClick={() => { setLocation(l); setLocOpen(false); }}
+                    onClick={() => { setCampus(c); setCampusOpen(false); }}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition ${
-                      l === location ? "bg-coral/15 text-coral" : "hover:bg-surface/60"
+                      c.id === campus.id ? "bg-coral/15 text-coral" : "hover:bg-surface/60"
                     }`}
                   >
-                    <MapPin className="size-4" />
-                    <span className="text-sm">{l}</span>
+                    <School className="size-4" />
+                    <div className="flex-1">
+                      <div className="text-sm">{c.name}</div>
+                      {c.location && <div className="text-[11px] text-muted-foreground">{c.location}</div>}
+                    </div>
                   </button>
                 </li>
               ))}
+              <li className="pt-2 mt-2 border-t border-border">
+                <button
+                  onClick={() => { setCampusOpen(false); window.location.href = "/community?join=1"; }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-surface/60 text-muted-foreground"
+                >
+                  <KeyRound className="size-4" />
+                  <span className="text-sm">用邀请码加入新园区</span>
+                </button>
+              </li>
             </ul>
           </Modal>
+        )}
+      </AnimatePresence>
+
+      {/* Invite generator */}
+      <AnimatePresence>
+        {inviteOpen && (
+          <InviteSheet campus={campus} onClose={() => setInviteOpen(false)} />
         )}
       </AnimatePresence>
 
@@ -256,7 +317,7 @@ function CommunityPage() {
         {composeOpen && (
           <ComposeSheet
             onClose={() => setComposeOpen(false)}
-            location={location}
+            campus={campus}
             onPublished={() => qc.invalidateQueries({ queryKey: ["community-posts"] })}
           />
         )}
@@ -273,6 +334,141 @@ function CommunityPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+function JoinCampusGate({ onJoined }: { onJoined: () => void }) {
+  const [code, setCode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const redeemFn = useServerFn(redeemCampusInvite);
+  const submit = async () => {
+    const v = code.trim();
+    if (v.length < 4) return;
+    setSubmitting(true);
+    try {
+      await redeemFn({ data: { code: v } });
+      toast.success("成功加入校园社区");
+      onJoined();
+    } catch (e: any) {
+      toast.error(e?.message ?? "加入失败");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  // strip the ?join=1 hint if present
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("join=1")) {
+      const u = new URL(window.location.href);
+      u.searchParams.delete("join");
+      window.history.replaceState({}, "", u.toString());
+    }
+  }, []);
+  return (
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+      <div className="max-w-sm w-full space-y-5 text-center">
+        <div className="size-16 mx-auto rounded-2xl bg-coral/15 grid place-items-center">
+          <KeyRound className="size-7 text-coral" />
+        </div>
+        <div>
+          <h1 className="font-display text-2xl font-bold">输入邀请码加入社区</h1>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            每个学校/园区都是独立的同频圈子。<br/>向圈内同学要一个邀请码即可加入。
+          </p>
+        </div>
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          maxLength={16}
+          placeholder="例如 K7QZ4M2A"
+          className="w-full h-12 px-4 rounded-2xl bg-surface border border-border text-center font-mono tracking-[0.3em] text-lg uppercase outline-none focus:border-coral/60"
+        />
+        <button
+          onClick={submit}
+          disabled={!code.trim() || submitting}
+          className="w-full h-12 rounded-2xl bg-coral text-background font-semibold disabled:opacity-40"
+        >
+          {submitting ? "验证中…" : "加入社区"}
+        </button>
+        <Link to="/" className="block text-xs text-muted-foreground hover:text-foreground">← 暂不加入，返回首页</Link>
+      </div>
+    </div>
+  );
+}
+
+function InviteSheet({ campus, onClose }: { campus: Campus; onClose: () => void }) {
+  const [maxUses, setMaxUses] = useState(5);
+  const [hours, setHours] = useState(168);
+  const [latest, setLatest] = useState<{ code: string; max_uses: number; expires_at: string | null } | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const createFn = useServerFn(createCampusInvite);
+
+  const generate = async () => {
+    setCreating(true);
+    try {
+      const { invite } = await createFn({
+        data: { campus_id: campus.id, max_uses: maxUses, expires_in_hours: hours },
+      });
+      setLatest({ code: invite.code, max_uses: invite.max_uses, expires_at: invite.expires_at });
+    } catch (e: any) {
+      toast.error(e?.message ?? "生成失败");
+    } finally {
+      setCreating(false);
+    }
+  };
+  const copy = async () => {
+    if (!latest) return;
+    await navigator.clipboard.writeText(latest.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <Modal onClose={onClose} title={`邀请好友加入 ${campus.name}`}>
+      <div className="space-y-4">
+        <p className="text-xs text-muted-foreground">
+          仅本园区成员可见的同频社区。生成邀请码发给同学，他们输入即可加入。
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-xs text-muted-foreground space-y-1">
+            可使用次数
+            <input
+              type="number" min={1} max={500} value={maxUses}
+              onChange={(e) => setMaxUses(Math.max(1, Math.min(500, Number(e.target.value) || 1)))}
+              className="w-full h-10 px-3 rounded-xl bg-background/40 border border-border text-sm text-foreground outline-none focus:border-coral/50"
+            />
+          </label>
+          <label className="text-xs text-muted-foreground space-y-1">
+            有效期 (小时)
+            <input
+              type="number" min={1} max={1440} value={hours}
+              onChange={(e) => setHours(Math.max(1, Math.min(1440, Number(e.target.value) || 1)))}
+              className="w-full h-10 px-3 rounded-xl bg-background/40 border border-border text-sm text-foreground outline-none focus:border-coral/50"
+            />
+          </label>
+        </div>
+        <button
+          onClick={generate}
+          disabled={creating}
+          className="w-full h-11 rounded-full bg-coral text-background font-semibold disabled:opacity-50"
+        >
+          {creating ? "生成中…" : "生成邀请码"}
+        </button>
+        {latest && (
+          <div className="rounded-2xl border border-border bg-background/40 p-4 text-center space-y-2">
+            <div className="font-mono text-2xl tracking-[0.3em]">{latest.code}</div>
+            <div className="text-[11px] text-muted-foreground">
+              可邀请 {latest.max_uses} 人 ·{" "}
+              {latest.expires_at ? `${new Date(latest.expires_at).toLocaleString("zh-CN")} 前有效` : "长期有效"}
+            </div>
+            <button onClick={copy} className="inline-flex items-center gap-1.5 text-xs text-coral">
+              {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+              {copied ? "已复制" : "复制邀请码"}
+            </button>
+          </div>
+        )}
+      </div>
+    </Modal>
   );
 }
 
