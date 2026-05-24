@@ -116,8 +116,15 @@ function DiscoverPage() {
           <Mic className="h-3.5 w-3.5" style={{ color: "var(--coral)" }} aria-label="语音破冰" />
           <Ghost className="h-3.5 w-3.5" style={{ color: "var(--sun)" }} aria-label="匿名树洞" />
         </div>
-        <button className="ml-auto rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur">
-          附近 · 5km 内
+        <Link
+          to="/messages"
+          className="ml-auto grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground backdrop-blur hover:text-coral"
+          aria-label="消息"
+        >
+          <MessageCircle className="h-4 w-4" />
+        </Link>
+        <button className="rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur">
+          5km
         </button>
       </header>
 
@@ -182,9 +189,14 @@ function DiscoverPage() {
           <ActionBtn label="喜欢" onClick={() => swipe("right")} className="h-16 w-16 border-mint/40 bg-gradient-to-br from-mint/20 to-coral/20 text-coral hover:from-mint/30 hover:to-coral/30">
             <Heart className="h-7 w-7 fill-current" />
           </ActionBtn>
-          <ActionBtn label="打招呼" onClick={() => swipe("right")} className="h-12 w-12 border-border bg-surface text-muted-foreground hover:text-foreground">
+          <Link
+            to="/chat"
+            search={{ name: current.name, avatar: current.gradient, from: "match", city: current.city }}
+            aria-label="打招呼"
+            className="grid h-12 w-12 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition hover:text-coral"
+          >
             <MessageCircle className="h-5 w-5" />
-          </ActionBtn>
+          </Link>
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
