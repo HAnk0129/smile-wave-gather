@@ -52,6 +52,7 @@ function CommunityPage() {
   const [location, setLocation] = useState(LOCATIONS[0]);
   const [locOpen, setLocOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [activePost, setActivePost] = useState<CommunityPost | null>(null);
 
   const listFn = useServerFn(listCommunityPosts);
   const likeFn = useServerFn(toggleCommunityLike);
@@ -187,6 +188,7 @@ function CommunityPage() {
                   key={post.id}
                   post={post}
                   onLike={() => likeMut.mutate(post.id)}
+                  onOpen={() => setActivePost(post)}
                 />
               ))}
             </AnimatePresence>
@@ -239,11 +241,22 @@ function CommunityPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Post detail */}
+      <AnimatePresence>
+        {activePost && (
+          <PostDetail
+            post={activePost}
+            onClose={() => setActivePost(null)}
+            onLike={() => likeMut.mutate(activePost.id)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function PostCard({ post, onLike }: { post: CommunityPost; onLike: () => void }) {
+function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () => void; onOpen: () => void }) {
   const meta = CATEGORY_META[post.category];
   const h = heightFor(post.id);
   const heightClass =
@@ -255,7 +268,8 @@ function PostCard({ post, onLike }: { post: CommunityPost; onLike: () => void })
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/60 border border-border hover:border-coral/40 transition"
+      onClick={onOpen}
+      className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/60 border border-border hover:border-coral/40 transition cursor-pointer active:scale-[0.99]"
     >
       <div className={`relative ${heightClass} bg-gradient-to-br ${post.cover} overflow-hidden`}>
         {post.media && post.media[0] ? (
