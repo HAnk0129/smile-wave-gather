@@ -166,3 +166,100 @@ export const deleteCommunityPost = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export type CommunityComment = {
+  id: string;
+  post_id: string;
+  author_id: string;
+  content: string;
+  created_at: string;
+  author_nickname: string | null;
+};
+
+export const listCommunityComments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { post_id: string }) =>
+    z.object({ post_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: rows, error } = await supabase
+      .from("community_comments")
+      .select("id, post_id, author_id, content, created_at")
+      .eq("post_id", data.post_id)
+      .order("created_at", { ascending: true })
+      .limit(200);
+    if (error) throw new Error(error.message);
+
+    const authorIds = Array.from(new Set((rows ?? []).map((r) => r.author_id as string)));
+    let nameMap = new Map<string, string | null>();
+    if (authorIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, nickname")
+        .in("id", authorIds);
+      nameMap = new Map((profiles ?? []).map((p: any) => [p.id, p.nickname ?? null]));
+    }
+
+    return {
+      comments: (rows ?? []).map<CommunityComment>((r: any) => ({
+        id: r.id,
+        post_id: r.post_id,
+        author_id: r.author_id,
+        content: r.content,
+        created_at: r.created_at,
+        author_nickname: nameMap.get(r.author_id) ?? null,
+      })),
+    };
+  });
+
+export const addCommunityComment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        post_id: z.string().uuid(),
+        content: z.string().trim().min(1).max(500),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("community_comments")
+      .insert({ post_id: data.post_id, author_id: userId, content: data.content })
+      .select("id, post_id, author_id, content, created_at")
+      .single();
+    if (error) throw new Error(error.message);
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("nickname")
+      .eq("id", userId)
+      .maybeSingle();
+
+    return {
+      comment: {
+        id: row.id,
+        post_id: row.post_id,
+        author_id: row.author_id,
+        content: row.content,
+        created_at: row.created_at,
+        author_nickname: profile?.nickname ?? null,
+      } as CommunityComment,
+    };
+  });
+
+export const deleteCommunityComment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ comment_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("community_comments")
+      .delete()
+      .eq("id", data.comment_id)
+      .eq("author_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
