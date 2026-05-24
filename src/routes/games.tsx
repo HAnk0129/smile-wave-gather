@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Trophy, Users, Wand2, Zap } from "lucide-react";
-import { AuthButtons, NeonButton, NeonInner, neonButtonClass } from "@/components/AuthButtons";
+import { useState } from "react";
+import { ArrowLeft, ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Trophy, Users, Wand2, Zap } from "lucide-react";
+import { NeonInner, neonButtonClass } from "@/components/AuthButtons";
 
 export const Route = createFileRoute("/games")({
   head: () => ({
@@ -121,179 +121,31 @@ function GamesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      <Nav />
-      <Hero />
-      <DemoPlayground />
-      <GameGrid />
-      <CTA />
-      <Footer />
-    </div>
-  );
-}
-
-function Nav() {
-  return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/60 border-b border-border">
-      <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="size-8 rounded-xl bg-gradient-to-br from-coral via-sun to-mint flex items-center justify-center glow-coral">
-            <Heart className="size-4 text-background fill-background" />
-          </div>
-          <span className="font-display font-bold text-lg tracking-tight">Pulse</span>
+    <div className="min-h-screen bg-background bg-grid text-foreground overflow-x-hidden">
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_oklab,var(--coral)_22%,transparent),transparent)]" />
+      <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-6 pt-6">
+        <Link to="/explore" className="inline-flex items-center gap-1 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur hover:text-foreground">
+          <ArrowLeft className="h-3.5 w-3.5" /> 返回发现
         </Link>
-        <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-          <Link to="/games" className="text-foreground transition">游戏</Link>
-          <Link to="/radar" className="hover:text-foreground transition">社交雷达</Link>
-          <Link to="/discover" className="hover:text-foreground transition">发现</Link>
-        </nav>
-        <AuthButtons />
-      </div>
-    </header>
-  );
-}
-
-function Hero() {
-  return (
-    <section className="relative">
-      <div className="absolute inset-0 bg-grid opacity-60 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-      <div className="absolute top-10 -left-20 size-[420px] rounded-full bg-sun/25 blur-[120px]" />
-      <div className="absolute top-32 right-0 size-[380px] rounded-full bg-coral/25 blur-[120px]" />
-
-      <div className="relative mx-auto max-w-5xl px-6 pt-20 pb-12 md:pt-28 md:pb-16 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground">
-          <Flame className="size-3.5 text-coral" />
-          <span>本周新增 3 款破冰游戏</span>
-        </div>
-        <h1 className="mt-6 font-display text-5xl md:text-7xl font-bold tracking-tight leading-[0.95]">
-          <span className="font-serif-display italic text-gradient-hero">玩</span>着玩着，<br />
-          就熟了。
+        <Link to="/games/leaderboard" className={neonButtonClass("ghost")}>
+          <NeonInner variant="ghost">
+            <Trophy className="size-4 text-sun" />
+            战绩榜
+          </NeonInner>
+        </Link>
+      </header>
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-24 pt-8">
+        <h1 className="font-display text-4xl md:text-5xl font-semibold tracking-tight">
+          小 <span className="font-serif-display italic text-gradient-hero">游戏</span>
         </h1>
-        <p className="mt-6 max-w-xl mx-auto text-base md:text-lg text-muted-foreground leading-relaxed">
-          告别"在吗 / 吃了吗"。Pulse 游戏中心精选 20+ 款轻量社交小游戏，
-          让你们的第一句话就有意思。
+        <p className="mt-3 max-w-xl text-muted-foreground">
+          精选轻量社交小游戏，让你们的第一句话就有意思。
         </p>
-        <div className="mt-7 flex items-center justify-center gap-5">
-          <Link to="/games/leaderboard" className={neonButtonClass("ghost")}>
-            <NeonInner variant="ghost">
-              <Trophy className="size-4 text-sun" />
-              查看战绩榜
-              <ArrowRight className="size-3.5" />
-            </NeonInner>
-          </Link>
+        <div className="mt-10">
+          <GameGrid />
         </div>
-      </div>
-    </section>
-  );
-}
-
-function DemoPlayground() {
-  const questions = useMemo(
-    () => [
-      "如果今晚可以瞬移到任何地方，你想去哪里？",
-      "上一次让你嘴角不自觉上扬的瞬间是什么？",
-      "你手机里循环最多的一首歌？为什么？",
-      "如果只能再吃一种食物过一辈子，选什么？",
-      "你最近一次脸红是因为？",
-      "童年里最想再回去一次的场景是？",
-      "如果可以删除一段记忆，你会删掉哪段？",
-      "你觉得自己最性感的瞬间是什么时候？",
-    ],
-    [],
-  );
-  const [i, setI] = useState(0);
-  const [spinning, setSpinning] = useState(false);
-
-  const spin = () => {
-    if (spinning) return;
-    setSpinning(true);
-    let step = 0;
-    const id = setInterval(() => {
-      setI((p) => (p + 1) % questions.length);
-      step++;
-      if (step > 10) {
-        clearInterval(id);
-        setSpinning(false);
-      }
-    }, 80);
-  };
-
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
-      <div className="grid lg:grid-cols-[1.1fr_1fr] gap-10 items-center">
-        <div>
-          <span className="text-xs uppercase tracking-[0.2em] text-coral font-semibold">现在就试试</span>
-          <h2 className="mt-3 font-display text-3xl md:text-4xl font-bold tracking-tight">
-            真心话 · 心动版
-            <br />
-            <span className="font-serif-display italic text-mint">点一下，立刻破冰。</span>
-          </h2>
-          <p className="mt-4 text-muted-foreground leading-relaxed max-w-md">
-            最受欢迎的破冰游戏。我们从 100 道走心问题中随机抽一道——
-            你也可以在 Pulse App 中和心动的他/她一起玩。
-          </p>
-          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
-            <Pill icon={Users} label="2 人对战" />
-            <Pill icon={Flame} label="热度 92°" color="coral" />
-            <Pill icon={Sparkles} label="走心指数 ★★★★" color="sun" />
-          </div>
-        </div>
-
-        <div className="relative">
-          <div className="absolute -inset-6 bg-gradient-to-tr from-coral/20 via-sun/10 to-mint/20 blur-3xl rounded-[40px]" />
-          <div className="relative rounded-[32px] border border-border bg-surface/70 backdrop-blur p-8 md:p-10">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-display tracking-wider">QUESTION #{String(i + 1).padStart(3, "0")}</span>
-              <span className="text-xs rounded-full bg-coral/15 text-coral px-2 py-1 font-semibold">心动 LV.1</span>
-            </div>
-
-            <div className="mt-6 min-h-[140px] flex items-center">
-              <p
-                key={i}
-                className="font-display text-2xl md:text-3xl font-bold leading-snug animate-in fade-in slide-in-from-bottom-2 duration-300"
-              >
-                "{questions[i]}"
-              </p>
-            </div>
-
-            <div className="mt-8 flex flex-col sm:flex-row gap-5 justify-center">
-              <NeonButton variant="coral" onClick={spin} disabled={spinning}>
-                <Dices className={`size-4 ${spinning ? "animate-spin" : "group-hover:rotate-12 transition"}`} />
-                {spinning ? "正在抽卡…" : "换一题"}
-              </NeonButton>
-              <NeonButton variant="ghost">
-                <Heart className="size-4 text-coral" />
-                收藏这题
-              </NeonButton>
-            </div>
-
-            <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground">
-              <span>共 100 题</span>
-              <div className="flex items-center gap-1.5">
-                {[...Array(5)].map((_, k) => (
-                  <span
-                    key={k}
-                    className={`size-1.5 rounded-full ${k === i % 5 ? "bg-coral w-4" : "bg-border"} transition-all`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Pill({ icon: Icon, label, color = "mint" }: { icon: typeof Users; label: string; color?: "coral" | "sun" | "mint" }) {
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 bg-surface/60"
-      style={{ color: `var(--${color})` }}
-    >
-      <Icon className="size-3.5" />
-      <span className="text-foreground">{label}</span>
-    </span>
+      </main>
+    </div>
   );
 }
 
@@ -303,15 +155,8 @@ function GameGrid() {
   const labels: Record<string, string> = { all: "全部", "2人": "双人", 群聊: "群聊", 新: "新上线" };
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-16 md:py-24">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-        <div>
-          <span className="text-xs uppercase tracking-[0.2em] text-mint font-semibold">游戏库</span>
-          <h2 className="mt-3 font-display text-3xl md:text-5xl font-bold tracking-tight">
-            选一款，开始 <span className="font-serif-display italic text-coral">心跳</span>。
-          </h2>
-        </div>
-        <div className="flex gap-2 overflow-x-auto">
+    <section>
+      <div className="flex items-center justify-end gap-2 mb-6 overflow-x-auto">
           {filters.map((f) => (
             <button
               key={f}
@@ -325,7 +170,6 @@ function GameGrid() {
               {labels[f]}
             </button>
           ))}
-        </div>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -396,50 +240,5 @@ function GameCard({ game }: { game: Game }) {
         </button>
       )}
     </div>
-  );
-}
-
-function CTA() {
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
-      <div
-        className="relative overflow-hidden rounded-[40px] p-10 md:p-16 text-center"
-        style={{ background: "linear-gradient(135deg, oklch(0.72 0.18 22), oklch(0.55 0.2 350) 60%, oklch(0.4 0.15 270))" }}
-      >
-        <div className="absolute -top-20 -left-20 size-80 rounded-full bg-sun/40 blur-3xl" />
-        <div className="absolute -bottom-20 -right-20 size-80 rounded-full bg-mint/30 blur-3xl" />
-        <div className="relative">
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-white">
-            找到那个能<span className="font-serif-display italic">陪你玩</span>的人。
-          </h2>
-          <p className="mt-4 text-white/80 max-w-md mx-auto">先匹配，再开聊。让游戏成为你们故事的开场。</p>
-          <Link to="/discover" className={`${neonButtonClass("coral")} mt-8`}>
-            <NeonInner variant="coral">
-              去发现页匹配
-              <ArrowRight className="size-4" />
-            </NeonInner>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="border-t border-border">
-      <div className="mx-auto max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <div className="size-6 rounded-lg bg-gradient-to-br from-coral via-sun to-mint" />
-          <span className="font-display font-bold text-foreground">Pulse</span>
-          <span>· 玩出来的心动</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <Link to="/" className="hover:text-foreground transition">首页</Link>
-          <Link to="/discover" className="hover:text-foreground transition">发现</Link>
-          <Link to="/radar" className="hover:text-foreground transition">雷达</Link>
-        </div>
-      </div>
-    </footer>
   );
 }
