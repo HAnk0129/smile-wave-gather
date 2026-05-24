@@ -22,12 +22,28 @@ function AuthPage() {
   const [tab, setTab] = useState<Tab>("email");
   const [loading, setLoading] = useState<string | null>(null);
 
+  // 登录成功后:员工 → /admin, 普通用户 → search.redirect
+  const routeAfterLogin = async (userId: string | undefined) => {
+    let target = search.redirect;
+    if (userId) {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (data) target = "/admin";
+    }
+    navigate({ to: target });
+  };
+
   // 已登录直接跳走
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: search.redirect });
+      if (data.session) routeAfterLogin(data.session.user.id);
     });
-  }, [navigate, search.redirect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 邮箱
   const [email, setEmail] = useState("");
@@ -50,10 +66,10 @@ function AuthPage() {
         toast.success("注册成功，请前往邮箱完成验证后再登录");
         setMode("login");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("登录成功");
-        navigate({ to: search.redirect });
+        await routeAfterLogin(data.user?.id);
       }
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "操作失败");
@@ -94,14 +110,14 @@ function AuthPage() {
     }
     setLoading("verifyOtp");
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         phone: fullPhone(),
         token: otp,
         type: "sms",
       });
       if (error) throw error;
       toast.success("登录成功");
-      navigate({ to: search.redirect });
+      await routeAfterLogin(data.user?.id);
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "验证失败");
     } finally {
