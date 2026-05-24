@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
-  ShieldCheck, CheckCircle2, XCircle, KeyRound, UserPlus, X,
+  ShieldCheck, CheckCircle2, XCircle, KeyRound, UserPlus, X, School, Copy, Check,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -20,6 +20,10 @@ import {
   adminModerationSummary,
   adminListRoleMembers, adminFindUser, adminAssignRole, adminRevokeRole,
 } from "@/lib/admin.functions";
+import {
+  adminListCampuses, adminCreateCampus, adminListCampusInvites,
+  createCampusInvite,
+} from "@/lib/campus.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -31,7 +35,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "roles";
+type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "roles" | "campuses";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -121,6 +125,7 @@ function AdminConsole() {
     { key: "posts", label: "社区", icon: FileText },
     { key: "reports", label: "举报", icon: Flag },
     { key: "roles", label: "权限", icon: KeyRound },
+    { key: "campuses", label: "园区", icon: School },
   ];
 
   return (
@@ -159,6 +164,7 @@ function AdminConsole() {
         {tab === "posts" && <PostsTab />}
         {tab === "reports" && <ReportsTab />}
         {tab === "roles" && <RolesTab />}
+        {tab === "campuses" && <CampusesTab />}
       </main>
     </div>
   );
@@ -761,6 +767,204 @@ function PostModeration() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// =========== Campuses Tab ===========
+function CampusesTab() {
+  const listFn = useServerFn(adminListCampuses);
+  const createFn = useServerFn(adminCreateCampus);
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-campuses"],
+    queryFn: () => listFn(),
+  });
+  const campuses = data?.campuses ?? [];
+  const [selected, setSelected] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [location, setLocation] = useState("");
+  const [description, setDescription] = useState("");
+
+  const createMut = useMutation({
+    mutationFn: () => createFn({
+      data: {
+        name: name.trim(),
+        slug: slug.trim().toLowerCase(),
+        location: location.trim() || undefined,
+        description: description.trim() || undefined,
+      },
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-campuses"] });
+      setShowCreate(false);
+      setName(""); setSlug(""); setLocation(""); setDescription("");
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">校园 / 园区</h2>
+          <p className="text-xs text-muted-foreground">管理各个学校或园区社区，下发首批邀请码。</p>
+        </div>
+        <button onClick={() => setShowCreate((v) => !v)} className="rounded-lg bg-coral px-3 py-1.5 text-sm text-white">
+          {showCreate ? "取消" : "+ 新建园区"}
+        </button>
+      </div>
+
+      {showCreate && (
+        <div className="rounded-xl border border-border bg-surface/40 p-4 grid gap-3 md:grid-cols-2">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="园区名称，如 复旦大学"
+            className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-coral/50" />
+          <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="英文标识 slug (a-z0-9-)"
+            className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-coral/50" />
+          <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="地点 (可选)"
+            className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-coral/50" />
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="简介 (可选)"
+            className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-coral/50" />
+          <button
+            disabled={!name.trim() || !slug.trim() || createMut.isPending}
+            onClick={() => createMut.mutate()}
+            className="md:col-span-2 h-10 rounded-lg bg-coral text-white text-sm font-medium disabled:opacity-40"
+          >
+            {createMut.isPending ? "创建中…" : "创建园区"}
+          </button>
+          {createMut.error && (
+            <div className="md:col-span-2 text-xs text-rose-400">{(createMut.error as any).message}</div>
+          )}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="text-sm text-muted-foreground">加载中…</div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface/40">
+          <table className="w-full text-sm">
+            <thead className="text-xs text-muted-foreground">
+              <tr className="border-b border-border">
+                <th className="px-4 py-2 text-left">名称</th>
+                <th className="px-4 py-2 text-left">Slug</th>
+                <th className="px-4 py-2 text-left">地点</th>
+                <th className="px-4 py-2 text-left">成员数</th>
+                <th className="px-4 py-2 text-left">创建时间</th>
+                <th className="px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {campuses.map((c) => (
+                <tr key={c.id} className="border-b border-border/60">
+                  <td className="px-4 py-2 font-medium">{c.name}</td>
+                  <td className="px-4 py-2 font-mono text-xs">{c.slug}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{c.location ?? "-"}</td>
+                  <td className="px-4 py-2">{c.member_count}</td>
+                  <td className="px-4 py-2 text-muted-foreground">
+                    {new Date(c.created_at).toLocaleDateString("zh-CN")}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    <button
+                      onClick={() => setSelected(selected === c.id ? null : c.id)}
+                      className="text-xs text-coral"
+                    >
+                      {selected === c.id ? "收起" : "邀请码"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {selected && (
+        <CampusInvitesPanel campusId={selected} campusName={campuses.find((c) => c.id === selected)?.name ?? ""} />
+      )}
+    </div>
+  );
+}
+
+function CampusInvitesPanel({ campusId, campusName }: { campusId: string; campusName: string }) {
+  const listFn = useServerFn(adminListCampusInvites);
+  const createFn = useServerFn(createCampusInvite);
+  const qc = useQueryClient();
+  const queryKey = ["admin-campus-invites", campusId] as const;
+  const { data } = useQuery({ queryKey, queryFn: () => listFn({ data: { campus_id: campusId } }) });
+  const invites = data?.invites ?? [];
+  const [maxUses, setMaxUses] = useState(20);
+  const [hours, setHours] = useState(168);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const mut = useMutation({
+    mutationFn: () => createFn({ data: { campus_id: campusId, max_uses: maxUses, expires_in_hours: hours } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+  });
+
+  const copy = async (code: string) => {
+    await navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 1200);
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-surface/40 p-4 space-y-3">
+      <div className="text-sm font-semibold">{campusName} · 邀请码</div>
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <label className="text-muted-foreground">可用次数</label>
+        <input type="number" min={1} max={500} value={maxUses}
+          onChange={(e) => setMaxUses(Number(e.target.value) || 1)}
+          className="w-20 h-8 px-2 rounded-lg border border-border bg-background outline-none" />
+        <label className="text-muted-foreground ml-2">有效期 (小时)</label>
+        <input type="number" min={1} max={1440} value={hours}
+          onChange={(e) => setHours(Number(e.target.value) || 1)}
+          className="w-20 h-8 px-2 rounded-lg border border-border bg-background outline-none" />
+        <button onClick={() => mut.mutate()} disabled={mut.isPending}
+          className="ml-2 h-8 px-3 rounded-lg bg-coral text-white text-xs disabled:opacity-40">
+          {mut.isPending ? "生成中…" : "+ 生成邀请码"}
+        </button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="text-muted-foreground">
+            <tr className="border-b border-border">
+              <th className="px-2 py-1.5 text-left">邀请码</th>
+              <th className="px-2 py-1.5 text-left">使用 / 上限</th>
+              <th className="px-2 py-1.5 text-left">到期</th>
+              <th className="px-2 py-1.5 text-left">状态</th>
+              <th className="px-2 py-1.5"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {invites.length === 0 && (
+              <tr><td colSpan={5} className="px-2 py-4 text-center text-muted-foreground">还没有邀请码</td></tr>
+            )}
+            {invites.map((i) => (
+              <tr key={i.id} className="border-b border-border/60">
+                <td className="px-2 py-1.5 font-mono">{i.code}</td>
+                <td className="px-2 py-1.5">{i.uses} / {i.max_uses}</td>
+                <td className="px-2 py-1.5 text-muted-foreground">
+                  {i.expires_at ? new Date(i.expires_at).toLocaleString("zh-CN") : "长期"}
+                </td>
+                <td className="px-2 py-1.5">
+                  {i.uses >= i.max_uses ? <span className="text-rose-400">已用完</span> :
+                    i.status !== "active" ? <span className="text-muted-foreground">已撤销</span> :
+                    i.expires_at && new Date(i.expires_at) < new Date() ? <span className="text-amber-400">已过期</span> :
+                    <span className="text-emerald-400">可用</span>}
+                </td>
+                <td className="px-2 py-1.5 text-right">
+                  <button onClick={() => copy(i.code)} className="inline-flex items-center gap-1 text-coral">
+                    {copiedCode === i.code ? <Check className="size-3" /> : <Copy className="size-3" />}
+                    {copiedCode === i.code ? "已复制" : "复制"}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
