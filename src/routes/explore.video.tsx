@@ -27,9 +27,31 @@ const MATCH_POOL = [
 
 const CALL_SECONDS = 5 * 60;
 
+const PROP_PREF_KEY = "pulse:video:prop";
+
 function VideoChatPage() {
   const [stage, setStage] = useState<Stage>("idle");
-  const [myProp, setMyProp] = useState(PROPS[2]);
+  const [myProp, setMyPropState] = useState(PROPS[2]);
+
+  // 读取上次选择
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = window.localStorage.getItem(PROP_PREF_KEY);
+      if (saved) {
+        const found = PROPS.find((p) => p.id === saved);
+        if (found) setMyPropState(found);
+      }
+    } catch {}
+  }, []);
+
+  const setMyProp = (p: (typeof PROPS)[number]) => {
+    setMyPropState(p);
+    try {
+      window.localStorage.setItem(PROP_PREF_KEY, p.id);
+    } catch {}
+  };
+
   const [meReady, setMeReady] = useState(false);
   const [taReady, setTaReady] = useState(false);
   const [match, setMatch] = useState(MATCH_POOL[0]);
