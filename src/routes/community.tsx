@@ -120,6 +120,16 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   const [joinOpen, setJoinOpen] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
 
+  // auto-open compose when arriving with ?compose=1 from the global "+" button
+  const search = Route.useSearch();
+  const nav = Route.useNavigate();
+  useEffect(() => {
+    if (search.compose === 1) {
+      setComposeOpen(true);
+      nav({ search: {} as never, replace: true });
+    }
+  }, [search.compose, nav]);
+
   const listFn = useServerFn(listCommunityPosts);
   const likeFn = useServerFn(toggleCommunityLike);
   const qc = useQueryClient();
