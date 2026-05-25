@@ -10,7 +10,7 @@ import {
   Flame, TrendingUp, X, Image as ImageIcon,
   Tag, ShoppingBag, MessageSquare, HelpCircle, KeyRound, Copy, Check, School,
 } from "lucide-react";
-import { BottomNav } from "@/components/BottomNav";
+import { BottomNav as AppBottomNav } from "@/components/BottomNav";
 import { z } from "zod";
 import {
   listCommunityPosts,
@@ -288,7 +288,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
       </main>
 
       {/* Bottom nav */}
-      <BottomNav active="community" onCompose={() => setComposeOpen(true)} />
+      <AppBottomNav active="community" onCompose={() => setComposeOpen(true)} />
 
       {/* Campus picker */}
       <AnimatePresence>
