@@ -745,63 +745,138 @@ function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () =>
   const meta = CATEGORY_META[post.category];
   const h = heightFor(post.id);
   const heightClass =
-    h === "tall" ? "h-56" : h === "mid" ? "h-44" : "h-32";
+    h === "tall" ? "h-60" : h === "mid" ? "h-48" : "h-36";
   const displayName = post.author_nickname ?? `同学 ${post.author_id.slice(0, 2).toUpperCase()}`;
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       onClick={onOpen}
-      className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/60 border border-border hover:border-coral/40 transition cursor-pointer active:scale-[0.99]"
+      className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/70 border border-border hover:border-coral/50 hover:shadow-lg hover:shadow-coral/5 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer active:scale-[0.98]"
     >
       <div className={`relative ${heightClass} bg-gradient-to-br ${post.cover} overflow-hidden`}>
         {post.media && post.media[0] ? (
           post.media[0].type === "image" ? (
-            <img src={post.media[0].url} alt={post.title} className="absolute inset-0 size-full object-cover" loading="lazy" />
+            <img src={post.media[0].url} alt={post.title} className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
           ) : (
             <video src={post.media[0].url} className="absolute inset-0 size-full object-cover" muted playsInline />
           )
         ) : (
           <div className="absolute inset-0 bg-grid opacity-30" />
         )}
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
         <span className={`absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border backdrop-blur-md ${meta.color}`}>
           <meta.icon className="size-3" />
           {meta.label}
         </span>
         {post.media && post.media.length > 1 && (
-          <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md bg-background/60 text-[10px] text-foreground/80 backdrop-blur-md">
+          <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md bg-background/70 text-[10px] text-foreground/90 backdrop-blur-md">
             +{post.media.length - 1}
           </span>
         )}
       </div>
-      <div className="p-3">
-        <h3 className="text-sm font-medium leading-snug line-clamp-2">{post.title}</h3>
-        <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{post.content}</p>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {post.tags.map((t) => (
-            <span key={t} className="text-[10px] text-mint">{t}</span>
-          ))}
-        </div>
-        <div className="mt-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <AuthorBadge nickname={post.author_nickname} avatar={post.author_avatar} fallback={post.author_id} />
-            <span className="truncate max-w-[80px]">{displayName}</span>
+      <div className="p-3 space-y-2">
+        <h3 className="text-sm font-semibold leading-snug line-clamp-2 text-foreground">{post.title}</h3>
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{post.content}</p>
+        {post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {post.tags.slice(0, 3).map((t) => (
+              <span
+                key={t}
+                className="text-[10px] text-mint bg-mint/10 px-1.5 py-0.5 rounded-md border border-mint/20"
+              >
+                #{t}
+              </span>
+            ))}
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        )}
+        <div className="pt-1 flex items-center justify-between border-t border-border/60">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 pt-2">
+            <AuthorBadge nickname={post.author_nickname} avatar={post.author_avatar} fallback={post.author_id} />
+            <span className="truncate max-w-[90px]">{displayName}</span>
+          </div>
+          <div className="flex items-center gap-2.5 text-xs text-muted-foreground pt-2 tabular-nums">
             <button
               onClick={(e) => { e.stopPropagation(); onLike(); }}
-              className={`inline-flex items-center gap-0.5 transition ${post.liked_by_me ? "text-coral" : "hover:text-coral"}`}
+              className={`inline-flex items-center gap-0.5 transition active:scale-90 ${post.liked_by_me ? "text-coral" : "hover:text-coral"}`}
+              aria-label="点赞"
             >
-              <Heart className={`size-3 ${post.liked_by_me ? "fill-coral" : ""}`} />
+              <Heart className={`size-3.5 ${post.liked_by_me ? "fill-coral" : ""}`} />
               {post.likes_count}
             </button>
-            <span className="inline-flex items-center gap-0.5"><MessageCircle className="size-3" />{post.comments_count}</span>
+            <span className="inline-flex items-center gap-0.5"><MessageCircle className="size-3.5" />{post.comments_count}</span>
           </div>
         </div>
       </div>
     </motion.article>
+  );
+}
+
+/** Masonry-shaped skeletons that mimic the real feed for a smoother loading transition. */
+function FeedSkeleton() {
+  const heights = ["h-56", "h-44", "h-60", "h-40", "h-52", "h-44", "h-56", "h-48"];
+  return (
+    <div className="columns-2 md:columns-3 gap-3 [column-fill:_balance]" aria-busy="true" aria-label="正在加载">
+      {heights.map((h, i) => (
+        <div
+          key={i}
+          className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/60 border border-border"
+        >
+          <div className={`${h} bg-gradient-to-br from-surface to-background animate-pulse`} />
+          <div className="p-3 space-y-2">
+            <div className="h-3.5 w-5/6 rounded-md bg-surface animate-pulse" />
+            <div className="h-3 w-4/6 rounded-md bg-surface/80 animate-pulse" />
+            <div className="pt-2 flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className="size-5 rounded-full bg-surface animate-pulse" />
+                <div className="h-2.5 w-14 rounded bg-surface/80 animate-pulse" />
+              </div>
+              <div className="h-2.5 w-10 rounded bg-surface/80 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyFeed() {
+  return (
+    <div className="py-16 px-6 text-center rounded-3xl border border-dashed border-border bg-surface/30">
+      <div className="size-14 mx-auto rounded-2xl bg-coral/10 grid place-items-center">
+        <MessageSquare className="size-6 text-coral" />
+      </div>
+      <h3 className="mt-4 font-display text-base font-semibold">这里还很安静</h3>
+      <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+        这个分类还没有动态<br />点击下方「+」发布第一条吧
+      </p>
+    </div>
+  );
+}
+
+/** Full-screen skeleton shown while auth/role/campus hydration is in flight. */
+function CommunityBootSkeleton() {
+  return (
+    <div className="min-h-screen bg-background text-foreground pb-24">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/80 border-b border-border">
+        <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-3">
+          <div className="h-7 w-32 rounded-full bg-surface animate-pulse" />
+          <div className="ml-auto h-9 w-16 rounded-full bg-surface animate-pulse" />
+        </div>
+        <div className="mx-auto max-w-3xl px-4 pb-3 flex items-center gap-2 overflow-hidden">
+          {[60, 80, 70, 64].map((w, i) => (
+            <div key={i} className="h-8 rounded-full bg-surface animate-pulse" style={{ width: w }} />
+          ))}
+        </div>
+      </header>
+      <main className="mx-auto max-w-3xl px-4 pt-4 space-y-6">
+        <div className="h-40 rounded-3xl bg-surface/50 animate-pulse" />
+        <FeedSkeleton />
+      </main>
+    </div>
   );
 }
 
