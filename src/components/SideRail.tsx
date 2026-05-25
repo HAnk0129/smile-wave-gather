@@ -87,9 +87,6 @@ export function SideRail() {
           })}
         </nav>
 
-        <div className="mt-auto p-4 text-[11px] text-muted-foreground">
-          <p>👉 滑动或点击空白处可收起</p>
-        </div>
       </aside>
     </>
   );
