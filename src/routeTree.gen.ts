@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RadarRouteImport } from './routes/radar'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -31,6 +32,11 @@ import { Route as ExploreVoiceRouteImport } from './routes/explore.voice'
 import { Route as ExploreVideoRouteImport } from './routes/explore.video'
 import { Route as ExploreTreeholeRouteImport } from './routes/explore.treehole'
 
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
+  '/wallet': typeof WalletRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
+  '/wallet': typeof WalletRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
+  '/wallet': typeof WalletRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/radar'
     | '/verify'
+    | '/wallet'
     | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/radar'
     | '/verify'
+    | '/wallet'
     | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/radar'
     | '/verify'
+    | '/wallet'
     | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
@@ -296,10 +308,18 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RadarRoute: typeof RadarRoute
   VerifyRoute: typeof VerifyRoute
+  WalletRoute: typeof WalletRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/verify': {
       id: '/verify'
       path: '/verify'
@@ -494,6 +514,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RadarRoute: RadarRoute,
   VerifyRoute: VerifyRoute,
+  WalletRoute: WalletRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

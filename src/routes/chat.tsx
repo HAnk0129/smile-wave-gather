@@ -3,9 +3,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal, Check, CheckCheck, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal, Check, CheckCheck, Trash2, Loader2, Gift as GiftIcon, Coins } from "lucide-react";
 import { getConversation, sendMessage as sendMessageFn, markConversationRead, sendImageMessage, deleteConversation } from "@/lib/chat.functions";
 import { blockUser, reportContent } from "@/lib/moderation.functions";
+import { sendGift, getMyWallet } from "@/lib/wallet.functions";
+import { GIFT_CATALOG } from "@/lib/wallet";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -246,6 +248,110 @@ function MockChat() {
         </div>
       </div>
     </div>
+  );
+}
+
+function GiftButton({
+  convId,
+  partnerId,
+  partnerName,
+}: {
+  convId: string;
+  partnerId: string | null;
+  partnerName: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [msg, setMsg] = useState("");
+  const [sending, setSending] = useState(false);
+  const send = useServerFn(sendGift);
+  const wallet = useServerFn(getMyWallet);
+  const w = useQuery({ queryKey: ["wallet"], queryFn: () => wallet(), enabled: open });
+  const coins = w.data?.coins ?? 0;
+
+  const navigate = useNavigate();
+  const handleSend = async () => {
+    if (!partnerId || !picked) return;
+    const gift = GIFT_CATALOG.find((g) => g.code === picked);
+    if (!gift) return;
+    setSending(true);
+    try {
+      await send({ data: { receiverId: partnerId, giftCode: picked, message: msg, conversationId: convId } });
+      toast.success(`已送出 ${gift.emoji} ${gift.name}`);
+      setOpen(false);
+      setPicked(null);
+      setMsg("");
+    } catch (e: any) {
+      const m = e?.message ?? "送礼失败";
+      if (m.includes("不足")) {
+        toast.error("心动币不足，去钱包充值吧");
+      } else {
+        toast.error(m);
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          disabled={!partnerId}
+          aria-label="送礼物"
+          className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-coral hover:bg-surface disabled:opacity-50"
+        >
+          <GiftIcon className="h-4 w-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" side="top" className="w-[320px] p-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">给 {partnerName} 送礼</span>
+          <span className="inline-flex items-center gap-1 text-coral">
+            <Coins className="h-3 w-3" /> {coins}
+          </span>
+        </div>
+        <div className="mt-2 grid grid-cols-4 gap-1.5">
+          {GIFT_CATALOG.map((g) => {
+            const active = picked === g.code;
+            return (
+              <button
+                key={g.code}
+                onClick={() => setPicked(g.code)}
+                className={`rounded-xl border p-2 text-center transition ${active ? "border-coral bg-coral/10" : "border-border hover:border-coral/50"}`}
+              >
+                <div className="text-2xl">{g.emoji}</div>
+                <div className="text-[10px] mt-0.5 truncate">{g.name}</div>
+                <div className="text-[10px] text-coral">{g.coins}</div>
+              </button>
+            );
+          })}
+        </div>
+        <input
+          value={msg}
+          onChange={(e) => setMsg(e.target.value)}
+          placeholder="附一句话（可选）"
+          maxLength={50}
+          className="mt-2 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs outline-none"
+        />
+        <div className="mt-2 flex gap-2">
+          <button
+            onClick={() => navigate({ to: "/wallet" })}
+            className="flex-1 rounded-lg border border-border py-1.5 text-xs text-muted-foreground hover:bg-surface"
+          >
+            去充值
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={!picked || sending || !partnerId}
+            className="flex-1 rounded-lg bg-gradient-to-r from-coral to-sun py-1.5 text-xs font-semibold text-background disabled:opacity-50"
+          >
+            {sending ? "送出中…" : "送出"}
+          </button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -638,6 +744,7 @@ function RealChat({
           >
             {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
           </button>
+          <GiftButton convId={convId} partnerId={partnerId ?? null} partnerName={data?.partner.name ?? fallbackName ?? "Ta"} />
           <div className="flex flex-1 items-center rounded-full border border-border bg-surface/70 px-3">
             <input
               value={input}

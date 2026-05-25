@@ -69,6 +69,7 @@ function previewTitle(n: any): string {
     case "comment": return `${p.commenter_name ?? "有人"} 评论了你的动态`;
     case "post_like": return `${p.liker_name ?? "有人"} 赞了你的动态`;
     case "follow": return `${p.follower_name ?? "有人"} 关注了你`;
+    case "gift": return `${p.sender_name ?? "有人"} 送了你 ${p.gift_code ?? "一份礼物"}`;
     default: return "新通知";
   }
 }
