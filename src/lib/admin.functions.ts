@@ -744,7 +744,7 @@ export const adminListShortVideos = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const authorIds = Array.from(new Set((rows ?? []).map((r: any) => r.author_id as string)));
     const { data: profs } = authorIds.length
-      ? await supabaseAdmin.from("profiles").select("id,nickname,photos,main_idx").in("id", authorIds)
+      ? await supabaseAdmin.from("profiles").select("id,nickname,photos,main_idx").in("id", authorIds as string[])
       : { data: [] as any[] };
     const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
     const videos = (rows ?? []).map((r: any) => ({ ...r, author: map.get(r.author_id) ?? null }));
@@ -806,7 +806,7 @@ export const adminListVideoComments = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const ids = Array.from(new Set((rows ?? []).map((r: any) => r.author_id as string)));
     const { data: profs } = ids.length
-      ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids)
+      ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids as string[])
       : { data: [] as any[] };
     const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
     const comments = (rows ?? []).map((r: any) => ({ ...r, author: map.get(r.author_id) ?? null }));
@@ -886,7 +886,7 @@ export const adminListGifts = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const ids = Array.from(new Set((rows ?? []).flatMap((r: any) => [r.sender_id, r.receiver_id] as string[])));
     const { data: profs } = ids.length
-      ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids)
+      ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids as string[])
       : { data: [] as any[] };
     const map = new Map((profs ?? []).map((p: any) => [p.id, p.nickname]));
     const gifts = (rows ?? []).map((r: any) => ({
@@ -919,7 +919,7 @@ export const adminListLedger = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const ids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id as string)));
     const { data: profs } = ids.length
-      ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids)
+      ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids as string[])
       : { data: [] as any[] };
     const map = new Map((profs ?? []).map((p: any) => [p.id, p.nickname]));
     const ledger = (rows ?? []).map((r: any) => ({ ...r, nickname: map.get(r.user_id) || "—" }));
