@@ -24,6 +24,7 @@ import {
   adminListShortVideos, adminReviewShortVideo,
   adminListVideoComments, adminDeleteVideoComment,
   adminWalletOverview, adminListGifts, adminListLedger,
+  adminListAppeals, adminResolveAppeal,
 } from "@/lib/admin.functions";
 import {
   adminListCampuses, adminCreateCampus, adminListCampusInvites,
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/admin")({
 
 type Tab =
   | "overview" | "moderation" | "users" | "messages" | "reports"
-  | "treehole" | "posts" | "videos" | "wallet" | "verify" | "roles" | "campuses";
+  | "appeals" | "treehole" | "posts" | "videos" | "wallet" | "verify" | "roles" | "campuses";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -134,6 +135,7 @@ function AdminConsole() {
     { key: "videos", label: "短视频", icon: VideoIcon },
     { key: "wallet", label: "钱包/礼物", icon: Wallet },
     { key: "reports", label: "举报", icon: Flag },
+    { key: "appeals", label: "申诉", icon: ShieldCheck },
     { key: "verify", label: "认证", icon: BadgeCheck },
     { key: "roles", label: "权限", icon: KeyRound },
     { key: "campuses", label: "园区", icon: School },
@@ -176,6 +178,7 @@ function AdminConsole() {
         {tab === "videos" && <VideosTab />}
         {tab === "wallet" && <WalletTab />}
         {tab === "reports" && <ReportsTab />}
+        {tab === "appeals" && <AppealsTab />}
         {tab === "verify" && <VerifyTab />}
         {tab === "roles" && <RolesTab />}
         {tab === "campuses" && <CampusesTab />}
