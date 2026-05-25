@@ -1376,3 +1376,239 @@ function TreeholeModeration() {
     </div>
   );
 }
+/* -------------------- Short Videos -------------------- */
+function VideosTab() {
+  const [status, setStatus] = useState<"all" | "published" | "removed">("all");
+  const list = useServerFn(adminListShortVideos);
+  const review = useServerFn(adminReviewShortVideo);
+  const qc = useQueryClient();
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin-videos", status],
+    queryFn: () => list({ data: { status, limit: 50, offset: 0 } }),
+  });
+  const mut = useMutation({
+    mutationFn: (v: { id: string; action: "remove" | "restore" | "delete"; reason?: string }) =>
+      review({ data: v }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-videos"] }),
+  });
+  const videos = data?.videos ?? [];
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">短视频审核 <span className="ml-2 text-sm font-normal text-muted-foreground">共 {data?.total ?? 0}</span></h2>
+        <div className="flex items-center gap-2">
+          {(["all", "published", "removed"] as const).map((s) => (
+            <button key={s} onClick={() => setStatus(s)}
+              className={`rounded-lg px-3 py-1.5 text-xs ${status === s ? "bg-coral text-white" : "border border-border text-muted-foreground"}`}>
+              {s === "all" ? "全部" : s === "published" ? "已发布" : "已下架"}
+            </button>
+          ))}
+          <button onClick={() => refetch()} className="rounded-lg border border-border p-2"><RefreshCw className="h-3.5 w-3.5" /></button>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {isLoading && <div className="col-span-full text-center text-muted-foreground">加载中…</div>}
+        {!isLoading && videos.length === 0 && <div className="col-span-full text-center text-muted-foreground">暂无数据</div>}
+        {videos.map((v: any) => (
+          <div key={v.id} className="overflow-hidden rounded-2xl border border-border bg-surface/60">
+            <div className="relative aspect-[9/12] bg-black">
+              <video src={v.video_url} poster={v.cover_url || undefined} controls className="h-full w-full object-cover" preload="metadata" />
+              <span className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] ${v.status === "published" ? "bg-emerald-500/80 text-white" : "bg-rose-500/80 text-white"}`}>
+                {v.status}
+              </span>
+            </div>
+            <div className="space-y-2 p-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{v.author?.nickname || v.author_id.slice(0, 8)}</span>
+                <span>·</span>
+                <span>{new Date(v.created_at).toLocaleString()}</span>
+              </div>
+              <p className="line-clamp-2 text-sm">{v.caption || <span className="text-muted-foreground">（无文案）</span>}</p>
+              <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                <span>♥ {v.likes_count}</span>
+                <span>💬 {v.comments_count}</span>
+                <span>▶ {v.views_count}</span>
+              </div>
+              <div className="flex gap-1.5 pt-1">
+                {v.status === "published" ? (
+                  <button
+                    onClick={() => {
+                      const r = prompt("下架原因（可选）") || undefined;
+                      if (confirm("确认下架?")) mut.mutate({ id: v.id, action: "remove", reason: r });
+                    }}
+                    className="flex-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-300">
+                    下架
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => mut.mutate({ id: v.id, action: "restore" })}
+                    className="flex-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-xs text-emerald-300">
+                    恢复
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const r = prompt("删除原因（可选）") || undefined;
+                    if (confirm("永久删除该视频?")) mut.mutate({ id: v.id, action: "delete", reason: r });
+                  }}
+                  className="flex-1 rounded-lg border border-rose-500/40 bg-rose-500/10 px-2 py-1.5 text-xs text-rose-300">
+                  删除
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <VideoCommentsAdmin />
+    </section>
+  );
+}
+
+function VideoCommentsAdmin() {
+  const list = useServerFn(adminListVideoComments);
+  const del = useServerFn(adminDeleteVideoComment);
+  const qc = useQueryClient();
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin-video-comments"],
+    queryFn: () => list({ data: { limit: 30, offset: 0 } }),
+  });
+  const mut = useMutation({
+    mutationFn: (id: string) => del({ data: { id } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-video-comments"] }),
+  });
+  const items = data?.comments ?? [];
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between pt-4">
+        <h3 className="text-sm font-semibold">视频评论（最近 {data?.total ?? 0}）</h3>
+        <button onClick={() => refetch()} className="rounded-lg border border-border p-1.5"><RefreshCw className="h-3 w-3" /></button>
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-surface/60 text-left text-xs text-muted-foreground">
+            <tr><th className="px-3 py-2">作者</th><th>内容</th><th>视频</th><th>时间</th><th></th></tr>
+          </thead>
+          <tbody>
+            {isLoading && <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">加载中…</td></tr>}
+            {!isLoading && items.length === 0 && <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">暂无评论</td></tr>}
+            {items.map((c: any) => (
+              <tr key={c.id} className="border-t border-border/60 align-top">
+                <td className="px-3 py-2 text-xs">{c.author?.nickname || c.author_id.slice(0, 8)}</td>
+                <td className="max-w-[400px] py-2 text-xs">{c.content}</td>
+                <td className="py-2 text-[10px] text-muted-foreground">{c.video_id.slice(0, 8)}</td>
+                <td className="py-2 text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleString()}</td>
+                <td className="py-2 pr-3">
+                  <button onClick={() => { if (confirm("删除该评论?")) mut.mutate(c.id); }}
+                    className="rounded-md border border-rose-500/40 bg-rose-500/10 px-2 py-1 text-[11px] text-rose-300">
+                    删除
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------- Wallet & Gifts -------------------- */
+function WalletTab() {
+  const overview = useServerFn(adminWalletOverview);
+  const gifts = useServerFn(adminListGifts);
+  const ledger = useServerFn(adminListLedger);
+  const [kind, setKind] = useState<"all" | "topup" | "pro_sub" | "gift_sent" | "gift_received">("all");
+
+  const ov = useQuery({ queryKey: ["admin-wallet-overview"], queryFn: () => overview() });
+  const gq = useQuery({ queryKey: ["admin-gifts"], queryFn: () => gifts({ data: { limit: 30, offset: 0 } }) });
+  const lq = useQuery({ queryKey: ["admin-ledger", kind], queryFn: () => ledger({ data: { kind, limit: 50, offset: 0 } }) });
+
+  const o = ov.data;
+  const cards = [
+    { label: "总流通心动币", value: o?.totalCoins, icon: Wallet, color: "from-coral to-pink-500" },
+    { label: "Pro 活跃会员", value: o?.proActive, icon: BadgeCheck, color: "from-amber-500 to-yellow-500" },
+    { label: "累计充值（币）", value: o?.topupTotal, icon: ArrowUpRight, color: "from-emerald-500 to-teal-500" },
+    { label: "Pro 收入（币）", value: o?.proRevenue, icon: ShieldCheck, color: "from-violet-500 to-indigo-500" },
+    { label: "送礼总额（币）", value: o?.giftSentTotal, icon: Gift, color: "from-rose-500 to-red-500" },
+    { label: "礼物笔数", value: o?.giftCount, icon: Gift, color: "from-blue-500 to-cyan-500" },
+  ];
+
+  return (
+    <section className="space-y-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">钱包 & 礼物审计</h2>
+        <button onClick={() => { ov.refetch(); gq.refetch(); lq.refetch(); }} className="flex items-center gap-1 text-xs text-muted-foreground">
+          <RefreshCw className="h-3 w-3" /> 刷新
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        {cards.map((c) => {
+          const Icon = c.icon;
+          return (
+            <div key={c.label} className="rounded-2xl border border-border bg-surface/60 p-4">
+              <div className={`mb-2 grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br ${c.color} text-white`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <div className="text-xl font-semibold">{(c.value ?? 0).toLocaleString()}</div>
+              <div className="mt-1 text-[11px] text-muted-foreground">{c.label}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-surface/60 p-4">
+          <h3 className="mb-3 text-sm font-semibold">最近礼物</h3>
+          <div className="max-h-[420px] space-y-2 overflow-y-auto">
+            {gq.isLoading && <div className="text-center text-xs text-muted-foreground">加载中…</div>}
+            {(gq.data?.gifts ?? []).map((g: any) => (
+              <div key={g.id} className="flex items-center justify-between rounded-lg border border-border/50 bg-background/40 px-3 py-2 text-xs">
+                <div>
+                  <div className="font-medium">{g.sender_name} → {g.receiver_name}</div>
+                  <div className="text-[10px] text-muted-foreground">{g.gift_code} · {new Date(g.created_at).toLocaleString()}</div>
+                  {g.message && <div className="mt-1 text-[11px] italic text-muted-foreground">"{g.message}"</div>}
+                </div>
+                <div className="flex items-center gap-1 text-sm font-semibold text-coral">
+                  <Gift className="h-3.5 w-3.5" /> {g.coins}
+                </div>
+              </div>
+            ))}
+            {!gq.isLoading && (gq.data?.gifts ?? []).length === 0 && <div className="text-center text-xs text-muted-foreground">暂无礼物</div>}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface/60 p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold">财务流水</h3>
+            <div className="flex flex-wrap gap-1">
+              {(["all", "topup", "pro_sub", "gift_sent", "gift_received"] as const).map((k) => (
+                <button key={k} onClick={() => setKind(k)}
+                  className={`rounded-md px-2 py-1 text-[10px] ${kind === k ? "bg-coral text-white" : "border border-border text-muted-foreground"}`}>
+                  {k === "all" ? "全部" : k === "topup" ? "充值" : k === "pro_sub" ? "Pro" : k === "gift_sent" ? "送礼" : "收礼"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="max-h-[420px] space-y-1.5 overflow-y-auto">
+            {lq.isLoading && <div className="text-center text-xs text-muted-foreground">加载中…</div>}
+            {(lq.data?.ledger ?? []).map((l: any) => (
+              <div key={l.id} className="flex items-center justify-between rounded-lg border border-border/50 bg-background/40 px-3 py-1.5 text-xs">
+                <div>
+                  <div className="font-medium">{l.nickname}</div>
+                  <div className="text-[10px] text-muted-foreground">{l.kind} · {new Date(l.created_at).toLocaleString()}</div>
+                </div>
+                <div className={`flex items-center gap-0.5 font-semibold ${l.delta > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {l.delta > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                  {l.delta > 0 ? "+" : ""}{l.delta}
+                </div>
+              </div>
+            ))}
+            {!lq.isLoading && (lq.data?.ledger ?? []).length === 0 && <div className="text-center text-xs text-muted-foreground">暂无流水</div>}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
