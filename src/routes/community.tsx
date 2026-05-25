@@ -305,26 +305,24 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
 
         {/* Posts feed - Xiaohongshu masonry */}
         <section>
-          {isLoading && (
-            <div className="py-10 text-center text-sm text-muted-foreground">加载中…</div>
-          )}
-          {!isLoading && posts.length === 0 && (
-            <div className="py-16 text-center text-sm text-muted-foreground">
-              这个分类还没有动态，点击右下角发布第一条吧～
+          {isLoading ? (
+            <FeedSkeleton />
+          ) : posts.length === 0 ? (
+            <EmptyFeed />
+          ) : (
+            <div className="columns-2 md:columns-3 gap-3 [column-fill:_balance]">
+              <AnimatePresence>
+                {posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onLike={() => likeMut.mutate(post.id)}
+                    onOpen={() => setActivePostId(post.id)}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           )}
-          <div className="columns-2 md:columns-3 gap-3 [column-fill:_balance]">
-            <AnimatePresence>
-              {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onLike={() => likeMut.mutate(post.id)}
-                  onOpen={() => setActivePostId(post.id)}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
         </section>
       </main>
 
