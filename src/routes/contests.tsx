@@ -81,7 +81,7 @@ function ContestsPage() {
       {open && (
         <ComposeSheet
           onClose={() => setOpen(false)}
-          onSubmit={(v) => create.mutate(v)}
+          onSubmit={(v: any) => create.mutate(v)}
           submitting={create.isPending}
         />
       )}
