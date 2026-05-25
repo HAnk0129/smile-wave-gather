@@ -411,6 +411,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_transactions: {
+        Row: {
+          coins: number
+          conversation_id: string | null
+          created_at: string
+          gift_code: string
+          id: string
+          message: string | null
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          coins: number
+          conversation_id?: string | null
+          created_at?: string
+          gift_code: string
+          id?: string
+          message?: string | null
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          coins?: number
+          conversation_id?: string | null
+          created_at?: string
+          gift_code?: string
+          id?: string
+          message?: string | null
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string
@@ -1022,6 +1055,57 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_ledger: {
+        Row: {
+          balance_after: number
+          created_at: string
+          delta: number
+          id: string
+          kind: string
+          ref: Json
+          user_id: string
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          delta: number
+          id?: string
+          kind: string
+          ref?: Json
+          user_id: string
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          delta?: number
+          id?: string
+          kind?: string
+          ref?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          coins: number
+          id: string
+          pro_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          coins?: number
+          id: string
+          pro_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          coins?: number
+          id?: string
+          pro_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1055,6 +1139,7 @@ export type Database = {
         Args: { _payload: Json; _type: string; _user_id: string }
         Returns: undefined
       }
+      ensure_wallet: { Args: { _uid: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1071,6 +1156,18 @@ export type Database = {
         Args: { partner_id: string; source?: string }
         Returns: string
       }
+      wallet_buy_pro: { Args: { _plan: string }; Returns: string }
+      wallet_send_gift: {
+        Args: {
+          _coins: number
+          _conv_id: string
+          _gift_code: string
+          _message: string
+          _receiver_id: string
+        }
+        Returns: string
+      }
+      wallet_topup: { Args: { _amount: number; _ref?: Json }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
