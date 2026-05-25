@@ -2,10 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Heart, MessageCircle, Play, Pause, Plus, Music2, Volume2, VolumeX, Trash2 } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Play, Plus, Music2, Volume2, VolumeX, Trash2, Flag } from "lucide-react";
 import { listShortVideos, toggleVideoLike, deleteShortVideo, type ShortVideoFeedItem } from "@/lib/videos.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { VideoCommentsSheet } from "@/components/VideoCommentsSheet";
+import { ReportSheet } from "@/components/ReportSheet";
 
 export const Route = createFileRoute("/videos")({
   head: () => ({
@@ -99,6 +101,9 @@ function VideoCard({ v }: { v: ShortVideoFeedItem }) {
   const [muted, setMuted] = useState(true);
   const [liked, setLiked] = useState(v.liked_by_me);
   const [likes, setLikes] = useState(v.likes_count);
+  const [comments, setComments] = useState(v.comments_count);
+  const [openComments, setOpenComments] = useState(false);
+  const [openReport, setOpenReport] = useState(false);
   const qc = useQueryClient();
   const like = useServerFn(toggleVideoLike);
   const remove = useServerFn(deleteShortVideo);
@@ -187,9 +192,9 @@ function VideoCard({ v }: { v: ShortVideoFeedItem }) {
           <Heart className={`h-9 w-9 ${liked ? "fill-coral text-coral" : ""}`} />
           <span className="text-xs tabular-nums">{likes}</span>
         </button>
-        <button className="flex flex-col items-center" onClick={() => toast("评论功能即将上线")}>
+        <button className="flex flex-col items-center" onClick={() => setOpenComments(true)}>
           <MessageCircle className="h-9 w-9" />
-          <span className="text-xs">评论</span>
+          <span className="text-xs tabular-nums">{comments}</span>
         </button>
         <button onClick={() => setMuted((m) => !m)} className="flex flex-col items-center">
           {muted ? <VolumeX className="h-7 w-7" /> : <Volume2 className="h-7 w-7" />}
@@ -201,6 +206,12 @@ function VideoCard({ v }: { v: ShortVideoFeedItem }) {
             <span className="text-[10px]">删除</span>
           </button>
         )}
+        {me && me !== v.author_id && (
+          <button onClick={() => setOpenReport(true)} className="flex flex-col items-center text-white/70">
+            <Flag className="h-6 w-6" />
+            <span className="text-[10px]">举报</span>
+          </button>
+        )}
       </div>
 
       {/* bottom info */}
@@ -208,6 +219,21 @@ function VideoCard({ v }: { v: ShortVideoFeedItem }) {
         <div className="font-display text-base font-semibold">@{v.author.nickname}{v.author.city ? ` · ${v.author.city}` : ""}</div>
         {v.caption && <p className="mt-1 line-clamp-3 text-sm text-white/90">{v.caption}</p>}
       </div>
+
+      <VideoCommentsSheet
+        open={openComments}
+        onClose={() => setOpenComments(false)}
+        videoId={v.id}
+        me={me}
+        onCountChange={(d) => setComments((n) => Math.max(0, n + d))}
+      />
+      <ReportSheet
+        open={openReport}
+        onClose={() => setOpenReport(false)}
+        targetType="video"
+        targetId={v.id}
+        authorId={v.author_id}
+      />
     </div>
   );
 }

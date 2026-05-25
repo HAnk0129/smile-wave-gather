@@ -60,7 +60,7 @@ const REPORT_REASONS = [
   "other",
 ] as const;
 
-const TARGET_TYPES = ["user", "post", "treehole", "message", "comment"] as const;
+const TARGET_TYPES = ["user", "post", "treehole", "message", "comment", "video", "video_comment"] as const;
 
 /** Create a report against another user, post, message, etc. */
 export const reportContent = createServerFn({ method: "POST" })

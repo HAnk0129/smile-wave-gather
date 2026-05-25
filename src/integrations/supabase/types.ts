@@ -853,6 +853,30 @@ export type Database = {
         }
         Relationships: []
       }
+      short_video_comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          video_id: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          video_id: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
       short_video_likes: {
         Row: {
           created_at: string
@@ -883,6 +907,7 @@ export type Database = {
         Row: {
           author_id: string
           caption: string
+          comments_count: number
           cover_url: string | null
           created_at: string
           duration_sec: number | null
@@ -898,6 +923,7 @@ export type Database = {
         Insert: {
           author_id: string
           caption?: string
+          comments_count?: number
           cover_url?: string | null
           created_at?: string
           duration_sec?: number | null
@@ -913,6 +939,7 @@ export type Database = {
         Update: {
           author_id?: string
           caption?: string
+          comments_count?: number
           cover_url?: string | null
           created_at?: string
           duration_sec?: number | null

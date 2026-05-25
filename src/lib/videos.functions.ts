@@ -51,6 +51,7 @@ export type ShortVideoFeedItem = {
   views_count: number;
   created_at: string;
   liked_by_me: boolean;
+  comments_count: number;
   author: {
     id: string;
     nickname: string;
@@ -74,7 +75,7 @@ export const listShortVideos = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     let q = supabase
       .from("short_videos")
-      .select("id, author_id, video_url, cover_url, caption, duration_sec, likes_count, views_count, created_at, status")
+      .select("id, author_id, video_url, cover_url, caption, duration_sec, likes_count, views_count, comments_count, created_at, status")
       .eq("status", "published")
       .order("created_at", { ascending: false })
       .limit(data.limit);
@@ -111,6 +112,7 @@ export const listShortVideos = createServerFn({ method: "POST" })
           duration_sec: r.duration_sec,
           likes_count: r.likes_count,
           views_count: r.views_count,
+          comments_count: r.comments_count ?? 0,
           created_at: r.created_at,
           liked_by_me: likedSet.has(r.id),
           author: {
@@ -194,6 +196,91 @@ export const deleteVoiceCard = createServerFn({ method: "POST" })
       .from("profiles")
       .update({ voice_card_url: null, voice_card_duration: null } as never)
       .eq("id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/* ===== 短视频评论 ===== */
+
+export type ShortVideoComment = {
+  id: string;
+  video_id: string;
+  author_id: string;
+  content: string;
+  created_at: string;
+  author_nickname: string | null;
+  author_avatar: string | null;
+};
+
+export const listVideoComments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ videoId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }): Promise<{ comments: ShortVideoComment[] }> => {
+    const { supabase } = context;
+    const { data: rows, error } = await supabase
+      .from("short_video_comments")
+      .select("id, video_id, author_id, content, created_at")
+      .eq("video_id", data.videoId)
+      .order("created_at", { ascending: true })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.author_id as string)));
+    const profMap = new Map<string, any>();
+    if (ids.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, nickname, photos, main_idx")
+        .in("id", ids);
+      (profs ?? []).forEach((p: any) => profMap.set(p.id, p));
+    }
+    return {
+      comments: (rows ?? []).map((r: any) => {
+        const p = profMap.get(r.author_id);
+        const photos = Array.isArray(p?.photos) ? (p.photos as string[]) : [];
+        return {
+          id: r.id,
+          video_id: r.video_id,
+          author_id: r.author_id,
+          content: r.content,
+          created_at: r.created_at,
+          author_nickname: p?.nickname ?? null,
+          author_avatar: photos[p?.main_idx ?? 0] || photos[0] || null,
+        };
+      }),
+    };
+  });
+
+export const addVideoComment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        videoId: z.string().uuid(),
+        content: z.string().trim().min(1).max(500),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("short_video_comments")
+      .insert({ video_id: data.videoId, author_id: userId, content: data.content } as never)
+      .select("id, video_id, author_id, content, created_at")
+      .single();
+    if (error) throw new Error(error.message);
+    return { comment: row };
+  });
+
+export const deleteVideoComment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("short_video_comments")
+      .delete()
+      .eq("id", data.id)
+      .eq("author_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
