@@ -13,6 +13,7 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as VoiceCardRouteImport } from './routes/voice-card'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as VenuesRouteImport } from './routes/venues'
 import { Route as RadarRouteImport } from './routes/radar'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -56,6 +57,11 @@ const VideosRoute = VideosRouteImport.update({
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VenuesRoute = VenuesRouteImport.update({
+  id: '/venues',
+  path: '/venues',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RadarRoute = RadarRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
+  '/venues': typeof VenuesRoute
   '/verify': typeof VerifyRoute
   '/videos': typeof VideosRouteWithChildren
   '/voice-card': typeof VoiceCardRoute
@@ -227,6 +234,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
+  '/venues': typeof VenuesRoute
   '/verify': typeof VerifyRoute
   '/videos': typeof VideosRouteWithChildren
   '/voice-card': typeof VoiceCardRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
+  '/venues': typeof VenuesRoute
   '/verify': typeof VerifyRoute
   '/videos': typeof VideosRouteWithChildren
   '/voice-card': typeof VoiceCardRoute
@@ -290,6 +299,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/radar'
+    | '/venues'
     | '/verify'
     | '/videos'
     | '/voice-card'
@@ -320,6 +330,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/radar'
+    | '/venues'
     | '/verify'
     | '/videos'
     | '/voice-card'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/radar'
+    | '/venues'
     | '/verify'
     | '/videos'
     | '/voice-card'
@@ -381,6 +393,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   RadarRoute: typeof RadarRoute
+  VenuesRoute: typeof VenuesRoute
   VerifyRoute: typeof VerifyRoute
   VideosRoute: typeof VideosRouteWithChildren
   VoiceCardRoute: typeof VoiceCardRoute
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/verify'
       fullPath: '/verify'
       preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/venues': {
+      id: '/venues'
+      path: '/venues'
+      fullPath: '/venues'
+      preLoaderRoute: typeof VenuesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/radar': {
@@ -654,6 +674,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   RadarRoute: RadarRoute,
+  VenuesRoute: VenuesRoute,
   VerifyRoute: VerifyRoute,
   VideosRoute: VideosRouteWithChildren,
   VoiceCardRoute: VoiceCardRoute,
