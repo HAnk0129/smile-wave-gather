@@ -274,17 +274,8 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
         </section>
       </main>
 
-      {/* Floating compose button */}
-      <button
-        onClick={() => setComposeOpen(true)}
-        className="fixed bottom-24 right-5 z-40 size-14 rounded-full bg-gradient-to-br from-coral to-sun text-background shadow-2xl glow-coral flex items-center justify-center active:scale-95 transition"
-        aria-label="发布内容"
-      >
-        <Plus className="size-7" />
-      </button>
-
       {/* Bottom nav */}
-      <BottomNav />
+      <BottomNav onCompose={() => setComposeOpen(true)} />
 
       {/* Campus picker */}
       <AnimatePresence>
