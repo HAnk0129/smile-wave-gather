@@ -4,6 +4,7 @@ import { ArrowLeft, Heart, Loader2, Mail, Phone as PhoneIcon, KeyRound } from "l
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { track, Events } from "@/lib/analytics";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -63,11 +64,13 @@ function AuthPage() {
           options: { emailRedirectTo: `${window.location.origin}/onboarding` },
         });
         if (error) throw error;
+        track(Events.SignUp, { method: "email" });
         toast.success("注册成功，请前往邮箱完成验证后再登录");
         setMode("login");
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        track(Events.SignIn, { method: "email" });
         toast.success("登录成功");
         await routeAfterLogin(data.user?.id);
       }
@@ -116,6 +119,7 @@ function AuthPage() {
         type: "sms",
       });
       if (error) throw error;
+      track(Events.SignIn, { method: "phone_otp" });
       toast.success("登录成功");
       await routeAfterLogin(data.user?.id);
     } catch (e: unknown) {
@@ -129,6 +133,7 @@ function AuthPage() {
   const handleGoogle = async () => {
     setLoading("google");
     try {
+      track(Events.SignIn, { method: "google", stage: "started" });
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin + search.redirect,
       });

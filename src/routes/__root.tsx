@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "sonner";
 import { useNotificationsRealtime } from "@/hooks/useNotificationsRealtime";
+import { initAnalytics, trackPageview, identifyUser, resetAnalytics } from "@/lib/analytics";
 
 import appCss from "../styles.css?url";
 
@@ -122,10 +123,24 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthSync />
       <NotificationsBridge />
+      <AnalyticsBridge />
       <Outlet />
       <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
+}
+
+function AnalyticsBridge() {
+  const router = useRouter();
+  useEffect(() => {
+    initAnalytics();
+    trackPageview(window.location.pathname);
+    const unsub = router.subscribe("onResolved", () => {
+      trackPageview(window.location.pathname);
+    });
+    return () => unsub();
+  }, [router]);
+  return null;
 }
 
 function NotificationsBridge() {
@@ -137,9 +152,14 @@ function AuthSync() {
   const router = useRouter();
   const queryClient = useQueryClient();
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       router.invalidate();
       queryClient.invalidateQueries();
+      if (session?.user) {
+        identifyUser(session.user.id, { email: session.user.email });
+      } else if (event === "SIGNED_OUT") {
+        resetAnalytics();
+      }
     });
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
