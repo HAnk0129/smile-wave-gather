@@ -121,6 +121,132 @@ export const listMyCampusInvites = createServerFn({ method: "GET" })
     return { invites: (rows ?? []) as CampusInvite[] };
   });
 
+/** Search profiles by nickname to invite into a campus.
+ *  Excludes the current user and existing members of the campus. */
+export const searchInviteCandidates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        campus_id: z.string().uuid(),
+        q: z.string().trim().max(40).optional().default(""),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Existing campus members to exclude.
+    const { data: members } = await supabase
+      .from("campus_memberships")
+      .select("user_id")
+      .eq("campus_id", data.campus_id);
+    const memberIds = new Set<string>((members ?? []).map((m: any) => m.user_id));
+    memberIds.add(userId);
+
+    let query = supabase
+      .from("profiles")
+      .select("id, nickname, photos, main_idx, city")
+      .eq("onboarded", true)
+      .limit(30);
+    if (data.q) query = query.ilike("nickname", `%${data.q}%`);
+    const { data: rows, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const users = (rows ?? [])
+      .filter((r: any) => !memberIds.has(r.id))
+      .map((r: any) => {
+        const photos = Array.isArray(r.photos) ? (r.photos as string[]) : [];
+        return {
+          id: r.id as string,
+          nickname: (r.nickname as string | null) ?? null,
+          city: (r.city as string | null) ?? null,
+          avatar: photos[r.main_idx ?? 0] || photos[0] || null,
+        };
+      });
+    return { users };
+  });
+
+/** Generate a campus invite and DM it to each selected recipient.
+ *  Uses one shared code (sized to recipients) so they each click their own message. */
+export const inviteUsersToCampus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        campus_id: z.string().uuid(),
+        recipient_ids: z.array(z.string().uuid()).min(1).max(20),
+        expires_in_hours: z.number().int().min(1).max(24 * 60).default(168),
+        note: z.string().trim().max(200).optional().default(""),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Campus name for the message body.
+    const { data: campus } = await supabase
+      .from("campuses")
+      .select("name")
+      .eq("id", data.campus_id)
+      .maybeSingle();
+    const campusName = (campus?.name as string | undefined) ?? "我的园区";
+
+    // Create one invite code with capacity = number of recipients.
+    const { data: invite, error: invErr } = await supabase.rpc("create_campus_invite", {
+      p_campus_id: data.campus_id,
+      p_max_uses: data.recipient_ids.length,
+      p_expires_in_hours: data.expires_in_hours,
+    });
+    if (invErr) {
+      if ((invErr.message || "").includes("NOT_A_MEMBER"))
+        throw new Error("你还不是该园区的成员");
+      throw new Error(invErr.message || "生成邀请码失败");
+    }
+    const code = (invite as CampusInvite).code;
+
+    // Build the message body.
+    const body = [
+      `📮 邀请你加入「${campusName}」社区`,
+      `邀请码：${code}`,
+      data.note ? `\n${data.note}` : "",
+      `\n在「社区」页输入邀请码即可加入。`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const results: { recipient_id: string; ok: boolean; error?: string }[] = [];
+    for (const rid of data.recipient_ids) {
+      if (rid === userId) {
+        results.push({ recipient_id: rid, ok: false, error: "不能邀请自己" });
+        continue;
+      }
+      try {
+        const { data: convId, error: convErr } = await supabase.rpc("start_conversation", {
+          partner_id: rid,
+          source: "match",
+        });
+        if (convErr) throw convErr;
+        const { error: msgErr } = await supabase.from("messages").insert({
+          conversation_id: convId as string,
+          sender_id: userId,
+          content: body,
+        });
+        if (msgErr) throw msgErr;
+        results.push({ recipient_id: rid, ok: true });
+      } catch (e: any) {
+        results.push({ recipient_id: rid, ok: false, error: e?.message ?? "发送失败" });
+      }
+    }
+
+    return {
+      invite: invite as CampusInvite,
+      sent: results.filter((r) => r.ok).length,
+      failed: results.filter((r) => !r.ok).length,
+      results,
+    };
+  });
+
 // ---------------- admin ----------------
 
 export const adminListCampuses = createServerFn({ method: "GET" })
