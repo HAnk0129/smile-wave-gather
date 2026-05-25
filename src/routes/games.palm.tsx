@@ -1,8 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Hand, Heart, Loader2, RefreshCw, Sparkles, Upload, Zap } from "lucide-react";
-import { readPalm } from "@/lib/palm.functions";
+import { ArrowLeft, Check, Hand, Heart, Loader2, RefreshCw, Share2, Sparkles, Upload, Zap } from "lucide-react";
+import { toast } from "sonner";
+import {
+  getPalmQuota,
+  revealPalm,
+  verifyPalm,
+  type PalmReport,
+} from "@/lib/palm.functions";
 
 export const Route = createFileRoute("/games/palm")({
   head: () => ({
@@ -16,15 +23,29 @@ export const Route = createFileRoute("/games/palm")({
   component: PalmPage,
 });
 
-type Report = Awaited<ReturnType<typeof readPalm>>;
+type Report = PalmReport;
+type Stage = "idle" | "share" | "report";
 
 function PalmPage() {
-  const fn = useServerFn(readPalm);
+  const verifyFn = useServerFn(verifyPalm);
+  const revealFn = useServerFn(revealPalm);
+  const quotaFn = useServerFn(getPalmQuota);
+
   const [preview, setPreview] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stage, setStage] = useState<Stage>("idle");
+  const [readingId, setReadingId] = useState<string | null>(null);
+  const [shareConfirmed, setShareConfirmed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const quota = useQuery({
+    queryKey: ["palm-quota"],
+    queryFn: () => quotaFn({}),
+  });
+  const remaining = quota.data?.remaining ?? 0;
+  const limit = quota.data?.limit ?? 2;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -33,7 +54,6 @@ function PalmPage() {
   const onFile = async (file: File) => {
     setError(null);
     setReport(null);
-    // Downscale for payload size
     const dataUrl = await compressImage(file, 1024, 0.85);
     setPreview(dataUrl);
   };
@@ -43,10 +63,27 @@ function PalmPage() {
     setLoading(true);
     setError(null);
     try {
-      const r = await fn({ data: { imageDataUrl: preview } });
-      setReport(r);
+      const r = await verifyFn({ data: { imageDataUrl: preview } });
+      setReadingId(r.readingId);
+      setStage("share");
+      void quota.refetch();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "解析失败，请重试");
+      setError(e instanceof Error ? e.message : "识别失败，请重试");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reveal = async () => {
+    if (!readingId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await revealFn({ data: { readingId } });
+      setReport(r.preset);
+      setStage("report");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "查看失败，请重试");
     } finally {
       setLoading(false);
     }
@@ -56,8 +93,13 @@ function PalmPage() {
     setPreview(null);
     setReport(null);
     setError(null);
+    setStage("idle");
+    setReadingId(null);
+    setShareConfirmed(false);
     if (inputRef.current) inputRef.current.value = "";
   };
+
+  const outOfQuota = !quota.isLoading && remaining <= 0 && stage === "idle";
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -81,18 +123,22 @@ function PalmPage() {
       </header>
 
       <section className="relative mx-auto max-w-4xl px-6 pt-8 md:pt-10 pb-20">
-        {!report && (
+        {stage === "idle" && (
           <div className="relative rounded-[32px] border border-border bg-surface/70 backdrop-blur p-5 md:p-8">
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground">
                   <Sparkles className="size-3.5 text-coral" />
-                  <span>Powered by Pulse AI · 仅供娱乐</span>
+                  <span>Powered by Pulse AI · 仅供娱乐 · 每人 {limit} 次</span>
                 </div>
                 <h1 className="mt-4 font-display text-3xl md:text-5xl font-bold tracking-tight leading-[0.98]">
                   上传手掌，马上开始
                   <span className="font-serif-display italic text-gradient-hero"> AI 看手相</span>
                 </h1>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  剩余测试机会：<span className="font-bold text-foreground">{remaining}/{limit}</span> ·
+                  分享到朋友圈解锁结果
+                </p>
               </div>
             </div>
 
@@ -125,18 +171,20 @@ function PalmPage() {
 
                 <button
                   onClick={analyze}
-                  disabled={!preview || loading}
+                  disabled={!preview || loading || outOfQuota}
                   className="mt-8 w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-primary text-primary-foreground font-semibold glow-coral hover:scale-[1.01] active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      AI 解读中…
+                      正在识别手掌…
                     </>
+                  ) : outOfQuota ? (
+                    <>已用完 {limit} 次机会</>
                   ) : (
                     <>
                       <Sparkles className="size-4" />
-                      开始解读手相
+                      开始识别手相
                     </>
                   )}
                 </button>
@@ -149,7 +197,18 @@ function PalmPage() {
           </div>
         )}
 
-        {report && preview && (
+        {stage === "share" && preview && (
+          <ShareGate
+            preview={preview}
+            confirmed={shareConfirmed}
+            onConfirm={() => setShareConfirmed(true)}
+            onReveal={reveal}
+            loading={loading}
+            error={error}
+          />
+        )}
+
+        {stage === "report" && report && preview && (
           <ReportView report={report} preview={preview} onReset={reset} />
         )}
       </section>
