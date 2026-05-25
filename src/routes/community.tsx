@@ -6,8 +6,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Heart, MessageCircle, Bookmark, Share2, MapPin, ChevronDown, Plus,
-  Flame, TrendingUp, Search, Home, Compass, Trophy, User, X, Image as ImageIcon,
+  Heart, MessageCircle, MapPin, ChevronDown, Plus,
+  Flame, TrendingUp, Compass, Trophy, User, X, Image as ImageIcon,
   Tag, ShoppingBag, MessageSquare, HelpCircle, KeyRound, Copy, Check, School,
 } from "lucide-react";
 import {
