@@ -119,7 +119,6 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   const listFn = useServerFn(listCommunityPosts);
   const likeFn = useServerFn(toggleCommunityLike);
   const qc = useQueryClient();
-  const myCampusesFn = useServerFn(listMyCampuses);
 
   const queryKey = ["community-posts", campus.id, activeCat] as const;
   const { data, isLoading } = useQuery({
