@@ -606,8 +606,38 @@ function RealChat({
 
       <div className="sticky bottom-0 border-t border-border/60 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-md items-center gap-2 px-3 py-3">
-          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><Smile className="h-4 w-4" /></button>
-          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><ImageIcon className="h-4 w-4" /></button>
+          <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+            <PopoverTrigger asChild>
+              <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground hover:text-foreground" aria-label="表情">
+                <Smile className="h-4 w-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="top" className="w-72 p-2">
+              <div className="grid grid-cols-8 gap-1 text-xl">
+                {EMOJI_LIST.map((e) => (
+                  <button key={e} onClick={() => insertEmoji(e)} className="rounded-md p-1 hover:bg-surface" aria-label={e}>
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+          <button
+            type="button"
+            onClick={handlePickImage}
+            disabled={uploadingImage}
+            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground hover:text-foreground disabled:opacity-50"
+            aria-label="发送图片"
+          >
+            {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+          </button>
           <div className="flex flex-1 items-center rounded-full border border-border bg-surface/70 px-3">
             <input
               value={input}
