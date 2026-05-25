@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type NotificationItem = {
   id: string;
   type: string;
-  payload: Record<string, unknown>;
+  payload: any;
   read_at: string | null;
   created_at: string;
 };
