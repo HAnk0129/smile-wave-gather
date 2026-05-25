@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "sonner";
 import { useNotificationsRealtime } from "@/hooks/useNotificationsRealtime";
 import { initAnalytics, trackPageview, identifyUser, resetAnalytics } from "@/lib/analytics";
+import { SideRail } from "@/components/SideRail";
 
 import appCss from "../styles.css?url";
 
@@ -125,6 +126,7 @@ function RootComponent() {
       <NotificationsBridge />
       <AnalyticsBridge />
       <Outlet />
+      <SideRail />
       <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
