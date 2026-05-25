@@ -179,14 +179,6 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
       <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/80 border-b border-border">
         <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => setCampusOpen(true)}
-            className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-surface/80 border border-border text-sm font-medium max-w-[55%]"
-          >
-            <School className="size-3.5 text-coral shrink-0" />
-            <span className="truncate">{campus.name}</span>
-            <ChevronDown className="size-3.5 text-muted-foreground shrink-0" />
-          </button>
-          <button
             onClick={() => setInviteOpen(true)}
             className="ml-auto h-9 px-3 rounded-full bg-surface/80 border border-border text-xs inline-flex items-center gap-1.5 hover:border-coral/40"
             title="生成邀请码"
