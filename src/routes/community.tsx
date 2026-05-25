@@ -113,11 +113,13 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   const [campusOpen, setCampusOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
 
   const listFn = useServerFn(listCommunityPosts);
   const likeFn = useServerFn(toggleCommunityLike);
   const qc = useQueryClient();
+  const myCampusesFn = useServerFn(listMyCampuses);
 
   const queryKey = ["community-posts", campus.id, activeCat] as const;
   const { data, isLoading } = useQuery({
