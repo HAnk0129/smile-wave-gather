@@ -63,7 +63,7 @@ function MePage() {
             </div>
           </div>
         </div>
-        <BottomNav />
+        <BottomNav active="me" />
       </Shell>
     );
   }
@@ -252,7 +252,7 @@ function MePage() {
         <p className="mt-4 text-center text-[11px] text-muted-foreground">Pulse v0.1 · 让相遇变得有趣</p>
       </main>
 
-      <BottomNav />
+      <BottomNav active="me" />
     </Shell>
   );
 }
