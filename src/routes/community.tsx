@@ -60,31 +60,58 @@ function heightFor(id: string): "tall" | "mid" | "short" {
 function CommunityPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [roleReady, setRoleReady] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const authRunRef = useRef(0);
+
   useEffect(() => {
-    const check = async (uid: string | undefined) => {
-      if (!uid) { setIsAdmin(false); return; }
-      const { data } = await supabase
-        .from("user_roles").select("role")
-        .eq("user_id", uid).eq("role", "admin").maybeSingle();
-      setIsAdmin(!!data);
+    let mounted = true;
+    const syncAuth = async (uid: string | undefined) => {
+      const runId = ++authRunRef.current;
+      if (!mounted) return;
+      setAuthed(!!uid);
+      setUserId(uid ?? null);
+      setIsAdmin(false);
+
+      if (!uid) {
+        setRoleReady(true);
+        return;
+      }
+
+      setRoleReady(false);
+      try {
+        const { data, error } = await supabase
+          .from("user_roles").select("role")
+          .eq("user_id", uid).eq("role", "admin").maybeSingle();
+        if (error) throw error;
+        if (mounted && runId === authRunRef.current) setIsAdmin(!!data);
+      } catch (error) {
+        console.warn("检查社区权限失败，已按普通用户继续加载", error);
+        if (mounted && runId === authRunRef.current) setIsAdmin(false);
+      } finally {
+        if (mounted && runId === authRunRef.current) setRoleReady(true);
+      }
     };
-    supabase.auth.getSession().then(({ data }) => {
-      setAuthed(!!data.session);
-      check(data.session?.user.id);
-    });
+    supabase.auth.getSession()
+      .then(({ data }) => syncAuth(data.session?.user.id))
+      .catch(() => syncAuth(undefined));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setAuthed(!!s);
-      check(s?.user.id);
+      window.setTimeout(() => void syncAuth(s?.user.id), 0);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const myCampusesFn = useServerFn(listMyCampuses);
   const allCampusesFn = useServerFn(listAllCampuses);
-  const { data: campusData, isLoading: campusLoading, refetch: refetchCampuses } = useQuery({
-    queryKey: ["my-campuses", isAdmin],
+  const { data: campusData, isPending: campusPending, isError: campusIsError, error: campusError, refetch: refetchCampuses } = useQuery({
+    queryKey: ["my-campuses", userId, isAdmin],
     queryFn: () => (isAdmin ? allCampusesFn() : myCampusesFn()),
-    enabled: authed === true,
+    enabled: authed === true && roleReady,
+    placeholderData: (previousData) => previousData,
+    retry: 2,
   });
   const myCampuses = campusData?.campuses ?? [];
 
@@ -102,8 +129,22 @@ function CommunityPage() {
       </div>
     );
   }
-  if (authed === null || campusLoading) {
+  if (authed === null || (authed === true && (!roleReady || campusPending))) {
     return <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">加载中…</div>;
+  }
+  if (campusIsError) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+        <div className="max-w-sm w-full text-center space-y-4">
+          <School className="size-12 mx-auto text-coral" />
+          <h1 className="font-display text-xl font-bold">社区加载失败</h1>
+          <p className="text-sm text-muted-foreground">{campusError?.message || "网络开小差了，请重试。"}</p>
+          <button onClick={() => refetchCampuses()} className="inline-block h-11 px-6 rounded-full bg-coral text-background font-semibold">
+            重新加载
+          </button>
+        </div>
+      </div>
+    );
   }
   if (myCampuses.length === 0) {
     return <JoinCampusGate onJoined={() => refetchCampuses()} />;
