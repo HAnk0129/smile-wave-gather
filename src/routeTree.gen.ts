@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as VoiceCardRouteImport } from './routes/voice-card'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RadarRouteImport } from './routes/radar'
@@ -37,6 +38,11 @@ import { Route as ExploreTreeholeRouteImport } from './routes/explore.treehole'
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VoiceCardRoute = VoiceCardRouteImport.update({
+  id: '/voice-card',
+  path: '/voice-card',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VideosRoute = VideosRouteImport.update({
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
   '/videos': typeof VideosRouteWithChildren
+  '/voice-card': typeof VoiceCardRoute
   '/wallet': typeof WalletRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
   '/videos': typeof VideosRouteWithChildren
+  '/voice-card': typeof VoiceCardRoute
   '/wallet': typeof WalletRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
   '/videos': typeof VideosRouteWithChildren
+  '/voice-card': typeof VoiceCardRoute
   '/wallet': typeof WalletRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/radar'
     | '/verify'
     | '/videos'
+    | '/voice-card'
     | '/wallet'
     | '/explore/treehole'
     | '/explore/video'
@@ -280,6 +290,7 @@ export interface FileRouteTypes {
     | '/radar'
     | '/verify'
     | '/videos'
+    | '/voice-card'
     | '/wallet'
     | '/explore/treehole'
     | '/explore/video'
@@ -306,6 +317,7 @@ export interface FileRouteTypes {
     | '/radar'
     | '/verify'
     | '/videos'
+    | '/voice-card'
     | '/wallet'
     | '/explore/treehole'
     | '/explore/video'
@@ -333,6 +345,7 @@ export interface RootRouteChildren {
   RadarRoute: typeof RadarRoute
   VerifyRoute: typeof VerifyRoute
   VideosRoute: typeof VideosRouteWithChildren
+  VoiceCardRoute: typeof VoiceCardRoute
   WalletRoute: typeof WalletRoute
 }
 
@@ -343,6 +356,13 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/voice-card': {
+      id: '/voice-card'
+      path: '/voice-card'
+      fullPath: '/voice-card'
+      preLoaderRoute: typeof VoiceCardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/videos': {
@@ -565,6 +585,7 @@ const rootRouteChildren: RootRouteChildren = {
   RadarRoute: RadarRoute,
   VerifyRoute: VerifyRoute,
   VideosRoute: VideosRouteWithChildren,
+  VoiceCardRoute: VoiceCardRoute,
   WalletRoute: WalletRoute,
 }
 export const routeTree = rootRouteImport
