@@ -5,7 +5,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal, Check, CheckCheck } from "lucide-react";
 import { getConversation, sendMessage as sendMessageFn, markConversationRead } from "@/lib/chat.functions";
+import { blockUser, reportContent } from "@/lib/moderation.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 type ChatSearch = {
   conv?: string;
@@ -234,7 +238,12 @@ function RealChat({
   const fetchConv = useServerFn(getConversation);
   const sendFn = useServerFn(sendMessageFn);
   const markReadFn = useServerFn(markConversationRead);
+  const blockFn = useServerFn(blockUser);
+  const reportFn = useServerFn(reportContent);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<"spam" | "harassment" | "nudity" | "hate" | "scam" | "other">("harassment");
+  const [reportDetail, setReportDetail] = useState("");
 
   const queryKey = ["conversation", convId] as const;
   const { data, isLoading, error } = useQuery({
@@ -330,6 +339,32 @@ function RealChat({
   const partnerCity = data?.partner.city || "";
   const me = data?.me;
   const source = data?.source || from || "match";
+  const partnerId = data?.partner.id;
+
+  const handleBlock = async () => {
+    if (!partnerId) return;
+    if (!confirm(`确定要拉黑 ${partnerName} 吗？对方将不会出现在你的消息和发现里。`)) return;
+    try {
+      await blockFn({ data: { targetId: partnerId } });
+      toast.success("已拉黑");
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+      navigate({ to: "/messages" });
+    } catch (e: any) {
+      toast.error(e?.message || "拉黑失败");
+    }
+  };
+
+  const handleSubmitReport = async () => {
+    if (!partnerId) return;
+    try {
+      await reportFn({ data: { targetType: "user", targetId: partnerId, reason: reportReason, detail: reportDetail || undefined } });
+      toast.success("举报已提交，我们会尽快处理");
+      setReportOpen(false);
+      setReportDetail("");
+    } catch (e: any) {
+      toast.error(e?.message || "举报失败");
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -354,9 +389,61 @@ function RealChat({
           </div>
           <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><Phone className="h-4 w-4" /></button>
           <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><Video className="h-4 w-4" /></button>
-          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground" aria-label="更多操作">
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuLabel className="text-xs">会话操作</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setReportOpen(true)} disabled={!partnerId}>
+                举报该用户
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleBlock} disabled={!partnerId} className="text-destructive focus:text-destructive">
+                拉黑该用户
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
+
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>举报 {partnerName}</DialogTitle>
+            <DialogDescription>请选择原因，我们会人工复核。恶意举报将影响你的账号信用。</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {([
+              ["harassment", "骚扰 / 辱骂"],
+              ["spam", "广告 / 营销"],
+              ["nudity", "色情内容"],
+              ["hate", "仇恨 / 歧视"],
+              ["scam", "诈骗 / 引流"],
+              ["other", "其他"],
+            ] as const).map(([k, label]) => (
+              <label key={k} className="flex cursor-pointer items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm has-[:checked]:border-coral has-[:checked]:bg-coral/10">
+                <input type="radio" name="reason" checked={reportReason === k} onChange={() => setReportReason(k)} />
+                {label}
+              </label>
+            ))}
+            <textarea
+              value={reportDetail}
+              onChange={(e) => setReportDetail(e.target.value)}
+              placeholder="补充说明（可选，最多 500 字）"
+              maxLength={500}
+              className="mt-2 w-full resize-none rounded-xl border border-border bg-surface/60 p-3 text-sm outline-none placeholder:text-muted-foreground/60"
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <button onClick={() => setReportOpen(false)} className="rounded-full border border-border px-4 py-2 text-sm">取消</button>
+            <button onClick={handleSubmitReport} className="rounded-full bg-coral px-4 py-2 text-sm font-semibold text-background">提交举报</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="mx-auto w-full max-w-md px-4 pt-3">
         <div className="rounded-2xl border border-coral/30 bg-gradient-to-r from-coral/15 via-sun/10 to-mint/15 p-3">
