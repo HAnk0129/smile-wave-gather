@@ -266,7 +266,8 @@ export const startConversation = createServerFn({ method: "POST" })
       .maybeSingle();
     if (blockRow) throw new Error("无法发起对话：你们之间存在拉黑关系");
     // honor partner's privacy: allow_messages
-    const { data: priv } = await supabase
+    // profiles_privacy SELECT is owner-only; use admin client for trusted cross-user check.
+    const { data: priv } = await supabaseAdmin
       .from("profiles_privacy")
       .select("allow_messages")
       .eq("id", data.partnerId)
@@ -329,7 +330,7 @@ export const searchUsersByNickname = createServerFn({ method: "POST" })
     // exclude users who set searchable=false, and users blocking me (or blocked by me)
     const [{ data: privRows }, { data: blockRows }] = await Promise.all([
       candidateIds.length
-        ? supabase.from("profiles_privacy").select("id, searchable, hide_city").in("id", candidateIds)
+        ? supabaseAdmin.from("profiles_privacy").select("id, searchable, hide_city").in("id", candidateIds)
         : Promise.resolve({ data: [] as any[] }),
       supabase.from("blocks").select("blocker_id, blocked_id")
         .or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`),
