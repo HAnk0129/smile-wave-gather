@@ -268,7 +268,7 @@ function Onboarding() {
         await saveProfileFn({ data: data as unknown as Record<string, unknown> });
         try { localStorage.setItem("pulse_profile", JSON.stringify(data)); } catch {}
         toast.success("资料已保存，开始遇见");
-        navigate({ to: "/discover" });
+        navigate({ to: "/me" });
       } catch (e: unknown) {
         toast.error(e instanceof Error ? e.message : "保存失败，请重试");
       } finally {
