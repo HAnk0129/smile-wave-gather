@@ -29,6 +29,8 @@ import {
   listAllCampuses,
   redeemCampusInvite,
   createCampusInvite,
+  searchInviteCandidates,
+  inviteUsersToCampus,
   type Campus,
 } from "@/lib/campus.functions";
 
