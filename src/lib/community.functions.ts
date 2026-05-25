@@ -26,6 +26,8 @@ export type CommunityPost = {
   created_at: string;
   liked_by_me: boolean;
   media: { url: string; type: "image" | "video" }[];
+  author_nickname: string | null;
+  author_avatar: string | null;
 };
 
 export const listCommunityPosts = createServerFn({ method: "GET" })
@@ -63,6 +65,23 @@ export const listCommunityPosts = createServerFn({ method: "GET" })
       likedSet = new Set((likes ?? []).map((l) => l.post_id as string));
     }
 
+    const authorIds = Array.from(new Set((rows ?? []).map((r: any) => r.author_id as string)));
+    let authorMap = new Map<string, { nickname: string | null; avatar: string | null }>();
+    if (authorIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, nickname, photos, main_idx")
+        .in("id", authorIds);
+      for (const p of profs ?? []) {
+        const photos = Array.isArray((p as any).photos) ? ((p as any).photos as string[]) : [];
+        const idx = (p as any).main_idx ?? 0;
+        authorMap.set((p as any).id, {
+          nickname: (p as any).nickname ?? null,
+          avatar: photos[idx] ?? photos[0] ?? null,
+        });
+      }
+    }
+
     return {
       posts: (rows ?? []).map<CommunityPost>((r: any) => ({
         id: r.id,
@@ -80,6 +99,8 @@ export const listCommunityPosts = createServerFn({ method: "GET" })
         created_at: r.created_at,
         liked_by_me: likedSet.has(r.id),
         media: Array.isArray(r.media) ? (r.media as any) : [],
+        author_nickname: authorMap.get(r.author_id)?.nickname ?? null,
+        author_avatar: authorMap.get(r.author_id)?.avatar ?? null,
       })),
     };
   });
@@ -178,6 +199,7 @@ export type CommunityComment = {
   content: string;
   created_at: string;
   author_nickname: string | null;
+  author_avatar: string | null;
 };
 
 export const listCommunityComments = createServerFn({ method: "GET" })
@@ -196,13 +218,20 @@ export const listCommunityComments = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     const authorIds = Array.from(new Set((rows ?? []).map((r) => r.author_id as string)));
-    let nameMap = new Map<string, string | null>();
+    let profMap = new Map<string, { nickname: string | null; avatar: string | null }>();
     if (authorIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, nickname")
+        .select("id, nickname, photos, main_idx")
         .in("id", authorIds);
-      nameMap = new Map((profiles ?? []).map((p: any) => [p.id, p.nickname ?? null]));
+      for (const p of profiles ?? []) {
+        const photos = Array.isArray((p as any).photos) ? ((p as any).photos as string[]) : [];
+        const idx = (p as any).main_idx ?? 0;
+        profMap.set((p as any).id, {
+          nickname: (p as any).nickname ?? null,
+          avatar: photos[idx] ?? photos[0] ?? null,
+        });
+      }
     }
 
     return {
@@ -212,7 +241,8 @@ export const listCommunityComments = createServerFn({ method: "GET" })
         author_id: r.author_id,
         content: r.content,
         created_at: r.created_at,
-        author_nickname: nameMap.get(r.author_id) ?? null,
+        author_nickname: profMap.get(r.author_id)?.nickname ?? null,
+        author_avatar: profMap.get(r.author_id)?.avatar ?? null,
       })),
     };
   });
@@ -238,9 +268,12 @@ export const addCommunityComment = createServerFn({ method: "POST" })
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("nickname")
+      .select("nickname, photos, main_idx")
       .eq("id", userId)
       .maybeSingle();
+
+    const photos = Array.isArray((profile as any)?.photos) ? ((profile as any).photos as string[]) : [];
+    const idx = (profile as any)?.main_idx ?? 0;
 
     return {
       comment: {
@@ -250,6 +283,7 @@ export const addCommunityComment = createServerFn({ method: "POST" })
         content: row.content,
         created_at: row.created_at,
         author_nickname: profile?.nickname ?? null,
+        author_avatar: photos[idx] ?? photos[0] ?? null,
       } as CommunityComment,
     };
   });

@@ -6,8 +6,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Heart, MessageCircle, Bookmark, Share2, MapPin, ChevronDown, Plus,
-  Flame, TrendingUp, Search, Home, Compass, Trophy, User, X, Image as ImageIcon,
+  Heart, MessageCircle, MapPin, ChevronDown, Plus,
+  Flame, TrendingUp, Compass, Trophy, User, X, Image as ImageIcon,
   Tag, ShoppingBag, MessageSquare, HelpCircle, KeyRound, Copy, Check, School,
 } from "lucide-react";
 import {
@@ -113,7 +113,8 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   const [campusOpen, setCampusOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
-  const [activePost, setActivePost] = useState<CommunityPost | null>(null);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
 
   const listFn = useServerFn(listCommunityPosts);
   const likeFn = useServerFn(toggleCommunityLike);
@@ -127,17 +128,16 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
 
   const posts = data?.posts ?? [];
 
-  // 排行榜独立查询：始终展示全部分类下的热门，不被当前分类筛选影响
-  const hotKey = ["community-posts", campus.id, "all"] as const;
-  const { data: hotData } = useQuery({
-    queryKey: hotKey,
-    queryFn: () => listFn({ data: { category: "all", campus_id: campus.id } }),
-    enabled: activeCat !== "all",
-  });
-  const hotSource = activeCat === "all" ? posts : hotData?.posts ?? [];
+  // 排行榜只在「全部」分类显示，直接复用 posts，无需二次请求
   const hotRank = useMemo(
-    () => [...hotSource].sort((a, b) => b.hot - a.hot).slice(0, 5),
-    [hotSource],
+    () => [...posts].sort((a, b) => b.hot - a.hot).slice(0, 5),
+    [posts],
+  );
+
+  // 详情页使用 posts 中的最新数据，保证点赞 / 评论数实时同步
+  const activePost = useMemo(
+    () => (activePostId ? posts.find((p) => p.id === activePostId) ?? null : null),
+    [activePostId, posts],
   );
 
   const likeMut = useMutation({
@@ -157,7 +157,6 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
       return { prev };
     },
     onError: (_e, _v, ctx) => ctx?.prev && qc.setQueryData(queryKey, ctx.prev),
-    onSettled: () => qc.invalidateQueries({ queryKey }),
   });
 
   return (
@@ -266,7 +265,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
                   key={post.id}
                   post={post}
                   onLike={() => likeMut.mutate(post.id)}
-                  onOpen={() => setActivePost(post)}
+                  onOpen={() => setActivePostId(post.id)}
                 />
               ))}
             </AnimatePresence>
@@ -300,7 +299,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
               ))}
               <li className="pt-2 mt-2 border-t border-border">
                 <button
-                  onClick={() => { setCampusOpen(false); window.location.href = "/community?join=1"; }}
+                  onClick={() => { setCampusOpen(false); setJoinOpen(true); }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-surface/60 text-muted-foreground"
                 >
                   <KeyRound className="size-4" />
@@ -316,6 +315,20 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
       <AnimatePresence>
         {inviteOpen && (
           <InviteSheet campus={campus} onClose={() => setInviteOpen(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Join another campus via invite code */}
+      <AnimatePresence>
+        {joinOpen && (
+          <Modal onClose={() => setJoinOpen(false)} title="加入新园区">
+            <InlineJoinForm
+              onJoined={() => {
+                setJoinOpen(false);
+                qc.invalidateQueries({ queryKey: ["my-campuses"] });
+              }}
+            />
+          </Modal>
         )}
       </AnimatePresence>
 
@@ -335,7 +348,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
         {activePost && (
           <PostDetail
             post={activePost}
-            onClose={() => setActivePost(null)}
+            onClose={() => setActivePostId(null)}
             onLike={() => likeMut.mutate(activePost.id)}
           />
         )}
@@ -344,7 +357,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   );
 }
 
-function JoinCampusGate({ onJoined }: { onJoined: () => void }) {
+function InlineJoinForm({ onJoined }: { onJoined: () => void }) {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const redeemFn = useServerFn(redeemCampusInvite);
@@ -362,41 +375,44 @@ function JoinCampusGate({ onJoined }: { onJoined: () => void }) {
       setSubmitting(false);
     }
   };
-  // strip the ?join=1 hint if present
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.location.search.includes("join=1")) {
-      const u = new URL(window.location.href);
-      u.searchParams.delete("join");
-      window.history.replaceState({}, "", u.toString());
-    }
-  }, []);
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        每个学校/园区都是独立的同频圈子。向圈内同学要一个邀请码即可加入。
+      </p>
+      <input
+        value={code}
+        onChange={(e) => setCode(e.target.value.toUpperCase())}
+        maxLength={16}
+        placeholder="例如 K7QZ4M2A"
+        className="w-full h-12 px-4 rounded-2xl bg-background/40 border border-border text-center font-mono tracking-[0.3em] text-lg uppercase outline-none focus:border-coral/60"
+      />
+      <button
+        onClick={submit}
+        disabled={!code.trim() || submitting}
+        className="w-full h-11 rounded-full bg-coral text-background font-semibold disabled:opacity-40"
+      >
+        {submitting ? "验证中…" : "加入社区"}
+      </button>
+    </div>
+  );
+}
+
+function JoinCampusGate({ onJoined }: { onJoined: () => void }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
-      <div className="max-w-sm w-full space-y-5 text-center">
+      <div className="max-w-sm w-full space-y-5">
         <div className="size-16 mx-auto rounded-2xl bg-coral/15 grid place-items-center">
           <KeyRound className="size-7 text-coral" />
         </div>
-        <div>
+        <div className="text-center">
           <h1 className="font-display text-2xl font-bold">输入邀请码加入社区</h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             每个学校/园区都是独立的同频圈子。<br/>向圈内同学要一个邀请码即可加入。
           </p>
         </div>
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          maxLength={16}
-          placeholder="例如 K7QZ4M2A"
-          className="w-full h-12 px-4 rounded-2xl bg-surface border border-border text-center font-mono tracking-[0.3em] text-lg uppercase outline-none focus:border-coral/60"
-        />
-        <button
-          onClick={submit}
-          disabled={!code.trim() || submitting}
-          className="w-full h-12 rounded-2xl bg-coral text-background font-semibold disabled:opacity-40"
-        >
-          {submitting ? "验证中…" : "加入社区"}
-        </button>
-        <Link to="/" className="block text-xs text-muted-foreground hover:text-foreground">← 暂不加入，返回首页</Link>
+        <InlineJoinForm onJoined={onJoined} />
+        <Link to="/me" className="block text-xs text-muted-foreground hover:text-foreground text-center">前往个人主页 →</Link>
       </div>
     </div>
   );
@@ -479,12 +495,35 @@ function InviteSheet({ campus, onClose }: { campus: Campus; onClose: () => void 
   );
 }
 
+function AuthorBadge({
+  nickname,
+  avatar,
+  fallback,
+  size = "sm",
+}: {
+  nickname: string | null;
+  avatar: string | null;
+  fallback: string;
+  size?: "sm" | "md";
+}) {
+  const ini = (nickname ?? fallback).slice(0, 2).toUpperCase();
+  const cls = size === "md" ? "size-9 text-sm" : "size-5 text-[10px]";
+  if (avatar) {
+    return <img src={avatar} alt={nickname ?? ini} className={`${cls} rounded-full object-cover shrink-0`} loading="lazy" />;
+  }
+  return (
+    <span className={`${cls} rounded-full bg-gradient-to-br from-coral/50 to-mint/40 flex items-center justify-center font-bold shrink-0`}>
+      {ini}
+    </span>
+  );
+}
+
 function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () => void; onOpen: () => void }) {
   const meta = CATEGORY_META[post.category];
   const h = heightFor(post.id);
   const heightClass =
     h === "tall" ? "h-56" : h === "mid" ? "h-44" : "h-32";
-  const avatar = post.author_id.slice(0, 2).toUpperCase();
+  const displayName = post.author_nickname ?? `同学 ${post.author_id.slice(0, 2).toUpperCase()}`;
   return (
     <motion.article
       layout
@@ -524,8 +563,8 @@ function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () =>
         </div>
         <div className="mt-2.5 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="size-5 rounded-full bg-surface flex items-center justify-center text-[10px]">{avatar}</span>
-            <span className="truncate max-w-[80px]">同学 {avatar}</span>
+            <AuthorBadge nickname={post.author_nickname} avatar={post.author_avatar} fallback={post.author_id} />
+            <span className="truncate max-w-[80px]">{displayName}</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <button
@@ -543,13 +582,9 @@ function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () =>
   );
 }
 
-function BottomNav({ onCompose }: { onCompose?: () => void }) {
-  return _BottomNav({ onCompose });
-}
-
 function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: () => void; onLike: () => void }) {
   const meta = CATEGORY_META[post.category];
-  const avatar = post.author_id.slice(0, 2).toUpperCase();
+  const displayName = post.author_nickname ?? `同学 ${post.author_id.slice(0, 2).toUpperCase()}`;
   const media = post.media ?? [];
   const [idx, setIdx] = useState(0);
   const [draft, setDraft] = useState("");
@@ -652,12 +687,11 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
           {/* Author header */}
           <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border">
-            <span className="size-9 rounded-full bg-gradient-to-br from-coral/50 to-mint/40 flex items-center justify-center text-sm font-bold">{avatar}</span>
+            <AuthorBadge nickname={post.author_nickname} avatar={post.author_avatar} fallback={post.author_id} size="md" />
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">同学 {avatar}</div>
+              <div className="text-sm font-medium truncate">{displayName}</div>
               <div className="text-[11px] text-muted-foreground">Pulse 用户</div>
             </div>
-            <button className="h-8 px-4 rounded-full bg-coral text-background text-xs font-medium">关注</button>
             <button onClick={onClose} className="size-8 rounded-full bg-surface/70 flex items-center justify-center md:bg-transparent">
               <X className="size-4" />
             </button>
@@ -691,12 +725,9 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
               <ul className="space-y-3 pt-1">
                 {comments.map((c) => {
                   const name = c.author_nickname || `同学 ${c.author_id.slice(0, 2).toUpperCase()}`;
-                  const ini = (c.author_nickname ?? c.author_id).slice(0, 2).toUpperCase();
                   return (
                     <li key={c.id} className="flex gap-2.5">
-                      <span className="size-8 shrink-0 rounded-full bg-gradient-to-br from-mint/50 to-coral/40 flex items-center justify-center text-xs font-bold">
-                        {ini}
-                      </span>
+                      <AuthorBadge nickname={c.author_nickname} avatar={c.author_avatar} fallback={c.author_id} size="md" />
                       <div className="flex-1 min-w-0">
                         <div className="text-xs text-muted-foreground flex items-center gap-2">
                           <span className="font-medium text-foreground/90 truncate">{name}</span>
@@ -749,9 +780,6 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
               {post.likes_count}
             </button>
             <button className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Bookmark className="size-5" />
-            </button>
-            <button className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <MessageCircle className="size-5" />
               {commentCount}
             </button>
@@ -762,7 +790,7 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
   );
 }
 
-function _BottomNav({ onCompose }: { onCompose?: () => void }) {
+function BottomNav({ onCompose }: { onCompose?: () => void }) {
   const items = [
     { to: "/community", icon: MessageSquare, label: "社区", active: true },
     { to: "/explore", icon: Compass, label: "发现" },
@@ -842,6 +870,8 @@ function ComposeSheet({
   const [cat, setCat] = useState<Exclude<Category, "all">>("second");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [tagDraft, setTagDraft] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const createFn = useServerFn(createCommunityPost);
   const [submitting, setSubmitting] = useState(false);
   const [media, setMedia] = useState<{ url: string; type: "image" | "video"; path: string }[]>([]);
@@ -893,6 +923,15 @@ function ComposeSheet({
     await supabase.storage.from("community-media").remove([item.path]).catch(() => {});
   };
 
+  const addTag = () => {
+    const t = tagDraft.trim().replace(/^#/, "").slice(0, 20);
+    if (!t) return;
+    if (tags.includes(t)) { setTagDraft(""); return; }
+    if (tags.length >= 6) { toast.error("最多 6 个话题"); return; }
+    setTags([...tags, t]);
+    setTagDraft("");
+  };
+
   const submit = async () => {
     if (!title.trim() || !content.trim()) return;
     setSubmitting(true);
@@ -904,7 +943,7 @@ function ComposeSheet({
           title: title.trim(),
           content: content.trim(),
           location: campus.name,
-          tags: [],
+          tags,
           media: media.map(({ url, type }) => ({ url, type })),
         },
       });
@@ -1006,13 +1045,33 @@ function ComposeSheet({
           className="w-full p-3 rounded-xl bg-background/40 border border-border text-sm resize-none focus:outline-none focus:border-coral/50"
         />
 
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <School className="size-3 text-coral" /> {campus.name}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Tag className="size-3" /> 添加话题
-          </span>
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((t) => (
+              <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-mint/15 text-mint text-xs">
+                #{t}
+                <button type="button" onClick={() => setTags(tags.filter((x) => x !== t))} className="opacity-70 hover:opacity-100">
+                  <X className="size-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Tag className="size-3.5 text-muted-foreground shrink-0" />
+            <input
+              value={tagDraft}
+              onChange={(e) => setTagDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); }
+              }}
+              maxLength={20}
+              placeholder="添加话题，回车确认（最多 6 个）"
+              className="flex-1 h-8 px-2 rounded-lg bg-background/40 border border-border text-xs focus:outline-none focus:border-coral/50"
+            />
+          </div>
+          <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+            <School className="size-3 text-coral" /> 发布到 {campus.name}
+          </div>
         </div>
 
         <button
