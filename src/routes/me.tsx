@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 import {
   Settings, Edit3, LogOut, Shield, Bell, Lock, Heart, MessageCircle,
   Sparkles, MapPin, Cake, Briefcase, GraduationCap, Crown, ChevronRight,
-  Home, Compass, Trophy, User as UserIcon, MessageSquare, Flame, Camera,
+  Home, User as UserIcon, Flame, Camera,
 } from "lucide-react";
 import { getMyProfile } from "@/lib/profile.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { BottomNav } from "@/components/BottomNav";
 
 export const Route = createFileRoute("/me")({
   head: () => ({
@@ -315,30 +316,4 @@ function MenuItem({
   return <button className="block w-full text-left hover:bg-background/40">{inner}</button>;
 }
 
-function BottomNav() {
-  const items = [
-    { to: "/", icon: Home, label: "首页" },
-    { to: "/explore", icon: Compass, label: "发现" },
-    { to: "/community", icon: MessageSquare, label: "社区" },
-    { to: "/games", icon: Trophy, label: "游戏" },
-    { to: "/me", icon: UserIcon, label: "我的", active: true },
-  ];
-  return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl bg-background/85 border-t border-border">
-      <div className="mx-auto max-w-3xl grid grid-cols-5 h-16">
-        {items.map((it) => (
-          <Link
-            key={it.label}
-            to={it.to}
-            className={`flex flex-col items-center justify-center gap-0.5 text-[10px] ${
-              it.active ? "text-coral" : "text-muted-foreground"
-            }`}
-          >
-            <it.icon className="size-5" />
-            {it.label}
-          </Link>
-        ))}
-      </div>
-    </nav>
-  );
-}
+// BottomNav lives in src/components/BottomNav.tsx
