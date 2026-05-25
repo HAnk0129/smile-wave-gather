@@ -714,9 +714,12 @@ function RealChat({
                     </div>
                   )
                 )}
+                {(() => { const big = !m.attachment && isEmojiOnly(m.content); return (
                 <div
                   className={
-                    mine
+                    big
+                      ? "max-w-[78%] px-1 py-1 text-5xl leading-none"
+                      : mine
                       ? `max-w-[78%] rounded-2xl rounded-br-md shadow-md ${m.attachment?.kind === "image" ? "overflow-hidden bg-surface/40 p-0" : "bg-gradient-to-br from-coral to-sun px-3.5 py-2 text-sm text-background"}`
                       : `max-w-[78%] rounded-2xl rounded-bl-md border border-border ${m.attachment?.kind === "image" ? "overflow-hidden bg-surface/40 p-0" : "bg-surface/80 px-3.5 py-2 text-sm"}`
                   }
@@ -734,13 +737,14 @@ function RealChat({
                   ) : (
                     m.content
                   )}
-                  <div className={`flex items-center justify-end gap-1 text-[10px] ${m.attachment?.kind === "image" ? "px-2 py-1 bg-background/40 text-foreground/70" : `mt-1 ${mine ? "text-background/80" : "text-muted-foreground"}`}`}>
+                  <div className={`flex items-center justify-end gap-1 text-[10px] ${m.attachment?.kind === "image" ? "px-2 py-1 bg-background/40 text-foreground/70" : `mt-1 ${big ? "text-muted-foreground" : mine ? "text-background/80" : "text-muted-foreground"}`}`}>
                     <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                     {mine && (m.readAt
                       ? <CheckCheck className="h-3 w-3" />
                       : <Check className="h-3 w-3 opacity-70" />)}
                   </div>
                 </div>
+                ); })()}
               </motion.div>
             );
           })}
