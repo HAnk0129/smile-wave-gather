@@ -671,7 +671,7 @@ export const adminModerationSummary = createServerFn({ method: "GET" })
       return count ?? 0;
     };
     const [posts, treehole, flagsOpen, reportsPending] = await Promise.all([
-      countOf("community_posts"),
+      countOf("community_posts", (q) => q.eq("status", "pending")),
       countOf("treehole_posts"),
       countOf("content_flags", (q) => q.eq("status", "open")),
       countOf("reports", (q) => q.eq("status", "pending")),
