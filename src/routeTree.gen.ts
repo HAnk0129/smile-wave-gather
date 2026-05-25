@@ -13,6 +13,7 @@ import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RadarRouteImport } from './routes/radar'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as GamesRouteImport } from './routes/games'
@@ -48,6 +49,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MessagesRoute = MessagesRouteImport.update({
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/games': typeof GamesRouteWithChildren
   '/me': typeof MeRoute
   '/messages': typeof MessagesRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/games': typeof GamesRouteWithChildren
   '/me': typeof MeRoute
   '/messages': typeof MessagesRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/games': typeof GamesRouteWithChildren
   '/me': typeof MeRoute
   '/messages': typeof MessagesRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/games'
     | '/me'
     | '/messages'
+    | '/notifications'
     | '/onboarding'
     | '/privacy'
     | '/radar'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/games'
     | '/me'
     | '/messages'
+    | '/notifications'
     | '/onboarding'
     | '/privacy'
     | '/radar'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/games'
     | '/me'
     | '/messages'
+    | '/notifications'
     | '/onboarding'
     | '/privacy'
     | '/radar'
@@ -279,6 +291,7 @@ export interface RootRouteChildren {
   GamesRoute: typeof GamesRouteWithChildren
   MeRoute: typeof MeRoute
   MessagesRoute: typeof MessagesRoute
+  NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   RadarRoute: typeof RadarRoute
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/messages': {
@@ -469,6 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   GamesRoute: GamesRouteWithChildren,
   MeRoute: MeRoute,
   MessagesRoute: MessagesRoute,
+  NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   RadarRoute: RadarRoute,
@@ -477,3 +498,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
