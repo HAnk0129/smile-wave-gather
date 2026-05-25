@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-rout
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Trophy, Users, Wand2, Zap } from "lucide-react";
 import { NeonInner, neonButtonClass } from "@/components/AuthButtons";
+import { BottomNav } from "@/components/BottomNav";
 
 export const Route = createFileRoute("/games")({
   head: () => ({
