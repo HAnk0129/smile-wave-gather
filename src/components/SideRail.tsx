@@ -9,7 +9,7 @@ const HIDDEN_ROUTES = ["/auth", "/onboarding", "/admin"];
 
 const ITEMS = [
   { to: "/contests", label: "比赛公告", icon: Trophy, hue: "from-coral to-sun" },
-  { to: "/jobs", label: "工作需求", icon: Briefcase, hue: "from-mint to-brand" },
+  { to: "/jobs", label: "实习与工作", icon: Briefcase, hue: "from-mint to-brand" },
   { to: "/venues", label: "场地预约", icon: CalendarDays, hue: "from-sun to-coral" },
   { to: "/games", label: "互动小游戏", icon: Sparkles, hue: "from-brand to-mint" },
   { to: "/radar", label: "附近的人", icon: Radio, hue: "from-mint to-sun" },
