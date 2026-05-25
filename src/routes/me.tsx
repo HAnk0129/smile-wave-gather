@@ -243,7 +243,7 @@ function MePage() {
 
         <section className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface/60 divide-y divide-border">
           <MenuItem icon={Bell} label="通知设置" />
-          <MenuItem icon={Lock} label="隐私与可见性" />
+          <MenuItem icon={Lock} label="隐私与可见性" to="/privacy" />
           <MenuItem icon={Shield} label="实名 & 学生认证" to="/verify" />
           <MenuItem icon={Shield} label="账号安全" />
         </section>
