@@ -483,6 +483,10 @@ function RealChat({
               <DropdownMenuItem onClick={handleBlock} disabled={!partnerId} className="text-destructive focus:text-destructive">
                 拉黑该用户
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleDeleteConv} className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" /> 删除会话
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
