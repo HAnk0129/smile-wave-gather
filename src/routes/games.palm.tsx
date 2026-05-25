@@ -360,6 +360,152 @@ function ReportView({
   );
 }
 
+function ShareGate({
+  preview,
+  confirmed,
+  onConfirm,
+  onReveal,
+  loading,
+  error,
+}: {
+  preview: string;
+  confirmed: boolean;
+  onConfirm: () => void;
+  onReveal: () => void;
+  loading: boolean;
+  error: string | null;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const downloadCard = async () => {
+    // Render a simple share card on a canvas and trigger download
+    const canvas = document.createElement("canvas");
+    const W = 750;
+    const H = 1000;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    // background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, "#0e0e12");
+    grad.addColorStop(1, "#1a1216");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    // load palm preview
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.crossOrigin = "anonymous";
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = preview;
+    }).catch(() => null);
+    if (img) {
+      const size = 500;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect((W - size) / 2, 200, size, size, 36);
+      ctx.clip();
+      ctx.drawImage(img, (W - size) / 2, 200, size, size);
+      ctx.restore();
+    }
+    ctx.fillStyle = "#ff6b6b";
+    ctx.font = "bold 28px -apple-system, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("PULSE · AI 手相", W / 2, 100);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 56px -apple-system, system-ui, sans-serif";
+    ctx.fillText("我的专属手相报告", W / 2, 170);
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.font = "400 26px -apple-system, system-ui, sans-serif";
+    ctx.fillText("扫描朋友圈，揭晓我的爱情线", W / 2, 770);
+    ctx.fillText("· 上 Pulse · AI 看手相 ·", W / 2, 820);
+    ctx.fillStyle = "#ffd166";
+    ctx.font = "italic 22px Georgia, serif";
+    ctx.fillText("分享后解锁你的完整运势", W / 2, 900);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "palm-share.png";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("已保存到本地，去朋友圈分享吧～");
+    }, "image/png");
+  };
+
+  return (
+    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="relative rounded-[32px] border border-border bg-surface/70 backdrop-blur p-6 md:p-8">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-mint/15 text-mint px-3 py-1.5 text-xs font-semibold">
+            <Check className="size-3.5" />
+            手掌识别成功
+          </div>
+          <h2 className="mt-4 font-display text-2xl md:text-3xl font-bold">
+            分享到朋友圈，解锁你的手相报告
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            保存下方卡片 → 发到朋友圈 → 回来点击「已分享，查看结果」
+          </p>
+        </div>
+
+        <div
+          ref={cardRef}
+          className="mx-auto max-w-sm rounded-3xl overflow-hidden border border-border bg-gradient-to-br from-coral/20 via-background to-sun/15 p-6"
+        >
+          <div className="text-coral text-xs font-bold tracking-widest">PULSE · AI 手相</div>
+          <h3 className="mt-1 font-display text-xl font-bold">我的专属手相报告已生成</h3>
+          <div className="mt-4 relative aspect-square rounded-2xl overflow-hidden border border-border">
+            <img src={preview} alt="手掌" className="w-full h-full object-cover" />
+            <PalmLines />
+          </div>
+          <div className="mt-4 text-xs text-muted-foreground">
+            扫描朋友圈，揭晓你的爱情线 · 事业线 · 生命线
+          </div>
+          <div className="mt-2 font-serif-display italic text-sm text-foreground">
+            "分享后解锁你的完整运势 ✨"
+          </div>
+        </div>
+
+        <div className="mt-6 grid sm:grid-cols-2 gap-3">
+          <button
+            onClick={downloadCard}
+            className="inline-flex items-center justify-center gap-2 h-12 rounded-full border border-border bg-surface hover:bg-surface-2 transition text-sm font-semibold"
+          >
+            <Share2 className="size-4" />
+            保存卡片图片
+          </button>
+          {!confirmed ? (
+            <button
+              onClick={onConfirm}
+              className="inline-flex items-center justify-center gap-2 h-12 rounded-full bg-mint text-background hover:scale-[1.01] transition text-sm font-semibold"
+            >
+              <Check className="size-4" />
+              我已分享朋友圈
+            </button>
+          ) : (
+            <button
+              onClick={onReveal}
+              disabled={loading}
+              className="inline-flex items-center justify-center gap-2 h-12 rounded-full bg-primary text-primary-foreground glow-coral hover:scale-[1.01] transition text-sm font-semibold disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+              查看我的手相结果
+            </button>
+          )}
+        </div>
+        {error && <p className="mt-3 text-sm text-coral text-center">{error}</p>}
+        <p className="mt-4 text-xs text-muted-foreground text-center">
+          诚信小提示：分享是给小伙伴一起玩的福利，不分享也能查看，但会少点仪式感～
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function LineCard({
   color,
   icon: Icon,
