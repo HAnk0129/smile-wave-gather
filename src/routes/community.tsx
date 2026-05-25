@@ -477,12 +477,35 @@ function InviteSheet({ campus, onClose }: { campus: Campus; onClose: () => void 
   );
 }
 
+function AuthorBadge({
+  nickname,
+  avatar,
+  fallback,
+  size = "sm",
+}: {
+  nickname: string | null;
+  avatar: string | null;
+  fallback: string;
+  size?: "sm" | "md";
+}) {
+  const ini = (nickname ?? fallback).slice(0, 2).toUpperCase();
+  const cls = size === "md" ? "size-9 text-sm" : "size-5 text-[10px]";
+  if (avatar) {
+    return <img src={avatar} alt={nickname ?? ini} className={`${cls} rounded-full object-cover shrink-0`} loading="lazy" />;
+  }
+  return (
+    <span className={`${cls} rounded-full bg-gradient-to-br from-coral/50 to-mint/40 flex items-center justify-center font-bold shrink-0`}>
+      {ini}
+    </span>
+  );
+}
+
 function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () => void; onOpen: () => void }) {
   const meta = CATEGORY_META[post.category];
   const h = heightFor(post.id);
   const heightClass =
     h === "tall" ? "h-56" : h === "mid" ? "h-44" : "h-32";
-  const avatar = post.author_id.slice(0, 2).toUpperCase();
+  const displayName = post.author_nickname ?? `同学 ${post.author_id.slice(0, 2).toUpperCase()}`;
   return (
     <motion.article
       layout
@@ -522,8 +545,8 @@ function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () =>
         </div>
         <div className="mt-2.5 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="size-5 rounded-full bg-surface flex items-center justify-center text-[10px]">{avatar}</span>
-            <span className="truncate max-w-[80px]">同学 {avatar}</span>
+            <AuthorBadge nickname={post.author_nickname} avatar={post.author_avatar} fallback={post.author_id} />
+            <span className="truncate max-w-[80px]">{displayName}</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <button
