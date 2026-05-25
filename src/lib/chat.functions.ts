@@ -137,3 +137,61 @@ export const startConversation = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { id: convId as string };
   });
+
+/** Search users by nickname (excluding self). Used for "add friend by nickname". */
+export const searchUsersByNickname = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ q: z.string().trim().min(1).max(40) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rows, error } = await supabase
+      .from("profiles")
+      .select("id, nickname, photos, main_idx, city, signature")
+      .eq("onboarded", true)
+      .ilike("nickname", `%${data.q}%`)
+      .limit(30);
+    if (error) throw new Error(error.message);
+    const users = (rows ?? [])
+      .filter((r: any) => r.id !== userId)
+      .map((r: any) => {
+        const photos = Array.isArray(r.photos) ? (r.photos as string[]) : [];
+        return {
+          id: r.id as string,
+          nickname: (r.nickname as string | null) ?? "Pulse 用户",
+          city: (r.city as string | null) ?? null,
+          signature: (r.signature as string | null) ?? null,
+          avatar: photos[r.main_idx ?? 0] || photos[0] || null,
+        };
+      });
+    return { users };
+  });
+
+/** Look up a single user by id (used after scanning a QR code). */
+export const lookupUserById = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (data.id === userId) throw new Error("这是你自己的二维码");
+    const { data: row, error } = await supabase
+      .from("profiles")
+      .select("id, nickname, photos, main_idx, city, signature, onboarded")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row || !(row as any).onboarded) throw new Error("用户不存在或未完成资料");
+    const photos = Array.isArray((row as any).photos) ? ((row as any).photos as string[]) : [];
+    return {
+      user: {
+        id: row.id as string,
+        nickname: ((row as any).nickname as string | null) ?? "Pulse 用户",
+        city: ((row as any).city as string | null) ?? null,
+        signature: ((row as any).signature as string | null) ?? null,
+        avatar: photos[(row as any).main_idx ?? 0] || photos[0] || null,
+      },
+    };
+  });
