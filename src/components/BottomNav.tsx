@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Compass, MessageSquare, Plus, Trophy, User } from "lucide-react";
+import { Compass, MessageCircle, Plus, User, Users } from "lucide-react";
 
 export type BottomNavActive = "community" | "explore" | "games" | "me" | "messages";
 
@@ -18,10 +18,10 @@ export function BottomNav({
 }) {
   const nav = useNavigate();
   const items = [
-    { key: "community", to: "/community", icon: MessageSquare, label: "社区" },
+    { key: "community", to: "/community", icon: Users, label: "社区" },
     { key: "explore", to: "/explore", icon: Compass, label: "发现" },
     { type: "compose" as const },
-    { key: "games", to: "/games", icon: Trophy, label: "游戏" },
+    { key: "messages", to: "/messages", icon: MessageCircle, label: "消息" },
     { key: "me", to: "/me", icon: User, label: "我的" },
   ];
   return (
