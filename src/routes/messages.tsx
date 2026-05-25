@@ -91,10 +91,6 @@ function MessagesPage() {
             </div>
             <span className="font-display text-lg font-semibold tracking-tight">消息</span>
           </Link>
-          <div className="ml-auto flex items-center gap-2 text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-coral" />
-            <span className="text-xs">{list.length} 个对话</span>
-          </div>
         </div>
         <div className="mx-auto w-full max-w-md px-5 pb-3">
           <label className="flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-2 text-sm">
