@@ -9,9 +9,10 @@ import {
   Heart, MessageCircle, MapPin, ChevronDown, Plus,
   Flame, TrendingUp, X, Image as ImageIcon,
   Tag, ShoppingBag, MessageSquare, HelpCircle, KeyRound, Copy, Check, School,
-  Search, Send, UserPlus, Loader2,
+  Search, Send, UserPlus, Loader2, Flag,
 } from "lucide-react";
 import { BottomNav as AppBottomNav } from "@/components/BottomNav";
+import { ReportSheet, type ReportTargetType } from "@/components/ReportSheet";
 import { z } from "zod";
 import {
   listCommunityPosts,
