@@ -102,6 +102,33 @@ export const getConversation = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true })
       .limit(200);
 
+    // load attachments + sign storage paths for image messages
+    const msgIds = (msgs ?? []).map((m) => m.id);
+    const attachmentsByMsg = new Map<string, { kind: string; url: string; width: number | null; height: number | null }>();
+    if (msgIds.length) {
+      const { data: atts } = await supabase
+        .from("message_attachments")
+        .select("message_id, kind, url, width, height")
+        .in("message_id", msgIds);
+      // batch-sign storage paths (stored as "<userId>/chat/...")
+      const pathsToSign = (atts ?? [])
+        .filter((a: any) => !a.url.startsWith("http"))
+        .map((a: any) => a.url);
+      const signedMap = new Map<string, string>();
+      if (pathsToSign.length) {
+        const { data: signed } = await supabase.storage
+          .from("media")
+          .createSignedUrls(pathsToSign, 60 * 60);
+        (signed ?? []).forEach((s: any) => {
+          if (s.path && s.signedUrl) signedMap.set(s.path, s.signedUrl);
+        });
+      }
+      (atts ?? []).forEach((a: any) => {
+        const url = a.url.startsWith("http") ? a.url : (signedMap.get(a.url) ?? a.url);
+        attachmentsByMsg.set(a.message_id, { kind: a.kind, url, width: a.width, height: a.height });
+      });
+    }
+
     return {
       id: conv.id,
       source: conv.source as "match" | "voice" | "video" | "treehole",
@@ -118,6 +145,7 @@ export const getConversation = createServerFn({ method: "GET" })
         content: m.content,
         createdAt: m.created_at,
         readAt: m.read_at,
+        attachment: attachmentsByMsg.get(m.id) ?? null,
       })),
     };
   });
@@ -145,6 +173,75 @@ export const sendMessage = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return { message: msg };
+  });
+
+/** Send an image message. The client uploads the file to the `media` bucket
+ *  first (at path `<userId>/chat/<convId>/<ts>-<rand>.<ext>`), then calls
+ *  this with the storage path. */
+export const sendImageMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        conversationId: z.string().uuid(),
+        storagePath: z.string().min(1).max(500),
+        width: z.number().int().positive().max(10000).optional(),
+        height: z.number().int().positive().max(10000).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // ensure the path belongs to caller (RLS on storage would have refused otherwise,
+    // but double-check at app level too)
+    if (!data.storagePath.startsWith(`${userId}/`)) {
+      throw new Error("Invalid storage path");
+    }
+    const { data: msg, error } = await supabase
+      .from("messages")
+      .insert({
+        conversation_id: data.conversationId,
+        sender_id: userId,
+        content: "[图片]",
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    const { error: attErr } = await supabase.from("message_attachments").insert({
+      message_id: msg.id,
+      kind: "image",
+      url: data.storagePath,
+      width: data.width ?? null,
+      height: data.height ?? null,
+    });
+    if (attErr) throw new Error(attErr.message);
+    return { id: msg.id as string };
+  });
+
+/** Delete a conversation (and all its messages via cascade). Either participant may delete. */
+export const deleteConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ conversationId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // verify caller is a participant
+    const { data: conv } = await supabase
+      .from("conversations")
+      .select("id, user_a, user_b")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!conv) throw new Error("会话不存在");
+    if (conv.user_a !== userId && conv.user_b !== userId) {
+      throw new Error("无权删除该会话");
+    }
+    const { error } = await supabase
+      .from("conversations")
+      .delete()
+      .eq("id", data.conversationId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const startConversation = createServerFn({ method: "POST" })
