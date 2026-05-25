@@ -570,7 +570,7 @@ function BottomNav({ onCompose }: { onCompose?: () => void }) {
 
 function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: () => void; onLike: () => void }) {
   const meta = CATEGORY_META[post.category];
-  const avatar = post.author_id.slice(0, 2).toUpperCase();
+  const displayName = post.author_nickname ?? `同学 ${post.author_id.slice(0, 2).toUpperCase()}`;
   const media = post.media ?? [];
   const [idx, setIdx] = useState(0);
   const [draft, setDraft] = useState("");
@@ -673,12 +673,11 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
           {/* Author header */}
           <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border">
-            <span className="size-9 rounded-full bg-gradient-to-br from-coral/50 to-mint/40 flex items-center justify-center text-sm font-bold">{avatar}</span>
+            <AuthorBadge nickname={post.author_nickname} avatar={post.author_avatar} fallback={post.author_id} size="md" />
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">同学 {avatar}</div>
+              <div className="text-sm font-medium truncate">{displayName}</div>
               <div className="text-[11px] text-muted-foreground">Pulse 用户</div>
             </div>
-            <button className="h-8 px-4 rounded-full bg-coral text-background text-xs font-medium">关注</button>
             <button onClick={onClose} className="size-8 rounded-full bg-surface/70 flex items-center justify-center md:bg-transparent">
               <X className="size-4" />
             </button>
@@ -712,12 +711,9 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
               <ul className="space-y-3 pt-1">
                 {comments.map((c) => {
                   const name = c.author_nickname || `同学 ${c.author_id.slice(0, 2).toUpperCase()}`;
-                  const ini = (c.author_nickname ?? c.author_id).slice(0, 2).toUpperCase();
                   return (
                     <li key={c.id} className="flex gap-2.5">
-                      <span className="size-8 shrink-0 rounded-full bg-gradient-to-br from-mint/50 to-coral/40 flex items-center justify-center text-xs font-bold">
-                        {ini}
-                      </span>
+                      <AuthorBadge nickname={c.author_nickname} avatar={c.author_avatar} fallback={c.author_id} size="md" />
                       <div className="flex-1 min-w-0">
                         <div className="text-xs text-muted-foreground flex items-center gap-2">
                           <span className="font-medium text-foreground/90 truncate">{name}</span>
@@ -768,9 +764,6 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
             <button onClick={onLike} className={`inline-flex items-center gap-1 text-xs ${post.liked_by_me ? "text-coral" : "text-muted-foreground"}`}>
               <Heart className={`size-5 ${post.liked_by_me ? "fill-coral" : ""}`} />
               {post.likes_count}
-            </button>
-            <button className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Bookmark className="size-5" />
             </button>
             <button className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <MessageCircle className="size-5" />
