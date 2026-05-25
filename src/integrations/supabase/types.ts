@@ -1121,6 +1121,13 @@ export type Database = {
             referencedRelation: "treehole_posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "treehole_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "treehole_posts_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       treehole_reveals: {
@@ -1295,7 +1302,66 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      treehole_posts_public: {
+        Row: {
+          anon_name: string | null
+          content: string | null
+          created_at: string | null
+          hug_count: number | null
+          id: string | null
+          media_url: string | null
+          mood: string | null
+          resonance_count: number | null
+        }
+        Insert: {
+          anon_name?: string | null
+          content?: string | null
+          created_at?: string | null
+          hug_count?: number | null
+          id?: string | null
+          media_url?: string | null
+          mood?: string | null
+          resonance_count?: number | null
+        }
+        Update: {
+          anon_name?: string | null
+          content?: string | null
+          created_at?: string | null
+          hug_count?: number | null
+          id?: string | null
+          media_url?: string | null
+          mood?: string | null
+          resonance_count?: number | null
+        }
+        Relationships: []
+      }
+      user_locations_public: {
+        Row: {
+          city: string | null
+          lat_bucket: number | null
+          lng_bucket: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          lat_bucket?: never
+          lng_bucket?: never
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          lat_bucket?: never
+          lng_bucket?: never
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_campus_invite: {
