@@ -132,7 +132,7 @@ export function VideoCommentsSheet({ open, onClose, videoId, me, onCountChange }
         <ReportSheet
           open
           onClose={() => setReportId(null)}
-          targetType="comment"
+          targetType="video_comment"
           targetId={reportId}
         />
       )}
