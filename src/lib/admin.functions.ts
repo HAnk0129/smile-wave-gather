@@ -742,7 +742,7 @@ export const adminListShortVideos = createServerFn({ method: "POST" })
     if (data.status !== "all") q = q.eq("status", data.status);
     const { data: rows, count, error } = await q;
     if (error) throw new Error(error.message);
-    const authorIds = Array.from(new Set((rows ?? []).map((r: any) => r.author_id)));
+    const authorIds = Array.from(new Set((rows ?? []).map((r: any) => r.author_id as string)));
     const { data: profs } = authorIds.length
       ? await supabaseAdmin.from("profiles").select("id,nickname,photos,main_idx").in("id", authorIds)
       : { data: [] as any[] };
@@ -804,7 +804,7 @@ export const adminListVideoComments = createServerFn({ method: "POST" })
     if (data.videoId) q = q.eq("video_id", data.videoId);
     const { data: rows, count, error } = await q;
     if (error) throw new Error(error.message);
-    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.author_id)));
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.author_id as string)));
     const { data: profs } = ids.length
       ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids)
       : { data: [] as any[] };
@@ -884,7 +884,7 @@ export const adminListGifts = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .range(data.offset, data.offset + data.limit - 1);
     if (error) throw new Error(error.message);
-    const ids = Array.from(new Set((rows ?? []).flatMap((r: any) => [r.sender_id, r.receiver_id])));
+    const ids = Array.from(new Set((rows ?? []).flatMap((r: any) => [r.sender_id, r.receiver_id] as string[])));
     const { data: profs } = ids.length
       ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids)
       : { data: [] as any[] };
@@ -917,7 +917,7 @@ export const adminListLedger = createServerFn({ method: "POST" })
     if (data.kind !== "all") q = q.eq("kind", data.kind);
     const { data: rows, count, error } = await q;
     if (error) throw new Error(error.message);
-    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id)));
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id as string)));
     const { data: profs } = ids.length
       ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids)
       : { data: [] as any[] };
