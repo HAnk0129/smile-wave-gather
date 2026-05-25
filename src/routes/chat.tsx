@@ -3,12 +3,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal, Check, CheckCheck } from "lucide-react";
-import { getConversation, sendMessage as sendMessageFn, markConversationRead } from "@/lib/chat.functions";
+import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal, Check, CheckCheck, Trash2, Loader2 } from "lucide-react";
+import { getConversation, sendMessage as sendMessageFn, markConversationRead, sendImageMessage, deleteConversation } from "@/lib/chat.functions";
 import { blockUser, reportContent } from "@/lib/moderation.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 
 type ChatSearch = {
@@ -56,6 +57,24 @@ function now() {
   const d = new Date();
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
+
+function readImageDimensions(file: File): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
+const EMOJI_LIST = ["😄","😂","🥹","🥰","😘","😍","🤩","😎","🤔","😴","😭","🥺","😳","😅","🙃","😇","🤗","🤤","😋","🤭","🙄","😏","😬","😤","🥳","🤯","🤝","👏","🙌","🙏","💪","👀","💋","💖","💕","💔","❤️","🧡","💛","💚","💙","💜","🔥","✨","⭐️","🌙","☀️","🌈","🍀","🌸","🌊","🍑","🍓","🍔","☕️","🍻","🎉","🎁","🎈","🎵","💃","🕺","🏝️","🌴","✈️","🚗","📷","📱"];
 
 function ChatPage() {
   const search = Route.useSearch();
@@ -240,10 +259,15 @@ function RealChat({
   const markReadFn = useServerFn(markConversationRead);
   const blockFn = useServerFn(blockUser);
   const reportFn = useServerFn(reportContent);
+  const sendImageFn = useServerFn(sendImageMessage);
+  const deleteConvFn = useServerFn(deleteConversation);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<"spam" | "harassment" | "nudity" | "hate" | "scam" | "other">("harassment");
   const [reportDetail, setReportDetail] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
 
   const queryKey = ["conversation", convId] as const;
   const { data, isLoading, error } = useQuery({
@@ -264,19 +288,23 @@ function RealChat({
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${convId}` },
         (payload) => {
           const m = payload.new as { id: string; sender_id: string; content: string; created_at: string; read_at: string | null };
-          qc.setQueryData(queryKey, (prev: any) => {
-            if (!prev) return prev;
-            if (prev.messages.some((x: any) => x.id === m.id)) return prev;
-            return {
-              ...prev,
-              messages: [
-                ...prev.messages,
-                { id: m.id, senderId: m.sender_id, content: m.content, createdAt: m.created_at, readAt: m.read_at },
-              ],
-            };
-          });
+          // image messages need attachment lookup + signed URL — refetch instead of cache patching
+          if (m.content === "[图片]") {
+            qc.invalidateQueries({ queryKey });
+          } else {
+            qc.setQueryData(queryKey, (prev: any) => {
+              if (!prev) return prev;
+              if (prev.messages.some((x: any) => x.id === m.id)) return prev;
+              return {
+                ...prev,
+                messages: [
+                  ...prev.messages,
+                  { id: m.id, senderId: m.sender_id, content: m.content, createdAt: m.created_at, readAt: m.read_at, attachment: null },
+                ],
+              };
+            });
+          }
           // if message came from partner, mark as read immediately
-          qc.setQueryData(queryKey, (prev: any) => prev); // noop to read
           const meId = (qc.getQueryData(queryKey) as any)?.me;
           if (meId && m.sender_id !== meId) {
             markReadFn({ data: { conversationId: convId } }).then(() => {
@@ -366,6 +394,57 @@ function RealChat({
     }
   };
 
+  const handleDeleteConv = async () => {
+    if (!confirm("确定要删除该会话吗？所有聊天记录将被永久删除且无法恢复。")) return;
+    try {
+      await deleteConvFn({ data: { conversationId: convId } });
+      toast.success("会话已删除");
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+      navigate({ to: "/messages" });
+    } catch (e: any) {
+      toast.error(e?.message || "删除失败");
+    }
+  };
+
+  const handlePickImage = () => fileInputRef.current?.click();
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !me) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("请选择图片文件");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("图片最大 8MB");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const path = `${me}/chat/${convId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("media").upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      // try to read dimensions for nicer rendering
+      const dims = await readImageDimensions(file);
+      await sendImageFn({ data: { conversationId: convId, storagePath: path, width: dims?.width, height: dims?.height } });
+      qc.invalidateQueries({ queryKey });
+    } catch (err: any) {
+      toast.error(err?.message || "图片发送失败");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const insertEmoji = (emoji: string) => {
+    setInput((v) => v + emoji);
+    setEmojiOpen(false);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
@@ -403,6 +482,10 @@ function RealChat({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleBlock} disabled={!partnerId} className="text-destructive focus:text-destructive">
                 拉黑该用户
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleDeleteConv} className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" /> 删除会话
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -491,12 +574,24 @@ function RealChat({
                 <div
                   className={
                     mine
-                      ? "max-w-[78%] rounded-2xl rounded-br-md bg-gradient-to-br from-coral to-sun px-3.5 py-2 text-sm text-background shadow-md"
-                      : "max-w-[78%] rounded-2xl rounded-bl-md border border-border bg-surface/80 px-3.5 py-2 text-sm"
+                      ? `max-w-[78%] rounded-2xl rounded-br-md shadow-md ${m.attachment?.kind === "image" ? "overflow-hidden bg-surface/40 p-0" : "bg-gradient-to-br from-coral to-sun px-3.5 py-2 text-sm text-background"}`
+                      : `max-w-[78%] rounded-2xl rounded-bl-md border border-border ${m.attachment?.kind === "image" ? "overflow-hidden bg-surface/40 p-0" : "bg-surface/80 px-3.5 py-2 text-sm"}`
                   }
                 >
-                  {m.content}
-                  <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-background/80" : "text-muted-foreground"}`}>
+                  {m.attachment?.kind === "image" ? (
+                    <a href={m.attachment.url} target="_blank" rel="noreferrer" className="block">
+                      <img
+                        src={m.attachment.url}
+                        alt="图片"
+                        loading="lazy"
+                        className="max-h-72 w-full object-cover"
+                        style={m.attachment.width && m.attachment.height ? { aspectRatio: `${m.attachment.width} / ${m.attachment.height}` } : undefined}
+                      />
+                    </a>
+                  ) : (
+                    m.content
+                  )}
+                  <div className={`flex items-center justify-end gap-1 text-[10px] ${m.attachment?.kind === "image" ? "px-2 py-1 bg-background/40 text-foreground/70" : `mt-1 ${mine ? "text-background/80" : "text-muted-foreground"}`}`}>
                     <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                     {mine && (m.readAt
                       ? <CheckCheck className="h-3 w-3" />
@@ -511,8 +606,38 @@ function RealChat({
 
       <div className="sticky bottom-0 border-t border-border/60 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-md items-center gap-2 px-3 py-3">
-          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><Smile className="h-4 w-4" /></button>
-          <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground"><ImageIcon className="h-4 w-4" /></button>
+          <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+            <PopoverTrigger asChild>
+              <button className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground hover:text-foreground" aria-label="表情">
+                <Smile className="h-4 w-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="top" className="w-72 p-2">
+              <div className="grid grid-cols-8 gap-1 text-xl">
+                {EMOJI_LIST.map((e) => (
+                  <button key={e} onClick={() => insertEmoji(e)} className="rounded-md p-1 hover:bg-surface" aria-label={e}>
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+          <button
+            type="button"
+            onClick={handlePickImage}
+            disabled={uploadingImage}
+            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-muted-foreground hover:text-foreground disabled:opacity-50"
+            aria-label="发送图片"
+          >
+            {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+          </button>
           <div className="flex flex-1 items-center rounded-full border border-border bg-surface/70 px-3">
             <input
               value={input}
