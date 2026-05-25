@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useLocation, Link } from "@tanstack/react-router";
 import { Radar, Mic, Video, Trees, ArrowLeft, Flame, Gamepad2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { BottomNav } from "@/components/BottomNav";
 
 export const Route = createFileRoute("/explore")({
   head: () => ({
@@ -115,6 +116,7 @@ function ExploreLayout() {
           ))}
         </div>
       </main>
+      <BottomNav active="explore" />
     </div>
   );
 }
