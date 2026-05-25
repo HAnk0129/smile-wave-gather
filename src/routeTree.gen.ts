@@ -13,15 +13,18 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as VoiceCardRouteImport } from './routes/voice-card'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as VenuesRouteImport } from './routes/venues'
 import { Route as RadarRouteImport } from './routes/radar'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MeRouteImport } from './routes/me'
+import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as GamesRouteImport } from './routes/games'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as ContestsRouteImport } from './routes/contests'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -56,6 +59,11 @@ const VerifyRoute = VerifyRouteImport.update({
   path: '/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VenuesRoute = VenuesRouteImport.update({
+  id: '/venues',
+  path: '/venues',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RadarRoute = RadarRouteImport.update({
   id: '/radar',
   path: '/radar',
@@ -86,6 +94,11 @@ const MeRoute = MeRouteImport.update({
   path: '/me',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JobsRoute = JobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GamesRoute = GamesRouteImport.update({
   id: '/games',
   path: '/games',
@@ -99,6 +112,11 @@ const ExploreRoute = ExploreRouteImport.update({
 const DiscoverRoute = DiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContestsRoute = ContestsRouteImport.update({
+  id: '/contests',
+  path: '/contests',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
@@ -174,15 +192,18 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/community': typeof CommunityRoute
+  '/contests': typeof ContestsRoute
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
+  '/jobs': typeof JobsRoute
   '/me': typeof MeRouteWithChildren
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
+  '/venues': typeof VenuesRoute
   '/verify': typeof VerifyRoute
   '/videos': typeof VideosRouteWithChildren
   '/voice-card': typeof VoiceCardRoute
@@ -202,15 +223,18 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/community': typeof CommunityRoute
+  '/contests': typeof ContestsRoute
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
+  '/jobs': typeof JobsRoute
   '/me': typeof MeRouteWithChildren
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
+  '/venues': typeof VenuesRoute
   '/verify': typeof VerifyRoute
   '/videos': typeof VideosRouteWithChildren
   '/voice-card': typeof VoiceCardRoute
@@ -231,15 +255,18 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/community': typeof CommunityRoute
+  '/contests': typeof ContestsRoute
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
+  '/jobs': typeof JobsRoute
   '/me': typeof MeRouteWithChildren
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
+  '/venues': typeof VenuesRoute
   '/verify': typeof VerifyRoute
   '/videos': typeof VideosRouteWithChildren
   '/voice-card': typeof VoiceCardRoute
@@ -261,15 +288,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/community'
+    | '/contests'
     | '/discover'
     | '/explore'
     | '/games'
+    | '/jobs'
     | '/me'
     | '/messages'
     | '/notifications'
     | '/onboarding'
     | '/privacy'
     | '/radar'
+    | '/venues'
     | '/verify'
     | '/videos'
     | '/voice-card'
@@ -289,15 +319,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/community'
+    | '/contests'
     | '/discover'
     | '/explore'
     | '/games'
+    | '/jobs'
     | '/me'
     | '/messages'
     | '/notifications'
     | '/onboarding'
     | '/privacy'
     | '/radar'
+    | '/venues'
     | '/verify'
     | '/videos'
     | '/voice-card'
@@ -317,15 +350,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/community'
+    | '/contests'
     | '/discover'
     | '/explore'
     | '/games'
+    | '/jobs'
     | '/me'
     | '/messages'
     | '/notifications'
     | '/onboarding'
     | '/privacy'
     | '/radar'
+    | '/venues'
     | '/verify'
     | '/videos'
     | '/voice-card'
@@ -346,15 +382,18 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChatRoute: typeof ChatRoute
   CommunityRoute: typeof CommunityRoute
+  ContestsRoute: typeof ContestsRoute
   DiscoverRoute: typeof DiscoverRoute
   ExploreRoute: typeof ExploreRouteWithChildren
   GamesRoute: typeof GamesRouteWithChildren
+  JobsRoute: typeof JobsRoute
   MeRoute: typeof MeRouteWithChildren
   MessagesRoute: typeof MessagesRoute
   NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   RadarRoute: typeof RadarRoute
+  VenuesRoute: typeof VenuesRoute
   VerifyRoute: typeof VerifyRoute
   VideosRoute: typeof VideosRouteWithChildren
   VoiceCardRoute: typeof VoiceCardRoute
@@ -389,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/verify'
       fullPath: '/verify'
       preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/venues': {
+      id: '/venues'
+      path: '/venues'
+      fullPath: '/venues'
+      preLoaderRoute: typeof VenuesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/radar': {
@@ -433,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/jobs': {
+      id: '/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof JobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/games': {
       id: '/games'
       path: '/games'
@@ -452,6 +505,13 @@ declare module '@tanstack/react-router' {
       path: '/discover'
       fullPath: '/discover'
       preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contests': {
+      id: '/contests'
+      path: '/contests'
+      fullPath: '/contests'
+      preLoaderRoute: typeof ContestsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -603,15 +663,18 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChatRoute: ChatRoute,
   CommunityRoute: CommunityRoute,
+  ContestsRoute: ContestsRoute,
   DiscoverRoute: DiscoverRoute,
   ExploreRoute: ExploreRouteWithChildren,
   GamesRoute: GamesRouteWithChildren,
+  JobsRoute: JobsRoute,
   MeRoute: MeRouteWithChildren,
   MessagesRoute: MessagesRoute,
   NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   RadarRoute: RadarRoute,
+  VenuesRoute: VenuesRoute,
   VerifyRoute: VerifyRoute,
   VideosRoute: VideosRouteWithChildren,
   VoiceCardRoute: VoiceCardRoute,
