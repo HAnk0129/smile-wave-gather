@@ -154,6 +154,24 @@ export const startConversation = createServerFn({ method: "POST" })
     return { id: convId as string };
   });
 
+/** Mark every incoming (not-mine, unread) message in a conversation as read. */
+export const markConversationRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ conversationId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error, count } = await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() }, { count: "exact" })
+      .eq("conversation_id", data.conversationId)
+      .neq("sender_id", userId)
+      .is("read_at", null);
+    if (error) throw new Error(error.message);
+    return { marked: count ?? 0 };
+  });
+
 /** Search users by nickname (excluding self). Used for "add friend by nickname". */
 export const searchUsersByNickname = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
