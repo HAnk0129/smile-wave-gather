@@ -719,3 +719,209 @@ export const adminRevokeRole = createServerFn({ method: "POST" })
     } as never);
     return { ok: true };
   });
+
+/* ==================== 短视频 / 评论审核 ==================== */
+
+export const adminListShortVideos = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      status: z.enum(["all", "published", "removed"]).default("all"),
+      limit: z.number().int().min(1).max(100).default(50),
+      offset: z.number().int().min(0).default(0),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    let q: any = supabaseAdmin
+      .from("short_videos")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(data.offset, data.offset + data.limit - 1);
+    if (data.status !== "all") q = q.eq("status", data.status);
+    const { data: rows, count, error } = await q;
+    if (error) throw new Error(error.message);
+    const authorIds = Array.from(new Set((rows ?? []).map((r: any) => r.author_id)));
+    const { data: profs } = authorIds.length
+      ? await supabaseAdmin.from("profiles").select("id,nickname,photos,main_idx").in("id", authorIds)
+      : { data: [] as any[] };
+    const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    const videos = (rows ?? []).map((r: any) => ({ ...r, author: map.get(r.author_id) ?? null }));
+    return { videos, total: count ?? 0 };
+  });
+
+export const adminReviewShortVideo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      action: z.enum(["remove", "restore", "delete"]),
+      reason: z.string().max(200).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    if (data.action === "delete") {
+      const { error } = await supabaseAdmin.from("short_videos").delete().eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const next = data.action === "remove" ? "removed" : "published";
+      const { error } = await supabaseAdmin.from("short_videos").update({ status: next } as never).eq("id", data.id);
+      if (error) throw new Error(error.message);
+    }
+    await supabaseAdmin.from("moderation_actions").insert({
+      admin_id: userId, target_type: "video", target_id: data.id, action: data.action, note: data.reason ?? null,
+    } as never);
+    if (data.action !== "restore") {
+      await supabaseAdmin.from("content_flags").insert({
+        target_type: "video", target_id: data.id,
+        reason: data.reason || `管理员${data.action === "delete" ? "删除" : "下架"}`,
+        severity: "high", source: "admin", status: "resolved",
+      } as never);
+    }
+    return { ok: true };
+  });
+
+export const adminListVideoComments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      videoId: z.string().uuid().optional(),
+      limit: z.number().int().min(1).max(100).default(50),
+      offset: z.number().int().min(0).default(0),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    let q: any = supabaseAdmin
+      .from("short_video_comments")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(data.offset, data.offset + data.limit - 1);
+    if (data.videoId) q = q.eq("video_id", data.videoId);
+    const { data: rows, count, error } = await q;
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.author_id)));
+    const { data: profs } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids)
+      : { data: [] as any[] };
+    const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    const comments = (rows ?? []).map((r: any) => ({ ...r, author: map.get(r.author_id) ?? null }));
+    return { comments, total: count ?? 0 };
+  });
+
+export const adminDeleteVideoComment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ id: z.string().uuid(), reason: z.string().max(200).optional() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { error } = await supabaseAdmin.from("short_video_comments").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("moderation_actions").insert({
+      admin_id: userId, target_type: "video_comment", target_id: data.id, action: "delete", note: data.reason ?? null,
+    } as never);
+    return { ok: true };
+  });
+
+/* ==================== 钱包 / 礼物 审计 ==================== */
+
+export const adminWalletOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    const { data: walletAgg } = await supabaseAdmin.from("wallets").select("coins,pro_until");
+    const totalCoins = (walletAgg ?? []).reduce((s, w: any) => s + (w.coins || 0), 0);
+    const now = Date.now();
+    const proActive = (walletAgg ?? []).filter((w: any) => w.pro_until && new Date(w.pro_until).getTime() > now).length;
+
+    const sumByKind = async (kind: string) => {
+      const { data } = await supabaseAdmin.from("wallet_ledger").select("delta").eq("kind", kind);
+      return (data ?? []).reduce((s, r: any) => s + (r.delta || 0), 0);
+    };
+    const [topupSum, proSum, giftSentSum, giftRecvSum] = await Promise.all([
+      sumByKind("topup"),
+      sumByKind("pro_sub"),
+      sumByKind("gift_sent"),
+      sumByKind("gift_received"),
+    ]);
+
+    const { count: giftCount } = await supabaseAdmin
+      .from("gift_transactions")
+      .select("*", { count: "exact", head: true });
+
+    return {
+      totalCoins,
+      proActive,
+      walletsCount: walletAgg?.length ?? 0,
+      topupTotal: topupSum,
+      proRevenue: -proSum, // negative deltas
+      giftSentTotal: -giftSentSum,
+      giftReceivedTotal: giftRecvSum,
+      giftCount: giftCount ?? 0,
+    };
+  });
+
+export const adminListGifts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      limit: z.number().int().min(1).max(100).default(50),
+      offset: z.number().int().min(0).default(0),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { data: rows, count, error } = await supabaseAdmin
+      .from("gift_transactions")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(data.offset, data.offset + data.limit - 1);
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((rows ?? []).flatMap((r: any) => [r.sender_id, r.receiver_id])));
+    const { data: profs } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids)
+      : { data: [] as any[] };
+    const map = new Map((profs ?? []).map((p: any) => [p.id, p.nickname]));
+    const gifts = (rows ?? []).map((r: any) => ({
+      ...r,
+      sender_name: map.get(r.sender_id) || "—",
+      receiver_name: map.get(r.receiver_id) || "—",
+    }));
+    return { gifts, total: count ?? 0 };
+  });
+
+export const adminListLedger = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      kind: z.enum(["all", "topup", "pro_sub", "gift_sent", "gift_received"]).default("all"),
+      limit: z.number().int().min(1).max(100).default(50),
+      offset: z.number().int().min(0).default(0),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    let q: any = supabaseAdmin
+      .from("wallet_ledger")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(data.offset, data.offset + data.limit - 1);
+    if (data.kind !== "all") q = q.eq("kind", data.kind);
+    const { data: rows, count, error } = await q;
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id)));
+    const { data: profs } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id,nickname").in("id", ids)
+      : { data: [] as any[] };
+    const map = new Map((profs ?? []).map((p: any) => [p.id, p.nickname]));
+    const ledger = (rows ?? []).map((r: any) => ({ ...r, nickname: map.get(r.user_id) || "—" }));
+    return { ledger, total: count ?? 0 };
+  });
