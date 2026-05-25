@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Trophy, Briefcase, CalendarDays, Sparkles, Radio, Film, Mic,
+  Trophy, Briefcase, CalendarDays, Sparkles, Radio,
   ChevronRight, ChevronLeft, LayoutGrid,
 } from "lucide-react";
 
@@ -13,8 +13,6 @@ const ITEMS = [
   { to: "/venues", label: "场地预约", icon: CalendarDays, hue: "from-sun to-coral" },
   { to: "/games", label: "互动小游戏", icon: Sparkles, hue: "from-brand to-mint" },
   { to: "/radar", label: "附近的人", icon: Radio, hue: "from-mint to-sun" },
-  { to: "/videos", label: "短视频", icon: Film, hue: "from-coral to-brand" },
-  { to: "/voice-card", label: "语音名片", icon: Mic, hue: "from-sun to-mint" },
 ];
 
 export function SideRail() {
