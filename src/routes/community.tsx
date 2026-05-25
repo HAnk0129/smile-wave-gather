@@ -564,10 +564,6 @@ function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () =>
   );
 }
 
-function BottomNav({ onCompose }: { onCompose?: () => void }) {
-  return _BottomNav({ onCompose });
-}
-
 function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: () => void; onLike: () => void }) {
   const meta = CATEGORY_META[post.category];
   const displayName = post.author_nickname ?? `同学 ${post.author_id.slice(0, 2).toUpperCase()}`;
@@ -776,7 +772,7 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
   );
 }
 
-function _BottomNav({ onCompose }: { onCompose?: () => void }) {
+function BottomNav({ onCompose }: { onCompose?: () => void }) {
   const items = [
     { to: "/community", icon: MessageSquare, label: "社区", active: true },
     { to: "/explore", icon: Compass, label: "发现" },
