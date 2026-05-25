@@ -3,11 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
-  Search, MessageSquare,
+  Search, MessageSquare, Bell,
   Flame, Mic, Video as VideoIcon, Ghost, Heart, Sparkles,
   UserPlus,
 } from "lucide-react";
 import { listConversations } from "@/lib/chat.functions";
+import { getUnreadCount } from "@/lib/notifications.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -62,6 +63,15 @@ function MessagesPage() {
     refetchOnWindowFocus: true,
   });
 
+  const fetchUnread = useServerFn(getUnreadCount);
+  const unreadQ = useQuery({
+    queryKey: ["notifications-unread"],
+    queryFn: () => fetchUnread(),
+    enabled: authed === true,
+    refetchOnWindowFocus: true,
+  });
+  const notifUnread = unreadQ.data?.count ?? 0;
+
   // realtime: refresh on new message in any of my conversations
   useEffect(() => {
     if (authed !== true) return;
@@ -93,6 +103,23 @@ function MessagesPage() {
             <span className="font-display text-lg font-semibold tracking-tight">消息</span>
           </Link>
           <div className="flex-1" />
+          <Link
+            to="/notifications"
+            aria-label="通知"
+            className="relative mr-1 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface/70 hover:bg-surface"
+            onClick={() => {
+              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+                Notification.requestPermission().catch(() => {});
+              }
+            }}
+          >
+            <Bell className="h-4 w-4 text-foreground" />
+            {notifUnread > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 grid min-w-[16px] place-items-center rounded-full bg-coral px-1 text-[10px] font-semibold text-background">
+                {notifUnread > 99 ? "99+" : notifUnread}
+              </span>
+            )}
+          </Link>
           <Link
             to="/add-friend"
             className="inline-flex items-center gap-1 rounded-full border border-border bg-surface/70 px-3 py-1.5 text-xs text-foreground hover:bg-surface"
