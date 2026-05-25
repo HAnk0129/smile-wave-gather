@@ -640,6 +640,7 @@ function RealChat({
           >
             {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
           </button>
+          <GiftButton convId={convId} partnerId={partnerId ?? null} partnerName={data?.partner.nickname ?? fallbackName ?? "Ta"} />
           <div className="flex flex-1 items-center rounded-full border border-border bg-surface/70 px-3">
             <input
               value={input}
