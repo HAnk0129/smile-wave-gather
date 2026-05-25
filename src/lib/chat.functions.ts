@@ -26,6 +26,21 @@ export const listConversations = createServerFn({ method: "GET" })
       (profs ?? []).forEach((p) => profilesMap.set(p.id, p as never));
     }
 
+    // unread counts per conversation (messages I haven't read that aren't mine)
+    const convIds = (convs ?? []).map((c) => c.id);
+    const unreadMap = new Map<string, number>();
+    if (convIds.length) {
+      const { data: unreadRows } = await supabase
+        .from("messages")
+        .select("conversation_id")
+        .in("conversation_id", convIds)
+        .is("read_at", null)
+        .neq("sender_id", userId);
+      (unreadRows ?? []).forEach((r: any) => {
+        unreadMap.set(r.conversation_id, (unreadMap.get(r.conversation_id) ?? 0) + 1);
+      });
+    }
+
     return {
       conversations: (convs ?? []).map((c) => {
         const partnerId = c.user_a === userId ? c.user_b : c.user_a;
@@ -39,6 +54,7 @@ export const listConversations = createServerFn({ method: "GET" })
           source: c.source as "match" | "voice" | "video" | "treehole",
           lastMessage: c.last_message,
           lastMessageAt: c.last_message_at,
+          unread: unreadMap.get(c.id) ?? 0,
         };
       }),
     };
