@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "sonner";
+import { useNotificationsRealtime } from "@/hooks/useNotificationsRealtime";
 
 import appCss from "../styles.css?url";
 
@@ -120,10 +121,16 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <NotificationsBridge />
       <Outlet />
       <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
+}
+
+function NotificationsBridge() {
+  useNotificationsRealtime();
+  return null;
 }
 
 function AuthSync() {
