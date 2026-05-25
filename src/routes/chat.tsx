@@ -77,7 +77,26 @@ function readImageDimensions(file: File): Promise<{ width: number; height: numbe
   });
 }
 
-const EMOJI_LIST = ["😄","😂","🥹","🥰","😘","😍","🤩","😎","🤔","😴","😭","🥺","😳","😅","🙃","😇","🤗","🤤","😋","🤭","🙄","😏","😬","😤","🥳","🤯","🤝","👏","🙌","🙏","💪","👀","💋","💖","💕","💔","❤️","🧡","💛","💚","💙","💜","🔥","✨","⭐️","🌙","☀️","🌈","🍀","🌸","🌊","🍑","🍓","🍔","☕️","🍻","🎉","🎁","🎈","🎵","💃","🕺","🏝️","🌴","✈️","🚗","📷","📱"];
+const EMOJI_PACKS: { key: string; label: string; emojis: string[] }[] = [
+  { key: "smile", label: "表情", emojis: ["😄","😂","🥹","🥰","😘","😍","🤩","😎","🤔","😴","😭","🥺","😳","😅","🙃","😇","🤗","🤤","😋","🤭","🙄","😏","😬","😤","🥳","🤯","😮","😱","🥶","🥵","😜","🤪","😈","🤡","🥱","😪","🤐","😶","🫠","🫡","🫢","🫣","🤫","🤥","😷","🤧"] },
+  { key: "heart", label: "心情", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💖","💕","💞","💓","💗","💘","💝","💔","❣️","💋","🌹","🌷","🌸","🌺","🌻","💐","✨","💫","⭐️","🌟","🔥","💥","🌈"] },
+  { key: "hand", label: "手势", emojis: ["👍","👎","👏","🙌","🙏","🤝","👀","💪","🫶","🤟","✌️","🤘","👌","🤌","🤏","👋","🤚","🖐️","✋","🖖","🤙","👆","👇","👉","👈","☝️","🫵","🫰","🙆","🙅","💁","🙋","🙇","🤷","🤦"] },
+  { key: "life", label: "生活", emojis: ["☕️","🍻","🍺","🍷","🥂","🍰","🧁","🍔","🍕","🍣","🍜","🍱","🍙","🍑","🍓","🍉","🍇","🍊","🍎","🥑","🍪","🍫","🍩","🎉","🎁","🎈","🎂","🎵","🎶","💃","🕺","🏝️","🌴","✈️","🚗","🚕","📷","📱","💻","🎮","⚽️","🏀","🎯","🎨","🎬","📚"] },
+];
+
+const STICKER_PACK: string[] = [
+  "🥰💕","😂👍","🤣🤣","😭💔","😍😍","🥺👉👈","✨🎉","🔥🔥","🙏🙏","💯💯",
+  "🌹💝","☕️🥐","🎁🎈","🥳🎉","😘💋","🤗💖","💪😤","🙄🙄","😴💤","☀️🌈",
+];
+
+function isEmojiOnly(s: string): boolean {
+  if (!s || s.length > 24) return false;
+  try {
+    return /^(\p{Extended_Pictographic}|\p{Emoji_Component}|\uFE0F|\u200D|\s)+$/u.test(s);
+  } catch {
+    return false;
+  }
+}
 
 function ChatPage() {
   const search = Route.useSearch();
@@ -550,8 +569,24 @@ function RealChat({
 
   const insertEmoji = (emoji: string) => {
     setInput((v) => v + emoji);
-    setEmojiOpen(false);
   };
+
+  const sendSticker = async (s: string) => {
+    if (sending) return;
+    setEmojiOpen(false);
+    setSending(true);
+    try {
+      await sendFn({ data: { conversationId: convId, content: s } });
+      track(Events.ChatMessageSent, { conversation_id: convId, kind: "sticker" });
+      qc.invalidateQueries({ queryKey });
+    } catch (e: any) {
+      toast.error(e?.message || "发送失败");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const [emojiTab, setEmojiTab] = useState<string>("smile");
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -679,9 +714,12 @@ function RealChat({
                     </div>
                   )
                 )}
+                {(() => { const big = !m.attachment && isEmojiOnly(m.content); return (
                 <div
                   className={
-                    mine
+                    big
+                      ? "max-w-[78%] px-1 py-1 text-5xl leading-none"
+                      : mine
                       ? `max-w-[78%] rounded-2xl rounded-br-md shadow-md ${m.attachment?.kind === "image" ? "overflow-hidden bg-surface/40 p-0" : "bg-gradient-to-br from-coral to-sun px-3.5 py-2 text-sm text-background"}`
                       : `max-w-[78%] rounded-2xl rounded-bl-md border border-border ${m.attachment?.kind === "image" ? "overflow-hidden bg-surface/40 p-0" : "bg-surface/80 px-3.5 py-2 text-sm"}`
                   }
@@ -699,13 +737,14 @@ function RealChat({
                   ) : (
                     m.content
                   )}
-                  <div className={`flex items-center justify-end gap-1 text-[10px] ${m.attachment?.kind === "image" ? "px-2 py-1 bg-background/40 text-foreground/70" : `mt-1 ${mine ? "text-background/80" : "text-muted-foreground"}`}`}>
+                  <div className={`flex items-center justify-end gap-1 text-[10px] ${m.attachment?.kind === "image" ? "px-2 py-1 bg-background/40 text-foreground/70" : `mt-1 ${big ? "text-muted-foreground" : mine ? "text-background/80" : "text-muted-foreground"}`}`}>
                     <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                     {mine && (m.readAt
                       ? <CheckCheck className="h-3 w-3" />
                       : <Check className="h-3 w-3 opacity-70" />)}
                   </div>
                 </div>
+                ); })()}
               </motion.div>
             );
           })}
@@ -720,14 +759,46 @@ function RealChat({
                 <Smile className="h-4 w-4" />
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" side="top" className="w-72 p-2">
-              <div className="grid grid-cols-8 gap-1 text-xl">
-                {EMOJI_LIST.map((e) => (
-                  <button key={e} onClick={() => insertEmoji(e)} className="rounded-md p-1 hover:bg-surface" aria-label={e}>
-                    {e}
+            <PopoverContent align="start" side="top" className="w-80 p-2">
+              <div className="mb-2 flex gap-1 overflow-x-auto">
+                {EMOJI_PACKS.map((p) => (
+                  <button
+                    key={p.key}
+                    onClick={() => setEmojiTab(p.key)}
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${emojiTab === p.key ? "bg-foreground text-background" : "bg-surface text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {p.label}
                   </button>
                 ))}
+                <button
+                  onClick={() => setEmojiTab("sticker")}
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${emojiTab === "sticker" ? "bg-foreground text-background" : "bg-surface text-muted-foreground hover:text-foreground"}`}
+                >
+                  贴纸
+                </button>
               </div>
+              {emojiTab === "sticker" ? (
+                <div className="grid max-h-60 grid-cols-4 gap-1 overflow-y-auto">
+                  {STICKER_PACK.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => sendSticker(s)}
+                      className="aspect-square rounded-lg bg-surface/60 text-2xl hover:bg-surface"
+                      aria-label={s}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid max-h-60 grid-cols-8 gap-1 overflow-y-auto text-xl">
+                  {(EMOJI_PACKS.find((p) => p.key === emojiTab)?.emojis ?? []).map((e: string) => (
+                    <button key={e} onClick={() => insertEmoji(e)} className="rounded-md p-1 hover:bg-surface" aria-label={e}>
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              )}
             </PopoverContent>
           </Popover>
           <input
