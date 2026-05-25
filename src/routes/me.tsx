@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Settings, Edit3, LogOut, Shield, Bell, Lock, Heart, MessageCircle,
   Sparkles, MapPin, Cake, Briefcase, GraduationCap, Crown, ChevronRight,
-  Home, User as UserIcon, Flame, Camera,
+  Home, User as UserIcon, Flame, Camera, Film, Mic,
 } from "lucide-react";
 import { getMyProfile } from "@/lib/profile.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -236,6 +236,8 @@ function MePage() {
         {/* Menu */}
         <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-surface/60 divide-y divide-border">
           <MenuItem icon={Edit3} label="编辑资料" to="/onboarding" />
+          <MenuItem icon={Film} label="我的短视频" to="/videos" />
+          <MenuItem icon={Mic} label="语音名片" to="/voice-card" />
           <MenuItem icon={Heart} label="我喜欢的人" badge="敬请期待" />
           <MenuItem icon={MessageCircle} label="我的消息" to="/messages" />
           <MenuItem icon={Crown} label="钱包 · Pulse Pro" to="/wallet" badge="HOT" badgeColor="bg-sun text-background" />
