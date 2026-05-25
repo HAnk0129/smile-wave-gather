@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { ArrowLeft, Bell, Heart, MessageSquare, Sparkles, UserPlus, ThumbsUp, MessageCircle, CheckCheck, Gift, Film } from "lucide-react";
+import { ArrowLeft, Bell, Heart, MessageSquare, Sparkles, UserPlus, ThumbsUp, MessageCircle, CheckCheck, Gift, Film, Flag, ShieldCheck } from "lucide-react";
 import { listMyNotifications, markAllRead, markRead, type NotificationItem } from "@/lib/notifications.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -38,6 +38,8 @@ const TYPE_META: Record<string, { icon: any; color: string; label: string }> = {
   gift: { icon: Gift, color: "text-sun", label: "收到礼物" },
   video_like: { icon: Film, color: "text-coral", label: "短视频被赞" },
 };
+TYPE_META.report_resolved = { icon: Flag, color: "text-coral", label: "举报有结果" };
+TYPE_META.appeal_resolved = { icon: ShieldCheck, color: "text-mint", label: "申诉有结果" };
 
 function describe(n: NotificationItem): { title: string; body: string; to?: any } {
   const p = n.payload || {};
@@ -58,6 +60,18 @@ function describe(n: NotificationItem): { title: string; body: string; to?: any 
       return { title: `${p.sender_name ?? "有人"} 送了你一份礼物`, body: p.message || `+${Math.max(Math.floor((p.coins ?? 0) * 0.6), 1)} 心动币已到账`, to: { to: "/wallet" } };
     case "video_like":
       return { title: `有人赞了你的短视频`, body: "去看看是谁吧", to: { to: "/videos" } };
+    case "report_resolved":
+      return {
+        title: p.status === "resolved" ? "举报已处理" : "举报未通过",
+        body: p.note || (p.status === "resolved" ? "感谢你帮助维护社区" : "如有异议可在我的举报中申诉"),
+        to: { to: "/me/reports" },
+      };
+    case "appeal_resolved":
+      return {
+        title: p.status === "accepted" ? "申诉已通过" : "申诉未通过",
+        body: p.note || "",
+        to: { to: "/me/reports" },
+      };
     default:
       return { title: n.type, body: "" };
   }
