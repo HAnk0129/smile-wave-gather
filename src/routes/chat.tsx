@@ -241,10 +241,15 @@ function RealChat({
   const markReadFn = useServerFn(markConversationRead);
   const blockFn = useServerFn(blockUser);
   const reportFn = useServerFn(reportContent);
+  const sendImageFn = useServerFn(sendImageMessage);
+  const deleteConvFn = useServerFn(deleteConversation);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<"spam" | "harassment" | "nudity" | "hate" | "scam" | "other">("harassment");
   const [reportDetail, setReportDetail] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
 
   const queryKey = ["conversation", convId] as const;
   const { data, isLoading, error } = useQuery({
@@ -265,19 +270,23 @@ function RealChat({
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${convId}` },
         (payload) => {
           const m = payload.new as { id: string; sender_id: string; content: string; created_at: string; read_at: string | null };
-          qc.setQueryData(queryKey, (prev: any) => {
-            if (!prev) return prev;
-            if (prev.messages.some((x: any) => x.id === m.id)) return prev;
-            return {
-              ...prev,
-              messages: [
-                ...prev.messages,
-                { id: m.id, senderId: m.sender_id, content: m.content, createdAt: m.created_at, readAt: m.read_at },
-              ],
-            };
-          });
+          // image messages need attachment lookup + signed URL — refetch instead of cache patching
+          if (m.content === "[图片]") {
+            qc.invalidateQueries({ queryKey });
+          } else {
+            qc.setQueryData(queryKey, (prev: any) => {
+              if (!prev) return prev;
+              if (prev.messages.some((x: any) => x.id === m.id)) return prev;
+              return {
+                ...prev,
+                messages: [
+                  ...prev.messages,
+                  { id: m.id, senderId: m.sender_id, content: m.content, createdAt: m.created_at, readAt: m.read_at, attachment: null },
+                ],
+              };
+            });
+          }
           // if message came from partner, mark as read immediately
-          qc.setQueryData(queryKey, (prev: any) => prev); // noop to read
           const meId = (qc.getQueryData(queryKey) as any)?.me;
           if (meId && m.sender_id !== meId) {
             markReadFn({ data: { conversationId: convId } }).then(() => {
