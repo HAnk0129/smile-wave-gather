@@ -291,19 +291,74 @@ export const adminUpdateReport = createServerFn({ method: "POST" })
     z.object({
       id: z.string().uuid(),
       status: z.enum(["pending", "reviewing", "resolved", "rejected"]),
+      resolutionNote: z.string().trim().max(500).optional(),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
+    const patch: Record<string, unknown> = { status: data.status };
+    if (data.status === "resolved" || data.status === "rejected") {
+      patch.resolved_at = new Date().toISOString();
+      patch.resolved_by = userId;
+    }
+    if (data.resolutionNote !== undefined) patch.resolution_note = data.resolutionNote || null;
     const { error } = await supabase
       .from("reports")
-      .update({ status: data.status } as never)
+      .update(patch as never)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     await supabase.from("moderation_actions").insert({
       admin_id: userId, target_type: "report", target_id: data.id,
       action: `update_status:${data.status}`,
+      note: data.resolutionNote ?? null,
+    } as never);
+    return { ok: true };
+  });
+
+/** 管理员:申诉列表 */
+export const adminListAppeals = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { data, error } = await supabase
+      .from("appeals")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return { appeals: data ?? [] };
+  });
+
+/** 管理员:处理申诉 */
+export const adminResolveAppeal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      status: z.enum(["pending", "reviewing", "accepted", "rejected"]),
+      resolutionNote: z.string().trim().max(500).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const patch: Record<string, unknown> = { status: data.status };
+    if (data.status === "accepted" || data.status === "rejected") {
+      patch.resolved_at = new Date().toISOString();
+      patch.resolved_by = userId;
+    }
+    if (data.resolutionNote !== undefined) patch.resolution_note = data.resolutionNote || null;
+    const { error } = await supabase
+      .from("appeals")
+      .update(patch as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await supabase.from("moderation_actions").insert({
+      admin_id: userId, target_type: "appeal", target_id: data.id,
+      action: `appeal:${data.status}`,
+      note: data.resolutionNote ?? null,
     } as never);
     return { ok: true };
   });
