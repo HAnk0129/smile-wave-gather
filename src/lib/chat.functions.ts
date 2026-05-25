@@ -264,6 +264,25 @@ export const startConversation = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
     if (blockRow) throw new Error("无法发起对话：你们之间存在拉黑关系");
+    // honor partner's privacy: allow_messages
+    const { data: priv } = await supabase
+      .from("profiles_privacy")
+      .select("allow_messages")
+      .eq("id", data.partnerId)
+      .maybeSingle();
+    const allow = (priv as any)?.allow_messages ?? "everyone";
+    if (allow === "none") throw new Error("对方已关闭新消息");
+    if (allow === "matches") {
+      const a = userId < data.partnerId ? userId : data.partnerId;
+      const b = userId < data.partnerId ? data.partnerId : userId;
+      const { data: m } = await supabase
+        .from("matches")
+        .select("id")
+        .eq("user_a", a)
+        .eq("user_b", b)
+        .maybeSingle();
+      if (!m) throw new Error("对方仅允许互相喜欢的人发消息");
+    }
     const { data: convId, error } = await supabase.rpc("start_conversation", {
       partner_id: data.partnerId,
       source: data.source,
@@ -305,14 +324,34 @@ export const searchUsersByNickname = createServerFn({ method: "POST" })
       .ilike("nickname", `%${data.q}%`)
       .limit(30);
     if (error) throw new Error(error.message);
+    const candidateIds = (rows ?? []).map((r: any) => r.id).filter((id: string) => id !== userId);
+    // exclude users who set searchable=false, and users blocking me (or blocked by me)
+    const [{ data: privRows }, { data: blockRows }] = await Promise.all([
+      candidateIds.length
+        ? supabase.from("profiles_privacy").select("id, searchable, hide_city").in("id", candidateIds)
+        : Promise.resolve({ data: [] as any[] }),
+      supabase.from("blocks").select("blocker_id, blocked_id")
+        .or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`),
+    ]);
+    const privMap = new Map<string, { searchable: boolean; hide_city: boolean }>();
+    (privRows ?? []).forEach((p: any) => privMap.set(p.id, p));
+    const blocked = new Set<string>(
+      (blockRows ?? []).map((b: any) => (b.blocker_id === userId ? b.blocked_id : b.blocker_id)),
+    );
     const users = (rows ?? [])
       .filter((r: any) => r.id !== userId)
+      .filter((r: any) => {
+        if (blocked.has(r.id)) return false;
+        const p = privMap.get(r.id);
+        return p ? p.searchable : true;
+      })
       .map((r: any) => {
         const photos = Array.isArray(r.photos) ? (r.photos as string[]) : [];
+        const p = privMap.get(r.id);
         return {
           id: r.id as string,
           nickname: (r.nickname as string | null) ?? "Pulse 用户",
-          city: (r.city as string | null) ?? null,
+          city: p?.hide_city ? null : ((r.city as string | null) ?? null),
           signature: (r.signature as string | null) ?? null,
           avatar: photos[r.main_idx ?? 0] || photos[0] || null,
         };
