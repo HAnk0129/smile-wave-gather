@@ -294,6 +294,7 @@ export type Database = {
       community_posts: {
         Row: {
           author_id: string
+          auto_flag_reason: string | null
           campus_id: string
           category: string
           comments_count: number
@@ -305,12 +306,17 @@ export type Database = {
           likes_count: number
           location: string
           media: Json
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
           tags: Json
           title: string
           updated_at: string
         }
         Insert: {
           author_id: string
+          auto_flag_reason?: string | null
           campus_id: string
           category: string
           comments_count?: number
@@ -322,12 +328,17 @@ export type Database = {
           likes_count?: number
           location?: string
           media?: Json
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           tags?: Json
           title: string
           updated_at?: string
         }
         Update: {
           author_id?: string
+          auto_flag_reason?: string | null
           campus_id?: string
           category?: string
           comments_count?: number
@@ -339,6 +350,10 @@ export type Database = {
           likes_count?: number
           location?: string
           media?: Json
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           tags?: Json
           title?: string
           updated_at?: string
