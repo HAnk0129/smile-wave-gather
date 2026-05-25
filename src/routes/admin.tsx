@@ -13,6 +13,7 @@ import {
   PieChart, Pie, Cell, Legend, BarChart, Bar,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { track, Events } from "@/lib/analytics";
 import {
   claimFirstAdmin, getAdminStats, getAdminCharts,
   adminListUsers, adminListMessages, adminListReports, adminUpdateReport,
