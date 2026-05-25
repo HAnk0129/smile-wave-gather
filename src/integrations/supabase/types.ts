@@ -712,6 +712,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles_privacy: {
+        Row: {
+          allow_messages: string
+          hide_city: boolean
+          hide_distance: boolean
+          id: string
+          searchable: boolean
+          updated_at: string
+        }
+        Insert: {
+          allow_messages?: string
+          hide_city?: boolean
+          hide_distance?: boolean
+          id: string
+          searchable?: boolean
+          updated_at?: string
+        }
+        Update: {
+          allow_messages?: string
+          hide_city?: boolean
+          hide_distance?: boolean
+          id?: string
+          searchable?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles_private: {
         Row: {
           id: string
