@@ -401,7 +401,10 @@ function MessagesTab() {
     queryFn: () => fn({ data: { search: search || undefined, hasMedia, limit: 80, offset: 0 } }),
   });
   const del = useMutation({
-    mutationFn: (id: string) => delFn({ data: { id } }),
+    mutationFn: (id: string) => {
+      track(Events.AdminActionPerformed, { action: "delete_message", id });
+      return delFn({ data: { id } });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-messages"] }),
   });
   const msgs = data?.messages ?? [];
@@ -502,7 +505,10 @@ function ReportsTab() {
   const { data, isLoading } = useQuery({ queryKey: ["admin-reports"], queryFn: () => fn() });
   const reports = data?.reports ?? [];
   const mut = useMutation({
-    mutationFn: (v: { id: string; status: any }) => upd({ data: v }),
+    mutationFn: (v: { id: string; status: any }) => {
+      track(Events.AdminActionPerformed, { action: "update_report", ...v });
+      return upd({ data: v });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-reports"] }),
   });
   return (
@@ -645,8 +651,10 @@ function PhotoModeration() {
     queryFn: () => listFn({ data: { onlyFlagged: onlyPending, limit: 60 } }),
   });
   const mut = useMutation({
-    mutationFn: (v: { profileId: string; idx: number; action: "approve" | "reject" }) =>
-      reviewFn({ data: v }),
+    mutationFn: (v: { profileId: string; idx: number; action: "approve" | "reject" }) => {
+      track(Events.AdminActionPerformed, { action: "review_photo", ...v });
+      return reviewFn({ data: v });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mod-photos"] }),
   });
   const items = data?.items ?? [];
@@ -734,7 +742,10 @@ function PostModeration() {
   const { data, isLoading } = useQuery({ queryKey: ["mod-posts"], queryFn: () => listFn() });
   const posts = data?.posts ?? [];
   const mut = useMutation({
-    mutationFn: (v: { id: string; action: "approve" | "remove"; reason?: string }) => reviewFn({ data: v }),
+    mutationFn: (v: { id: string; action: "approve" | "remove"; reason?: string }) => {
+      track(Events.AdminActionPerformed, { action: "review_post", ...v });
+      return reviewFn({ data: v });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["mod-posts"] });
       qc.invalidateQueries({ queryKey: ["mod-summary"] });
@@ -796,7 +807,10 @@ function VerifyTab() {
   });
 
   const review = useMutation({
-    mutationFn: (v: { id: string; action: "approve" | "reject"; note?: string }) => reviewFn({ data: v }),
+    mutationFn: (v: { id: string; action: "approve" | "reject"; note?: string }) => {
+      track(Events.AdminActionPerformed, { action: "review_verification", ...v });
+      return reviewFn({ data: v });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-verifications"] }),
   });
 
@@ -1107,11 +1121,17 @@ function RolesTab() {
   const members: any[] = data?.members ?? [];
 
   const assign = useMutation({
-    mutationFn: (v: { targetUserId: string; role: "admin" | "moderator" }) => assignFn({ data: v }),
+    mutationFn: (v: { targetUserId: string; role: "admin" | "moderator" }) => {
+      track(Events.AdminActionPerformed, { action: "assign_role", ...v });
+      return assignFn({ data: v });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-roles"] }),
   });
   const revoke = useMutation({
-    mutationFn: (v: { targetUserId: string; role: "admin" | "moderator" }) => revokeFn({ data: v }),
+    mutationFn: (v: { targetUserId: string; role: "admin" | "moderator" }) => {
+      track(Events.AdminActionPerformed, { action: "revoke_role", ...v });
+      return revokeFn({ data: v });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-roles"] }),
   });
 
