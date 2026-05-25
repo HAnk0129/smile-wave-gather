@@ -461,6 +461,7 @@ function RealChat({
     setInput("");
     try {
       await sendFn({ data: { conversationId: convId, content: text } });
+      track(Events.ChatMessageSent, { conversation_id: convId, kind: "text" });
       // realtime will update; also optimistic-refresh as fallback
       qc.invalidateQueries({ queryKey });
     } catch (e) {
