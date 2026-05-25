@@ -6,6 +6,7 @@ import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
   ShieldCheck, CheckCircle2, XCircle, KeyRound, UserPlus, X, School, Copy, Check,
+  BadgeCheck, GraduationCap,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -24,6 +25,7 @@ import {
   adminListCampuses, adminCreateCampus, adminListCampusInvites,
   createCampusInvite,
 } from "@/lib/campus.functions";
+import { adminListVerifications, adminReviewVerification } from "@/lib/verify.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -35,7 +37,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "roles" | "campuses";
+type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "verify" | "roles" | "campuses";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -124,6 +126,7 @@ function AdminConsole() {
     { key: "treehole", label: "树洞", icon: Trees },
     { key: "posts", label: "社区", icon: FileText },
     { key: "reports", label: "举报", icon: Flag },
+    { key: "verify", label: "认证", icon: BadgeCheck },
     { key: "roles", label: "权限", icon: KeyRound },
     { key: "campuses", label: "园区", icon: School },
   ];
@@ -163,6 +166,7 @@ function AdminConsole() {
         {tab === "treehole" && <TreeholeTab />}
         {tab === "posts" && <PostsTab />}
         {tab === "reports" && <ReportsTab />}
+        {tab === "verify" && <VerifyTab />}
         {tab === "roles" && <RolesTab />}
         {tab === "campuses" && <CampusesTab />}
       </main>
@@ -767,6 +771,105 @@ function PostModeration() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function VerifyTab() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListVerifications);
+  const reviewFn = useServerFn(adminReviewVerification);
+  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-verifications", status],
+    queryFn: () => listFn({ data: { status, limit: 80 } }),
+  });
+
+  const review = useMutation({
+    mutationFn: (v: { id: string; action: "approve" | "reject"; note?: string }) => reviewFn({ data: v }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-verifications"] }),
+  });
+
+  const items = data?.items ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">实名 / 学生认证</h2>
+        <div className="flex gap-1 rounded-lg border border-border p-1 text-xs">
+          {(["pending","approved","rejected","all"] as const).map((s) => (
+            <button key={s} onClick={() => setStatus(s)}
+              className={`rounded px-2.5 py-1 ${status===s ? "bg-coral text-white" : "text-muted-foreground hover:bg-surface"}`}>
+              {s === "pending" ? "待审核" : s === "approved" ? "已通过" : s === "rejected" ? "已驳回" : "全部"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
+      {!isLoading && items.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">暂无记录</p>
+      )}
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {items.map((it: any) => (
+          <div key={it.id} className="overflow-hidden rounded-2xl border border-border bg-surface/60">
+            <a href={it.evidence_url} target="_blank" rel="noreferrer" className="block">
+              <img src={it.evidence_url} alt="凭证" className="h-56 w-full object-cover" />
+            </a>
+            <div className="p-3">
+              <div className="flex items-center gap-2">
+                {it.user.avatar
+                  ? <img src={it.user.avatar} alt="" className="h-7 w-7 rounded-full object-cover" />
+                  : <div className="grid h-7 w-7 place-items-center rounded-full bg-coral/30 text-[11px]">{it.user.nickname.slice(0,1)}</div>}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">{it.user.nickname}</div>
+                  <div className="text-[10px] text-muted-foreground">{it.user.city || "未填城市"}</div>
+                </div>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ${it.kind === "real" ? "bg-mint/20 text-mint" : "bg-brand/20 text-brand"}`}>
+                  {it.kind === "real" ? <Shield className="h-3 w-3" /> : <GraduationCap className="h-3 w-3" />}
+                  {it.kind === "real" ? "实人" : "学生"}
+                </span>
+              </div>
+              {it.evidence_extra && (
+                <p className="mt-2 line-clamp-2 rounded-lg bg-background/60 px-2 py-1 text-[11px] text-muted-foreground">
+                  备注：{it.evidence_extra}
+                </p>
+              )}
+              <p className="mt-1 text-[10px] text-muted-foreground">提交于 {new Date(it.created_at).toLocaleString()}</p>
+
+              {it.status === "pending" ? (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => review.mutate({ id: it.id, action: "approve" })}
+                    disabled={review.isPending}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-mint/20 px-3 py-1.5 text-xs font-semibold text-mint hover:bg-mint/30 disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" /> 通过
+                  </button>
+                  <button
+                    onClick={() => {
+                      const note = prompt("驳回原因（可选）") || undefined;
+                      review.mutate({ id: it.id, action: "reject", note });
+                    }}
+                    disabled={review.isPending}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/25 disabled:opacity-50"
+                  >
+                    <XCircle className="h-3.5 w-3.5" /> 驳回
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-3 text-[11px]">
+                  <span className={it.status === "approved" ? "text-mint" : "text-rose-300"}>
+                    {it.status === "approved" ? "已通过" : "已驳回"}
+                  </span>
+                  {it.review_note && <span className="ml-1 text-muted-foreground">· {it.review_note}</span>}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

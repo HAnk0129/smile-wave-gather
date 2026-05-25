@@ -124,6 +124,11 @@ function MePage() {
                       <Shield className="h-3 w-3" /> 真人
                     </span>
                   )}
+                  {profile?.verify_student && (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-brand/20 px-1.5 py-0.5 text-[10px] text-brand">
+                      <GraduationCap className="h-3 w-3" /> 学生
+                    </span>
+                  )}
                 </div>
                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                   {profile?.signature || "还没有签名，点编辑加一句让人记住你的话"}
@@ -239,6 +244,7 @@ function MePage() {
         <section className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface/60 divide-y divide-border">
           <MenuItem icon={Bell} label="通知设置" />
           <MenuItem icon={Lock} label="隐私与可见性" />
+          <MenuItem icon={Shield} label="实名 & 学生认证" to="/verify" />
           <MenuItem icon={Shield} label="账号安全" />
         </section>
 
