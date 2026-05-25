@@ -176,11 +176,18 @@ function MessagesPage() {
                           <Icon className="h-2.5 w-2.5" /> {meta.label}
                         </span>
                       </div>
-                      <p className="truncate text-xs text-muted-foreground">
+                      <p className={`truncate text-xs ${c.unread > 0 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                         {c.lastMessage || "开始你们的第一句话…"}
                       </p>
                     </div>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">{timeAgo(c.lastMessageAt)}</span>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="text-[11px] text-muted-foreground">{timeAgo(c.lastMessageAt)}</span>
+                      {c.unread > 0 && (
+                        <span className="grid min-w-[18px] place-items-center rounded-full bg-coral px-1.5 text-[10px] font-semibold text-background">
+                          {c.unread > 99 ? "99+" : c.unread}
+                        </span>
+                      )}
+                    </div>
                   </Link>
                 </li>
               );

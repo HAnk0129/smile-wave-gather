@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal } from "lucide-react";
-import { getConversation, sendMessage as sendMessageFn } from "@/lib/chat.functions";
+import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal, Check, CheckCheck } from "lucide-react";
+import { getConversation, sendMessage as sendMessageFn, markConversationRead } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 type ChatSearch = {
@@ -233,6 +233,7 @@ function RealChat({
   const qc = useQueryClient();
   const fetchConv = useServerFn(getConversation);
   const sendFn = useServerFn(sendMessageFn);
+  const markReadFn = useServerFn(markConversationRead);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   const queryKey = ["conversation", convId] as const;
@@ -265,11 +266,45 @@ function RealChat({
               ],
             };
           });
+          // if message came from partner, mark as read immediately
+          qc.setQueryData(queryKey, (prev: any) => prev); // noop to read
+          const meId = (qc.getQueryData(queryKey) as any)?.me;
+          if (meId && m.sender_id !== meId) {
+            markReadFn({ data: { conversationId: convId } }).then(() => {
+              qc.invalidateQueries({ queryKey: ["conversations"] });
+            }).catch(() => {});
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${convId}` },
+        (payload) => {
+          const m = payload.new as { id: string; read_at: string | null };
+          qc.setQueryData(queryKey, (prev: any) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              messages: prev.messages.map((x: any) =>
+                x.id === m.id ? { ...x, readAt: m.read_at } : x,
+              ),
+            };
+          });
         },
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [convId, qc]);
+  }, [convId, qc, markReadFn]);
+
+  // mark conversation as read when opened / when data loads
+  useEffect(() => {
+    if (!data?.me) return;
+    const hasUnread = data.messages.some((m) => m.senderId !== data.me && !m.readAt);
+    if (!hasUnread) return;
+    markReadFn({ data: { conversationId: convId } })
+      .then(() => qc.invalidateQueries({ queryKey: ["conversations"] }))
+      .catch(() => {});
+  }, [convId, data?.me, data?.messages, markReadFn, qc]);
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
@@ -374,8 +409,11 @@ function RealChat({
                   }
                 >
                   {m.content}
-                  <div className={`mt-1 text-right text-[10px] ${mine ? "text-background/70" : "text-muted-foreground"}`}>
-                    {new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-background/80" : "text-muted-foreground"}`}>
+                    <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                    {mine && (m.readAt
+                      ? <CheckCheck className="h-3 w-3" />
+                      : <Check className="h-3 w-3 opacity-70" />)}
                   </div>
                 </div>
               </motion.div>
