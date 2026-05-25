@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Search, MessageSquare,
   Flame, Mic, Video as VideoIcon, Ghost, Heart, Sparkles,
+  UserPlus,
 } from "lucide-react";
 import { listConversations } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +91,14 @@ function MessagesPage() {
               <Flame className="h-5 w-5" />
             </div>
             <span className="font-display text-lg font-semibold tracking-tight">消息</span>
+          </Link>
+          <div className="flex-1" />
+          <Link
+            to="/add-friend"
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-surface/70 px-3 py-1.5 text-xs text-foreground hover:bg-surface"
+            aria-label="添加好友"
+          >
+            <UserPlus className="h-3.5 w-3.5 text-coral" /> 加好友
           </Link>
         </div>
         <div className="mx-auto w-full max-w-md px-5 pb-3">
