@@ -78,6 +78,9 @@ function MePage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    const { track, Events, resetAnalytics } = await import("@/lib/analytics");
+    track(Events.SignOut);
+    resetAnalytics();
     refetch();
     navigate({ to: "/" });
   };

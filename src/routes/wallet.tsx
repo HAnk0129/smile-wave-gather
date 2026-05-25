@@ -7,6 +7,7 @@ import { getMyWallet, getMyLedger, topUpCoins, buyProPlan } from "@/lib/wallet.f
 import { GIFT_CATALOG, TOPUP_PACKS, PRO_PLANS, isPro, findGift } from "@/lib/wallet";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { track, Events } from "@/lib/analytics";
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({
@@ -70,12 +71,17 @@ function WalletPage() {
 
   const handleTopUp = async (amount: number) => {
     setBusy(`topup-${amount}`);
+    track(Events.TopupStarted, { amount });
     try {
       await topup({ data: { amount } });
+      track(Events.TopupSucceeded, { amount });
       toast.success(`充值成功 +${amount} 心动币`);
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["wallet-ledger"] });
-    } catch (e: any) { toast.error(e.message ?? "充值失败"); }
+    } catch (e: any) {
+      track(Events.TopupFailed, { amount, message: e?.message });
+      toast.error(e.message ?? "充值失败");
+    }
     finally { setBusy(null); }
   };
 
@@ -83,6 +89,7 @@ function WalletPage() {
     setBusy(`pro-${plan}`);
     try {
       const r = await buyPro({ data: { plan } });
+      track(Events.PaidFeatureUnlocked, { feature: "pulse_pro", plan });
       toast.success(`Pulse Pro 已开通至 ${new Date(r.proUntil).toLocaleDateString()}`);
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["wallet-ledger"] });

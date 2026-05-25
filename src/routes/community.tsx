@@ -14,6 +14,7 @@ import {
 import { BottomNav as AppBottomNav } from "@/components/BottomNav";
 import { ReportSheet, type ReportTargetType } from "@/components/ReportSheet";
 import { z } from "zod";
+import { track, Events } from "@/lib/analytics";
 import {
   listCommunityPosts,
   createCommunityPost,
@@ -200,7 +201,10 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   );
 
   const likeMut = useMutation({
-    mutationFn: (post_id: string) => likeFn({ data: { post_id } }),
+    mutationFn: (post_id: string) => {
+      track(Events.PostLiked, { post_id });
+      return likeFn({ data: { post_id } });
+    },
     onMutate: async (post_id) => {
       await qc.cancelQueries({ queryKey });
       const prev = qc.getQueryData<{ posts: CommunityPost[] }>(queryKey);
@@ -1231,6 +1235,7 @@ function ComposeSheet({
           media: media.map(({ url, type }) => ({ url, type })),
         },
       });
+      track(Events.PostCreated, { category: cat, has_media: media.length > 0, tags_count: tags.length });
       toast.success("发布成功");
       onPublished();
       onClose();

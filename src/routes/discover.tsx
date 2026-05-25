@@ -7,6 +7,7 @@ import profile2 from "@/assets/profile-2.jpg";
 import profile3 from "@/assets/profile-3.jpg";
 import profile4 from "@/assets/profile-4.jpg";
 import profile5 from "@/assets/profile-5.jpg";
+import { track, Events } from "@/lib/analytics";
 
 export const Route = createFileRoute("/discover")({
   head: () => ({
@@ -92,6 +93,7 @@ function DiscoverPage() {
   const after = PROFILES[(index + 2) % PROFILES.length];
 
   const swipe = (dir: "left" | "right" | "up") => {
+    track(Events.MatchSwipe, { direction: dir, profile_id: current.id });
     setHistory((h) => [...h, { id: current.id, dir }]);
     setLastAction(dir === "right" ? "like" : dir === "left" ? "nope" : "super");
     if (dir === "right" || dir === "up") {

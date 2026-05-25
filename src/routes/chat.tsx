@@ -8,6 +8,7 @@ import { getConversation, sendMessage as sendMessageFn, markConversationRead, se
 import { blockUser, reportContent } from "@/lib/moderation.functions";
 import { sendGift, getMyWallet } from "@/lib/wallet.functions";
 import { GIFT_CATALOG } from "@/lib/wallet";
+import { track, Events } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -460,6 +461,7 @@ function RealChat({
     setInput("");
     try {
       await sendFn({ data: { conversationId: convId, content: text } });
+      track(Events.ChatMessageSent, { conversation_id: convId, kind: "text" });
       // realtime will update; also optimistic-refresh as fallback
       qc.invalidateQueries({ queryKey });
     } catch (e) {

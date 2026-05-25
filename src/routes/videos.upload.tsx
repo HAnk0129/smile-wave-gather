@@ -5,6 +5,7 @@ import { ArrowLeft, UploadCloud, X, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { publishShortVideo } from "@/lib/videos.functions";
 import { toast } from "sonner";
+import { track, Events } from "@/lib/analytics";
 
 export const Route = createFileRoute("/videos/upload")({
   head: () => ({ meta: [{ title: "发布短视频 · Pulse" }] }),
@@ -80,6 +81,7 @@ function VideoUploadPage() {
           height: size?.h,
         },
       });
+      track(Events.VideoUploaded, { duration: duration ?? null, size_bytes: file.size });
       toast.success("发布成功");
       navigate({ to: "/videos" });
     } catch (e: any) {
