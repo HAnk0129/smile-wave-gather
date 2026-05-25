@@ -9,6 +9,7 @@ import {
   Heart, MessageCircle, MapPin, ChevronDown, Plus,
   Flame, TrendingUp, X, Image as ImageIcon,
   Tag, ShoppingBag, MessageSquare, HelpCircle, KeyRound, Copy, Check, School,
+  Search, Send, UserPlus, Loader2,
 } from "lucide-react";
 import { BottomNav as AppBottomNav } from "@/components/BottomNav";
 import { z } from "zod";
@@ -29,6 +30,8 @@ import {
   listAllCampuses,
   redeemCampusInvite,
   createCampusInvite,
+  searchInviteCandidates,
+  inviteUsersToCampus,
   type Campus,
 } from "@/lib/campus.functions";
 
@@ -471,12 +474,77 @@ function JoinCampusGate({ onJoined }: { onJoined: () => void }) {
 }
 
 function InviteSheet({ campus, onClose }: { campus: Campus; onClose: () => void }) {
+  const [tab, setTab] = useState<"users" | "code">("users");
   const [maxUses, setMaxUses] = useState(5);
   const [hours, setHours] = useState(168);
   const [latest, setLatest] = useState<{ code: string; max_uses: number; expires_at: string | null } | null>(null);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const createFn = useServerFn(createCampusInvite);
+  const searchFn = useServerFn(searchInviteCandidates);
+  const inviteUsersFn = useServerFn(inviteUsersToCampus);
+
+  const [q, setQ] = useState("");
+  const [users, setUsers] = useState<{ id: string; nickname: string | null; city: string | null; avatar: string | null }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [note, setNote] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const { users: rows } = await searchFn({ data: { campus_id: campus.id, q } });
+        if (!cancelled) setUsers(rows);
+      } catch (e: any) {
+        if (!cancelled) toast.error(e?.message ?? "搜索失败");
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [q, campus.id, searchFn]);
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < 20) next.add(id);
+      else toast.message("一次最多邀请 20 人");
+      return next;
+    });
+  };
+
+  const sendInvites = async () => {
+    if (selected.size === 0) {
+      toast.error("请先选择至少一位用户");
+      return;
+    }
+    setSending(true);
+    try {
+      const { sent, failed } = await inviteUsersFn({
+        data: {
+          campus_id: campus.id,
+          recipient_ids: Array.from(selected),
+          expires_in_hours: 168,
+          note: note.trim() || undefined,
+        },
+      });
+      if (sent > 0) toast.success(`已发送 ${sent} 条邀请${failed ? `，${failed} 条失败` : ""}`);
+      else toast.error("邀请发送失败");
+      setSelected(new Set());
+      setNote("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "发送失败");
+    } finally {
+      setSending(false);
+    }
+  };
 
   const generate = async () => {
     setCreating(true);
@@ -501,6 +569,109 @@ function InviteSheet({ campus, onClose }: { campus: Campus; onClose: () => void 
   return (
     <Modal onClose={onClose} title={`邀请好友加入 ${campus.name}`}>
       <div className="space-y-4">
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 rounded-full bg-background/40 border border-border">
+          {([
+            { k: "users" as const, label: "选用户发送", icon: UserPlus },
+            { k: "code" as const, label: "生成邀请码", icon: KeyRound },
+          ]).map((t) => {
+            const active = tab === t.k;
+            return (
+              <button
+                key={t.k}
+                onClick={() => setTab(t.k)}
+                className={`flex-1 h-9 rounded-full text-xs font-medium inline-flex items-center justify-center gap-1.5 transition ${
+                  active ? "bg-coral text-background" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <t.icon className="size-3.5" />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {tab === "users" ? (
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="按昵称搜索用户"
+                className="w-full h-10 pl-9 pr-3 rounded-xl bg-background/40 border border-border text-sm outline-none focus:border-coral/50"
+              />
+            </div>
+
+            {selected.size > 0 && (
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>已选 {selected.size} 人</span>
+                <button onClick={() => setSelected(new Set())} className="text-coral">清空</button>
+              </div>
+            )}
+
+            <div className="max-h-64 overflow-y-auto -mx-1 px-1 space-y-1.5">
+              {searching ? (
+                <div className="py-8 flex items-center justify-center text-muted-foreground text-xs">
+                  <Loader2 className="size-4 animate-spin mr-2" /> 搜索中…
+                </div>
+              ) : users.length === 0 ? (
+                <div className="py-8 text-center text-xs text-muted-foreground">
+                  {q ? "没找到匹配的用户" : "没有可邀请的用户"}
+                </div>
+              ) : (
+                users.map((u) => {
+                  const checked = selected.has(u.id);
+                  return (
+                    <button
+                      key={u.id}
+                      onClick={() => toggle(u.id)}
+                      className={`w-full flex items-center gap-3 p-2.5 rounded-xl border transition ${
+                        checked ? "border-coral/60 bg-coral/10" : "border-border bg-background/30 hover:border-coral/30"
+                      }`}
+                    >
+                      <AuthorBadge
+                        nickname={u.nickname}
+                        avatar={u.avatar}
+                        fallback={u.id.slice(0, 2)}
+                        size="md"
+                      />
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="text-sm font-medium truncate">{u.nickname || "未命名"}</div>
+                        {u.city && <div className="text-[11px] text-muted-foreground truncate">{u.city}</div>}
+                      </div>
+                      <div
+                        className={`size-5 rounded-md border flex items-center justify-center ${
+                          checked ? "bg-coral border-coral text-background" : "border-border"
+                        }`}
+                      >
+                        {checked && <Check className="size-3.5" />}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value.slice(0, 200))}
+              placeholder="附言（可选，≤ 200 字）"
+              rows={2}
+              className="w-full px-3 py-2 rounded-xl bg-background/40 border border-border text-sm outline-none focus:border-coral/50 resize-none"
+            />
+
+            <button
+              onClick={sendInvites}
+              disabled={sending || selected.size === 0}
+              className="w-full h-11 rounded-full bg-coral text-background font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2"
+            >
+              {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              {sending ? "发送中…" : `发送邀请${selected.size ? ` (${selected.size})` : ""}`}
+            </button>
+          </div>
+        ) : (
+          <>
         <p className="text-xs text-muted-foreground">
           仅本园区成员可见的同频社区。生成邀请码发给同学，他们输入即可加入。
         </p>
@@ -541,6 +712,8 @@ function InviteSheet({ campus, onClose }: { campus: Campus; onClose: () => void 
               {copied ? "已复制" : "复制邀请码"}
             </button>
           </div>
+        )}
+          </>
         )}
       </div>
     </Modal>
