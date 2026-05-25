@@ -870,6 +870,8 @@ function ComposeSheet({
   const [cat, setCat] = useState<Exclude<Category, "all">>("second");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [tagDraft, setTagDraft] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const createFn = useServerFn(createCommunityPost);
   const [submitting, setSubmitting] = useState(false);
   const [media, setMedia] = useState<{ url: string; type: "image" | "video"; path: string }[]>([]);
@@ -921,6 +923,15 @@ function ComposeSheet({
     await supabase.storage.from("community-media").remove([item.path]).catch(() => {});
   };
 
+  const addTag = () => {
+    const t = tagDraft.trim().replace(/^#/, "").slice(0, 20);
+    if (!t) return;
+    if (tags.includes(t)) { setTagDraft(""); return; }
+    if (tags.length >= 6) { toast.error("最多 6 个话题"); return; }
+    setTags([...tags, t]);
+    setTagDraft("");
+  };
+
   const submit = async () => {
     if (!title.trim() || !content.trim()) return;
     setSubmitting(true);
@@ -932,7 +943,7 @@ function ComposeSheet({
           title: title.trim(),
           content: content.trim(),
           location: campus.name,
-          tags: [],
+          tags,
           media: media.map(({ url, type }) => ({ url, type })),
         },
       });
@@ -1034,13 +1045,33 @@ function ComposeSheet({
           className="w-full p-3 rounded-xl bg-background/40 border border-border text-sm resize-none focus:outline-none focus:border-coral/50"
         />
 
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <School className="size-3 text-coral" /> {campus.name}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Tag className="size-3" /> 添加话题
-          </span>
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((t) => (
+              <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-mint/15 text-mint text-xs">
+                #{t}
+                <button type="button" onClick={() => setTags(tags.filter((x) => x !== t))} className="opacity-70 hover:opacity-100">
+                  <X className="size-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Tag className="size-3.5 text-muted-foreground shrink-0" />
+            <input
+              value={tagDraft}
+              onChange={(e) => setTagDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); }
+              }}
+              maxLength={20}
+              placeholder="添加话题，回车确认（最多 6 个）"
+              className="flex-1 h-8 px-2 rounded-lg bg-background/40 border border-border text-xs focus:outline-none focus:border-coral/50"
+            />
+          </div>
+          <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+            <School className="size-3 text-coral" /> 发布到 {campus.name}
+          </div>
         </div>
 
         <button
