@@ -1224,7 +1224,7 @@ function ComposeSheet({
     if (!title.trim() || !content.trim()) return;
     setSubmitting(true);
     try {
-      await createFn({
+      const res = await createFn({
         data: {
           campus_id: campus.id,
           category: cat,
@@ -1236,7 +1236,11 @@ function ComposeSheet({
         },
       });
       track(Events.PostCreated, { category: cat, has_media: media.length > 0, tags_count: tags.length });
-      toast.success("发布成功");
+      if ((res as any)?.pending) {
+        toast.success("已提交,内容含敏感词,需管理员审核通过后才会公开展示");
+      } else {
+        toast.success("发布成功");
+      }
       onPublished();
       onClose();
     } catch (e: any) {
