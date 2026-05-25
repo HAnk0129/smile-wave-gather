@@ -6,6 +6,15 @@ export const listConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    // exclude conversations where the partner is blocked (either direction)
+    const { data: blockRows } = await supabase
+      .from("blocks")
+      .select("blocker_id, blocked_id")
+      .or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`);
+    const blockedSet = new Set<string>(
+      (blockRows ?? []).map((b: any) => (b.blocker_id === userId ? b.blocked_id : b.blocker_id)),
+    );
+
     const { data: convs, error } = await supabase
       .from("conversations")
       .select("id, user_a, user_b, source, last_message, last_message_at, created_at")
@@ -14,8 +23,13 @@ export const listConversations = createServerFn({ method: "GET" })
       .limit(50);
     if (error) throw new Error(error.message);
 
+    const visibleConvs = (convs ?? []).filter((c) => {
+      const partnerId = c.user_a === userId ? c.user_b : c.user_a;
+      return !blockedSet.has(partnerId);
+    });
+
     const partnerIds = Array.from(
-      new Set((convs ?? []).map((c) => (c.user_a === userId ? c.user_b : c.user_a))),
+      new Set(visibleConvs.map((c) => (c.user_a === userId ? c.user_b : c.user_a))),
     );
     const profilesMap = new Map<string, { nickname: string | null; photos: unknown; main_idx: number | null }>();
     if (partnerIds.length) {
@@ -27,7 +41,7 @@ export const listConversations = createServerFn({ method: "GET" })
     }
 
     // unread counts per conversation (messages I haven't read that aren't mine)
-    const convIds = (convs ?? []).map((c) => c.id);
+    const convIds = visibleConvs.map((c) => c.id);
     const unreadMap = new Map<string, number>();
     if (convIds.length) {
       const { data: unreadRows } = await supabase
@@ -42,7 +56,7 @@ export const listConversations = createServerFn({ method: "GET" })
     }
 
     return {
-      conversations: (convs ?? []).map((c) => {
+      conversations: visibleConvs.map((c) => {
         const partnerId = c.user_a === userId ? c.user_b : c.user_a;
         const p = profilesMap.get(partnerId);
         const photos = Array.isArray(p?.photos) ? (p!.photos as string[]) : [];
@@ -146,6 +160,13 @@ export const startConversation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (data.partnerId === userId) throw new Error("不能和自己开始对话");
+    const { data: blockRow } = await supabase
+      .from("blocks")
+      .select("blocker_id")
+      .or(`and(blocker_id.eq.${userId},blocked_id.eq.${data.partnerId}),and(blocker_id.eq.${data.partnerId},blocked_id.eq.${userId})`)
+      .limit(1)
+      .maybeSingle();
+    if (blockRow) throw new Error("无法发起对话：你们之间存在拉黑关系");
     const { data: convId, error } = await supabase.rpc("start_conversation", {
       partner_id: data.partnerId,
       source: data.source,
