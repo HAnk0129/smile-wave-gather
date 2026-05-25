@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      appeals: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          reason: string
+          related_report_id: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          target_id: string | null
+          target_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          reason: string
+          related_report_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          target_id?: string | null
+          target_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          reason?: string
+          related_report_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          target_id?: string | null
+          target_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appeals_related_report_id_fkey"
+            columns: ["related_report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocks: {
         Row: {
           blocked_id: string
@@ -827,6 +883,9 @@ export type Database = {
           id: string
           reason: string
           reporter_id: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           status: string
           target_id: string
           target_type: string
@@ -837,6 +896,9 @@ export type Database = {
           id?: string
           reason: string
           reporter_id: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           status?: string
           target_id: string
           target_type: string
@@ -847,6 +909,9 @@ export type Database = {
           id?: string
           reason?: string
           reporter_id?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           status?: string
           target_id?: string
           target_type?: string

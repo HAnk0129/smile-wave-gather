@@ -250,6 +250,7 @@ function MePage() {
           <MenuItem icon={Bell} label="通知中心" to="/notifications" />
           <MenuItem icon={Lock} label="隐私与可见性" to="/privacy" />
           <MenuItem icon={Shield} label="实名 & 学生认证" to="/verify" />
+          <MenuItem icon={Shield} label="我的举报与申诉" to="/me/reports" />
           <MenuItem icon={Shield} label="账号安全" />
         </section>
 
