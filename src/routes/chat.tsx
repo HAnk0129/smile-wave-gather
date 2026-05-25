@@ -574,12 +574,24 @@ function RealChat({
                 <div
                   className={
                     mine
-                      ? "max-w-[78%] rounded-2xl rounded-br-md bg-gradient-to-br from-coral to-sun px-3.5 py-2 text-sm text-background shadow-md"
-                      : "max-w-[78%] rounded-2xl rounded-bl-md border border-border bg-surface/80 px-3.5 py-2 text-sm"
+                      ? `max-w-[78%] rounded-2xl rounded-br-md shadow-md ${m.attachment?.kind === "image" ? "overflow-hidden bg-surface/40 p-0" : "bg-gradient-to-br from-coral to-sun px-3.5 py-2 text-sm text-background"}`
+                      : `max-w-[78%] rounded-2xl rounded-bl-md border border-border ${m.attachment?.kind === "image" ? "overflow-hidden bg-surface/40 p-0" : "bg-surface/80 px-3.5 py-2 text-sm"}`
                   }
                 >
-                  {m.content}
-                  <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-background/80" : "text-muted-foreground"}`}>
+                  {m.attachment?.kind === "image" ? (
+                    <a href={m.attachment.url} target="_blank" rel="noreferrer" className="block">
+                      <img
+                        src={m.attachment.url}
+                        alt="图片"
+                        loading="lazy"
+                        className="max-h-72 w-full object-cover"
+                        style={m.attachment.width && m.attachment.height ? { aspectRatio: `${m.attachment.width} / ${m.attachment.height}` } : undefined}
+                      />
+                    </a>
+                  ) : (
+                    m.content
+                  )}
+                  <div className={`flex items-center justify-end gap-1 text-[10px] ${m.attachment?.kind === "image" ? "px-2 py-1 bg-background/40 text-foreground/70" : `mt-1 ${mine ? "text-background/80" : "text-muted-foreground"}`}`}>
                     <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                     {mine && (m.readAt
                       ? <CheckCheck className="h-3 w-3" />
