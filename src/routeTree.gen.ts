@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as VoiceCardRouteImport } from './routes/voice-card'
+import { Route as VideosRouteImport } from './routes/videos'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RadarRouteImport } from './routes/radar'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -26,6 +28,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AddFriendRouteImport } from './routes/add-friend'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VideosUploadRouteImport } from './routes/videos.upload'
 import { Route as GamesPalmRouteImport } from './routes/games.palm'
 import { Route as GamesLeaderboardRouteImport } from './routes/games.leaderboard'
 import { Route as ExploreVoiceRouteImport } from './routes/explore.voice'
@@ -35,6 +38,16 @@ import { Route as ExploreTreeholeRouteImport } from './routes/explore.treehole'
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VoiceCardRoute = VoiceCardRouteImport.update({
+  id: '/voice-card',
+  path: '/voice-card',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideosRoute = VideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyRoute = VerifyRouteImport.update({
@@ -117,6 +130,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VideosUploadRoute = VideosUploadRouteImport.update({
+  id: '/upload',
+  path: '/upload',
+  getParentRoute: () => VideosRoute,
+} as any)
 const GamesPalmRoute = GamesPalmRouteImport.update({
   id: '/palm',
   path: '/palm',
@@ -160,12 +178,15 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
+  '/videos': typeof VideosRouteWithChildren
+  '/voice-card': typeof VoiceCardRoute
   '/wallet': typeof WalletRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
+  '/videos/upload': typeof VideosUploadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -184,12 +205,15 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
+  '/videos': typeof VideosRouteWithChildren
+  '/voice-card': typeof VoiceCardRoute
   '/wallet': typeof WalletRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
+  '/videos/upload': typeof VideosUploadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -209,12 +233,15 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
+  '/videos': typeof VideosRouteWithChildren
+  '/voice-card': typeof VoiceCardRoute
   '/wallet': typeof WalletRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
+  '/videos/upload': typeof VideosUploadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -235,12 +262,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/radar'
     | '/verify'
+    | '/videos'
+    | '/voice-card'
     | '/wallet'
     | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
+    | '/videos/upload'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -259,12 +289,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/radar'
     | '/verify'
+    | '/videos'
+    | '/voice-card'
     | '/wallet'
     | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
+    | '/videos/upload'
   id:
     | '__root__'
     | '/'
@@ -283,12 +316,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/radar'
     | '/verify'
+    | '/videos'
+    | '/voice-card'
     | '/wallet'
     | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
+    | '/videos/upload'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -308,6 +344,8 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RadarRoute: typeof RadarRoute
   VerifyRoute: typeof VerifyRoute
+  VideosRoute: typeof VideosRouteWithChildren
+  VoiceCardRoute: typeof VoiceCardRoute
   WalletRoute: typeof WalletRoute
 }
 
@@ -318,6 +356,20 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/voice-card': {
+      id: '/voice-card'
+      path: '/voice-card'
+      fullPath: '/voice-card'
+      preLoaderRoute: typeof VoiceCardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/videos': {
+      id: '/videos'
+      path: '/videos'
+      fullPath: '/videos'
+      preLoaderRoute: typeof VideosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify': {
@@ -432,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/videos/upload': {
+      id: '/videos/upload'
+      path: '/upload'
+      fullPath: '/videos/upload'
+      preLoaderRoute: typeof VideosUploadRouteImport
+      parentRoute: typeof VideosRoute
+    }
     '/games/palm': {
       id: '/games/palm'
       path: '/palm'
@@ -497,6 +556,17 @@ const GamesRouteChildren: GamesRouteChildren = {
 
 const GamesRouteWithChildren = GamesRoute._addFileChildren(GamesRouteChildren)
 
+interface VideosRouteChildren {
+  VideosUploadRoute: typeof VideosUploadRoute
+}
+
+const VideosRouteChildren: VideosRouteChildren = {
+  VideosUploadRoute: VideosUploadRoute,
+}
+
+const VideosRouteWithChildren =
+  VideosRoute._addFileChildren(VideosRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddFriendRoute: AddFriendRoute,
@@ -514,6 +584,8 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RadarRoute: RadarRoute,
   VerifyRoute: VerifyRoute,
+  VideosRoute: VideosRouteWithChildren,
+  VoiceCardRoute: VoiceCardRoute,
   WalletRoute: WalletRoute,
 }
 export const routeTree = rootRouteImport

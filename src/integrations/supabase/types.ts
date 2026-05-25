@@ -665,6 +665,8 @@ export type Database = {
           verify_real: boolean
           verify_student: boolean
           video_intro: string | null
+          voice_card_duration: number | null
+          voice_card_url: string | null
           zodiac: string | null
         }
         Insert: {
@@ -703,6 +705,8 @@ export type Database = {
           verify_real?: boolean
           verify_student?: boolean
           video_intro?: string | null
+          voice_card_duration?: number | null
+          voice_card_url?: string | null
           zodiac?: string | null
         }
         Update: {
@@ -741,6 +745,8 @@ export type Database = {
           verify_real?: boolean
           verify_student?: boolean
           video_intro?: string | null
+          voice_card_duration?: number | null
+          voice_card_url?: string | null
           zodiac?: string | null
         }
         Relationships: []
@@ -844,6 +850,80 @@ export type Database = {
           status?: string
           target_id?: string
           target_type?: string
+        }
+        Relationships: []
+      }
+      short_video_likes: {
+        Row: {
+          created_at: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "short_video_likes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "short_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      short_videos: {
+        Row: {
+          author_id: string
+          caption: string
+          cover_url: string | null
+          created_at: string
+          duration_sec: number | null
+          height: number | null
+          id: string
+          likes_count: number
+          status: string
+          updated_at: string
+          video_url: string
+          views_count: number
+          width: number | null
+        }
+        Insert: {
+          author_id: string
+          caption?: string
+          cover_url?: string | null
+          created_at?: string
+          duration_sec?: number | null
+          height?: number | null
+          id?: string
+          likes_count?: number
+          status?: string
+          updated_at?: string
+          video_url: string
+          views_count?: number
+          width?: number | null
+        }
+        Update: {
+          author_id?: string
+          caption?: string
+          cover_url?: string | null
+          created_at?: string
+          duration_sec?: number | null
+          height?: number | null
+          id?: string
+          likes_count?: number
+          status?: string
+          updated_at?: string
+          video_url?: string
+          views_count?: number
+          width?: number | null
         }
         Relationships: []
       }

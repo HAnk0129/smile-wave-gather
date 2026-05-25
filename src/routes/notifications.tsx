@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { ArrowLeft, Bell, Heart, MessageSquare, Sparkles, UserPlus, ThumbsUp, MessageCircle, CheckCheck, Gift } from "lucide-react";
+import { ArrowLeft, Bell, Heart, MessageSquare, Sparkles, UserPlus, ThumbsUp, MessageCircle, CheckCheck, Gift, Film } from "lucide-react";
 import { listMyNotifications, markAllRead, markRead, type NotificationItem } from "@/lib/notifications.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -36,6 +36,7 @@ const TYPE_META: Record<string, { icon: any; color: string; label: string }> = {
   post_like: { icon: ThumbsUp, color: "text-coral", label: "动态被赞" },
   follow: { icon: UserPlus, color: "text-mint", label: "新粉丝" },
   gift: { icon: Gift, color: "text-sun", label: "收到礼物" },
+  video_like: { icon: Film, color: "text-coral", label: "短视频被赞" },
 };
 
 function describe(n: NotificationItem): { title: string; body: string; to?: any } {
@@ -55,6 +56,8 @@ function describe(n: NotificationItem): { title: string; body: string; to?: any 
       return { title: `${p.follower_name ?? "有人"} 关注了你`, body: "", to: { to: "/me" } };
     case "gift":
       return { title: `${p.sender_name ?? "有人"} 送了你一份礼物`, body: p.message || `+${Math.max(Math.floor((p.coins ?? 0) * 0.6), 1)} 心动币已到账`, to: { to: "/wallet" } };
+    case "video_like":
+      return { title: `有人赞了你的短视频`, body: "去看看是谁吧", to: { to: "/videos" } };
     default:
       return { title: n.type, body: "" };
   }
