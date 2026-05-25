@@ -58,6 +58,24 @@ function now() {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+function readImageDimensions(file: File): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
+const EMOJI_LIST = ["😄","😂","🥹","🥰","😘","😍","🤩","😎","🤔","😴","😭","🥺","😳","😅","🙃","😇","🤗","🤤","😋","🤭","🙄","😏","😬","😤","🥳","🤯","🤝","👏","🙌","🙏","💪","👀","💋","💖","💕","💔","❤️","🧡","💛","💚","💙","💜","🔥","✨","⭐️","🌙","☀️","🌈","🍀","🌸","🌊","🍑","🍓","🍔","☕️","🍻","🎉","🎁","🎈","🎵","💃","🕺","🏝️","🌴","✈️","🚗","📷","📱"];
+
 function ChatPage() {
   const search = Route.useSearch();
   if (search.conv) return <RealChat convId={search.conv} fallbackName={search.name} from={search.from} />;
