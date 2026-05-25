@@ -274,17 +274,8 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
         </section>
       </main>
 
-      {/* Floating compose button */}
-      <button
-        onClick={() => setComposeOpen(true)}
-        className="fixed bottom-24 right-5 z-40 size-14 rounded-full bg-gradient-to-br from-coral to-sun text-background shadow-2xl glow-coral flex items-center justify-center active:scale-95 transition"
-        aria-label="发布内容"
-      >
-        <Plus className="size-7" />
-      </button>
-
       {/* Bottom nav */}
-      <BottomNav />
+      <BottomNav onCompose={() => setComposeOpen(true)} />
 
       {/* Campus picker */}
       <AnimatePresence>
@@ -552,8 +543,8 @@ function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () =>
   );
 }
 
-function BottomNav() {
-  return _BottomNav();
+function BottomNav({ onCompose }: { onCompose?: () => void }) {
+  return _BottomNav({ onCompose });
 }
 
 function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: () => void; onLike: () => void }) {
@@ -771,29 +762,45 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
   );
 }
 
-function _BottomNav() {
+function _BottomNav({ onCompose }: { onCompose?: () => void }) {
   const items = [
-    { to: "/", icon: Home, label: "首页" },
-    { to: "/explore", icon: Compass, label: "发现" },
     { to: "/community", icon: MessageSquare, label: "社区", active: true },
+    { to: "/explore", icon: Compass, label: "发现" },
+    { type: "compose" as const },
     { to: "/games", icon: Trophy, label: "游戏" },
     { to: "/me", icon: User, label: "我的" },
   ];
   return (
     <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl bg-background/85 border-t border-border">
-      <div className="mx-auto max-w-3xl grid grid-cols-5 h-16">
-        {items.map((it) => (
-          <Link
-            key={it.label}
-            to={it.to}
-            className={`flex flex-col items-center justify-center gap-0.5 text-[10px] ${
-              it.active ? "text-coral" : "text-muted-foreground"
-            }`}
-          >
-            <it.icon className="size-5" />
-            {it.label}
-          </Link>
-        ))}
+      <div className="mx-auto max-w-3xl grid grid-cols-5 h-16 items-center">
+        {items.map((it, i) => {
+          if ("type" in it && it.type === "compose") {
+            return (
+              <button
+                key="compose"
+                onClick={() => onCompose?.()}
+                aria-label="发布内容"
+                className="flex items-center justify-center"
+              >
+                <span className="size-12 rounded-full bg-gradient-to-br from-coral to-sun text-background shadow-lg glow-coral flex items-center justify-center active:scale-95 transition -mt-4">
+                  <Plus className="size-6" />
+                </span>
+              </button>
+            );
+          }
+          return (
+            <Link
+              key={it.label}
+              to={it.to}
+              className={`flex flex-col items-center justify-center gap-0.5 text-[10px] ${
+                it.active ? "text-coral" : "text-muted-foreground"
+              }`}
+            >
+              <it.icon className="size-5" />
+              {it.label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
