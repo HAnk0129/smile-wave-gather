@@ -507,8 +507,9 @@ function ReportsTab() {
   const upd = useServerFn(adminUpdateReport);
   const { data, isLoading } = useQuery({ queryKey: ["admin-reports"], queryFn: () => fn() });
   const reports = data?.reports ?? [];
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const mut = useMutation({
-    mutationFn: (v: { id: string; status: any }) => {
+    mutationFn: (v: { id: string; status: any; resolutionNote?: string }) => {
       track(Events.AdminActionPerformed, { action: "update_report", ...v });
       return upd({ data: v });
     },
@@ -532,14 +533,100 @@ function ReportsTab() {
                 <span>{new Date(r.created_at).toLocaleString()}</span>
               </div>
               <p className="mt-1.5 text-sm"><span className="font-medium">{r.reason}</span>{r.detail && <span className="ml-2 text-muted-foreground">{r.detail}</span>}</p>
+              {r.resolution_note && <p className="mt-1 text-xs text-mint">已回复:{r.resolution_note}</p>}
             </div>
-            <select value={r.status} onChange={(e) => mut.mutate({ id: r.id, status: e.target.value })}
+            <select value={r.status} onChange={(e) => mut.mutate({ id: r.id, status: e.target.value, resolutionNote: notes[r.id] })}
               className="rounded-lg border border-border bg-surface px-2 py-1 text-xs">
               <option value="pending">待处理</option>
               <option value="reviewing">审核中</option>
               <option value="resolved">已处理</option>
               <option value="rejected">驳回</option>
             </select>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={notes[r.id] ?? r.resolution_note ?? ""}
+              onChange={(e) => setNotes((n) => ({ ...n, [r.id]: e.target.value.slice(0, 500) }))}
+              placeholder="处理说明(将通知给举报人,选填)"
+              className="flex-1 rounded-lg border border-border bg-surface px-2 py-1 text-xs outline-none focus:border-coral"
+            />
+            <button
+              onClick={() => mut.mutate({ id: r.id, status: r.status, resolutionNote: notes[r.id] })}
+              className="rounded-lg border border-border bg-surface px-3 py-1 text-xs hover:bg-muted/40"
+            >保存</button>
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/* -------------------- Appeals -------------------- */
+const APPEAL_KIND: Record<string, string> = {
+  report_rejected: "举报被驳回",
+  content_removed: "内容被处理",
+  account_action: "账号处置",
+  other: "其他",
+};
+function AppealsTab() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListAppeals);
+  const resFn = useServerFn(adminResolveAppeal);
+  const { data, isLoading } = useQuery({ queryKey: ["admin-appeals"], queryFn: () => listFn() });
+  const appeals = data?.appeals ?? [];
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const mut = useMutation({
+    mutationFn: (v: { id: string; status: any; resolutionNote?: string }) => {
+      track(Events.AdminActionPerformed, { action: "resolve_appeal", ...v });
+      return resFn({ data: v });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-appeals"] }),
+  });
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">申诉处理</h2>
+      {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
+      {!isLoading && appeals.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">暂无申诉</p>
+      )}
+      {appeals.map((a: any) => (
+        <div key={a.id} className="rounded-2xl border border-border bg-surface/40 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="rounded bg-mint/20 px-1.5 py-0.5 text-[10px] text-mint">{APPEAL_KIND[a.kind] ?? a.kind}</span>
+                <span>by {a.user_id.slice(0, 8)}</span>
+                {a.target_type && <><span>·</span><span>{a.target_type}/{a.target_id?.slice(0, 8)}</span></>}
+                <span>·</span>
+                <span>{new Date(a.created_at).toLocaleString()}</span>
+              </div>
+              <p className="mt-1.5 whitespace-pre-wrap text-sm">{a.reason}</p>
+              {a.related_report_id && (
+                <p className="mt-1 text-[11px] text-muted-foreground">关联举报:{a.related_report_id.slice(0, 8)}</p>
+              )}
+            </div>
+            <select
+              value={a.status}
+              onChange={(e) => mut.mutate({ id: a.id, status: e.target.value, resolutionNote: notes[a.id] })}
+              className="rounded-lg border border-border bg-surface px-2 py-1 text-xs"
+            >
+              <option value="pending">待受理</option>
+              <option value="reviewing">审核中</option>
+              <option value="accepted">通过</option>
+              <option value="rejected">驳回</option>
+            </select>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={notes[a.id] ?? a.resolution_note ?? ""}
+              onChange={(e) => setNotes((n) => ({ ...n, [a.id]: e.target.value.slice(0, 500) }))}
+              placeholder="审核回复(将通知给申诉人,选填)"
+              className="flex-1 rounded-lg border border-border bg-surface px-2 py-1 text-xs outline-none focus:border-mint"
+            />
+            <button
+              onClick={() => mut.mutate({ id: a.id, status: a.status, resolutionNote: notes[a.id] })}
+              className="rounded-lg border border-border bg-surface px-3 py-1 text-xs hover:bg-muted/40"
+            >保存</button>
           </div>
         </div>
       ))}
