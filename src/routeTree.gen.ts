@@ -19,6 +19,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MeRouteImport } from './routes/me'
+import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as GamesRouteImport } from './routes/games'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DiscoverRouteImport } from './routes/discover'
@@ -85,6 +86,11 @@ const MessagesRoute = MessagesRouteImport.update({
 const MeRoute = MeRouteImport.update({
   id: '/me',
   path: '/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JobsRoute = JobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesRoute = GamesRouteImport.update({
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
+  '/jobs': typeof JobsRoute
   '/me': typeof MeRouteWithChildren
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
+  '/jobs': typeof JobsRoute
   '/me': typeof MeRouteWithChildren
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
+  '/jobs': typeof JobsRoute
   '/me': typeof MeRouteWithChildren
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/explore'
     | '/games'
+    | '/jobs'
     | '/me'
     | '/messages'
     | '/notifications'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/explore'
     | '/games'
+    | '/jobs'
     | '/me'
     | '/messages'
     | '/notifications'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/explore'
     | '/games'
+    | '/jobs'
     | '/me'
     | '/messages'
     | '/notifications'
@@ -362,6 +374,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   ExploreRoute: typeof ExploreRouteWithChildren
   GamesRoute: typeof GamesRouteWithChildren
+  JobsRoute: typeof JobsRoute
   MeRoute: typeof MeRouteWithChildren
   MessagesRoute: typeof MessagesRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -444,6 +457,13 @@ declare module '@tanstack/react-router' {
       path: '/me'
       fullPath: '/me'
       preLoaderRoute: typeof MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jobs': {
+      id: '/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof JobsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games': {
@@ -627,6 +647,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   ExploreRoute: ExploreRouteWithChildren,
   GamesRoute: GamesRouteWithChildren,
+  JobsRoute: JobsRoute,
   MeRoute: MeRouteWithChildren,
   MessagesRoute: MessagesRoute,
   NotificationsRoute: NotificationsRoute,
@@ -641,3 +662,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
