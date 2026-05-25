@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Heart, MessageCircle, Play, Plus, Music2, Volume2, VolumeX, Trash2, MoreVertical, Flag } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Play, Plus, Music2, Volume2, VolumeX, Trash2, Flag } from "lucide-react";
 import { listShortVideos, toggleVideoLike, deleteShortVideo, type ShortVideoFeedItem } from "@/lib/videos.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
