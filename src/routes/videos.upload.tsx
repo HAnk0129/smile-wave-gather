@@ -81,6 +81,7 @@ function VideoUploadPage() {
           height: size?.h,
         },
       });
+      track(Events.VideoUploaded, { duration: duration ?? null, size_bytes: file.size });
       toast.success("发布成功");
       navigate({ to: "/videos" });
     } catch (e: any) {
