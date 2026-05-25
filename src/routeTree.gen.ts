@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RadarRouteImport } from './routes/radar'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MeRouteImport } from './routes/me'
@@ -37,6 +38,11 @@ const VerifyRoute = VerifyRouteImport.update({
 const RadarRoute = RadarRouteImport.update({
   id: '/radar',
   path: '/radar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/me': typeof MeRoute
   '/messages': typeof MessagesRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/me': typeof MeRoute
   '/messages': typeof MessagesRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/me': typeof MeRoute
   '/messages': typeof MessagesRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/radar': typeof RadarRoute
   '/verify': typeof VerifyRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/me'
     | '/messages'
     | '/onboarding'
+    | '/privacy'
     | '/radar'
     | '/verify'
     | '/explore/treehole'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/me'
     | '/messages'
     | '/onboarding'
+    | '/privacy'
     | '/radar'
     | '/verify'
     | '/explore/treehole'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/me'
     | '/messages'
     | '/onboarding'
+    | '/privacy'
     | '/radar'
     | '/verify'
     | '/explore/treehole'
@@ -268,6 +280,7 @@ export interface RootRouteChildren {
   MeRoute: typeof MeRoute
   MessagesRoute: typeof MessagesRoute
   OnboardingRoute: typeof OnboardingRoute
+  PrivacyRoute: typeof PrivacyRoute
   RadarRoute: typeof RadarRoute
   VerifyRoute: typeof VerifyRoute
 }
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/radar'
       fullPath: '/radar'
       preLoaderRoute: typeof RadarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -450,6 +470,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeRoute: MeRoute,
   MessagesRoute: MessagesRoute,
   OnboardingRoute: OnboardingRoute,
+  PrivacyRoute: PrivacyRoute,
   RadarRoute: RadarRoute,
   VerifyRoute: VerifyRoute,
 }
