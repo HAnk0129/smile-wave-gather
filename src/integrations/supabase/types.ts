@@ -404,6 +404,72 @@ export type Database = {
         }
         Relationships: []
       }
+      contests: {
+        Row: {
+          author_id: string
+          category: string
+          contact: string | null
+          cover: string | null
+          created_at: string
+          deadline: string | null
+          description: string | null
+          ends_at: string | null
+          hot: number
+          id: string
+          location: string | null
+          organizer: string | null
+          prize: string | null
+          register_url: string | null
+          starts_at: string | null
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          category?: string
+          contact?: string | null
+          cover?: string | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          ends_at?: string | null
+          hot?: number
+          id?: string
+          location?: string | null
+          organizer?: string | null
+          prize?: string | null
+          register_url?: string | null
+          starts_at?: string | null
+          status?: string
+          summary: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          category?: string
+          contact?: string | null
+          cover?: string | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          ends_at?: string | null
+          hot?: number
+          id?: string
+          location?: string | null
+          organizer?: string | null
+          prize?: string | null
+          register_url?: string | null
+          starts_at?: string | null
+          status?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string
@@ -512,6 +578,57 @@ export type Database = {
           message?: string | null
           receiver_id?: string
           sender_id?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          author_id: string
+          category: string
+          contact: string
+          created_at: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          location: string | null
+          salary: string | null
+          status: string
+          summary: string
+          tags: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          category?: string
+          contact: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          location?: string | null
+          salary?: string | null
+          status?: string
+          summary: string
+          tags?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          category?: string
+          contact?: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          location?: string | null
+          salary?: string | null
+          status?: string
+          summary?: string
+          tags?: Json
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1204,6 +1321,107 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      venue_bookings: {
+        Row: {
+          attendees: number
+          contact: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          purpose: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          starts_at: string
+          status: string
+          user_id: string
+          venue_id: string
+        }
+        Insert: {
+          attendees?: number
+          contact?: string | null
+          created_at?: string
+          ends_at: string
+          id?: string
+          purpose: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          starts_at: string
+          status?: string
+          user_id: string
+          venue_id: string
+        }
+        Update: {
+          attendees?: number
+          contact?: string | null
+          created_at?: string
+          ends_at?: string
+          id?: string
+          purpose?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          starts_at?: string
+          status?: string
+          user_id?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_bookings_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venues: {
+        Row: {
+          active: boolean
+          capacity: number | null
+          category: string
+          cover: string | null
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          manager_id: string | null
+          name: string
+          open_hours: string | null
+          rules: string | null
+        }
+        Insert: {
+          active?: boolean
+          capacity?: number | null
+          category?: string
+          cover?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          manager_id?: string | null
+          name: string
+          open_hours?: string | null
+          rules?: string | null
+        }
+        Update: {
+          active?: boolean
+          capacity?: number | null
+          category?: string
+          cover?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          manager_id?: string | null
+          name?: string
+          open_hours?: string | null
+          rules?: string | null
         }
         Relationships: []
       }
