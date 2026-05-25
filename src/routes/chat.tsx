@@ -3,12 +3,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal, Check, CheckCheck } from "lucide-react";
-import { getConversation, sendMessage as sendMessageFn, markConversationRead } from "@/lib/chat.functions";
+import { ArrowLeft, Send, Smile, ImageIcon, Mic, Phone, Video, Sparkles, Heart, MoreHorizontal, Check, CheckCheck, Trash2, Loader2 } from "lucide-react";
+import { getConversation, sendMessage as sendMessageFn, markConversationRead, sendImageMessage, deleteConversation } from "@/lib/chat.functions";
 import { blockUser, reportContent } from "@/lib/moderation.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 
 type ChatSearch = {
