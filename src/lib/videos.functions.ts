@@ -51,6 +51,7 @@ export type ShortVideoFeedItem = {
   views_count: number;
   created_at: string;
   liked_by_me: boolean;
+  comments_count: number;
   author: {
     id: string;
     nickname: string;
@@ -74,7 +75,7 @@ export const listShortVideos = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     let q = supabase
       .from("short_videos")
-      .select("id, author_id, video_url, cover_url, caption, duration_sec, likes_count, views_count, created_at, status")
+      .select("id, author_id, video_url, cover_url, caption, duration_sec, likes_count, views_count, comments_count, created_at, status")
       .eq("status", "published")
       .order("created_at", { ascending: false })
       .limit(data.limit);
@@ -111,6 +112,7 @@ export const listShortVideos = createServerFn({ method: "POST" })
           duration_sec: r.duration_sec,
           likes_count: r.likes_count,
           views_count: r.views_count,
+          comments_count: r.comments_count ?? 0,
           created_at: r.created_at,
           liked_by_me: likedSet.has(r.id),
           author: {
