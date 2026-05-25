@@ -274,20 +274,28 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
             {hotRank.map((p, i) => {
               const Icon = CATEGORY_META[p.category].icon;
               return (
-                <li key={p.id} className="flex items-center gap-3">
-                  <span
-                    className={`size-6 rounded-md flex items-center justify-center text-xs font-bold ${
-                      i === 0 ? "bg-coral text-background" :
-                      i === 1 ? "bg-sun text-background" :
-                      i === 2 ? "bg-mint text-background" :
-                      "bg-surface text-muted-foreground"
-                    }`}
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => setActivePostId(p.id)}
+                    className="w-full flex items-center gap-3 rounded-xl px-2 py-1.5 -mx-2 text-left transition hover:bg-surface/60 active:scale-[0.99]"
                   >
-                    {i + 1}
-                  </span>
-                  <Icon className="size-3.5 text-muted-foreground shrink-0" />
-                  <span className="flex-1 text-sm truncate">{p.title}</span>
-                  <span className="text-xs text-muted-foreground tabular-nums">{(p.hot / 1000).toFixed(1)}k</span>
+                    <span
+                      className={`size-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${
+                        i === 0 ? "bg-coral text-background" :
+                        i === 1 ? "bg-sun text-background" :
+                        i === 2 ? "bg-mint text-background" :
+                        "bg-surface text-muted-foreground"
+                      }`}
+                    >
+                      {i + 1}
+                    </span>
+                    <Icon className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="flex-1 text-sm truncate">{p.title}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                      {p.hot >= 1000 ? `${(p.hot / 1000).toFixed(1)}k` : p.hot}
+                    </span>
+                  </button>
                 </li>
               );
             })}
