@@ -6,6 +6,7 @@ import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
   ShieldCheck, CheckCircle2, XCircle, KeyRound, UserPlus, X, School, Copy, Check,
+  BadgeCheck, GraduationCap,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -24,6 +25,7 @@ import {
   adminListCampuses, adminCreateCampus, adminListCampusInvites,
   createCampusInvite,
 } from "@/lib/campus.functions";
+import { adminListVerifications, adminReviewVerification } from "@/lib/verify.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -35,7 +37,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "roles" | "campuses";
+type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "verify" | "roles" | "campuses";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -124,6 +126,7 @@ function AdminConsole() {
     { key: "treehole", label: "树洞", icon: Trees },
     { key: "posts", label: "社区", icon: FileText },
     { key: "reports", label: "举报", icon: Flag },
+    { key: "verify", label: "认证", icon: BadgeCheck },
     { key: "roles", label: "权限", icon: KeyRound },
     { key: "campuses", label: "园区", icon: School },
   ];
@@ -163,6 +166,7 @@ function AdminConsole() {
         {tab === "treehole" && <TreeholeTab />}
         {tab === "posts" && <PostsTab />}
         {tab === "reports" && <ReportsTab />}
+        {tab === "verify" && <VerifyTab />}
         {tab === "roles" && <RolesTab />}
         {tab === "campuses" && <CampusesTab />}
       </main>
