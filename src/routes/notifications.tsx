@@ -40,6 +40,7 @@ const TYPE_META: Record<string, { icon: any; color: string; label: string }> = {
 };
 TYPE_META.report_resolved = { icon: Flag, color: "text-coral", label: "举报有结果" };
 TYPE_META.appeal_resolved = { icon: ShieldCheck, color: "text-mint", label: "申诉有结果" };
+TYPE_META.post_reviewed = { icon: ShieldCheck, color: "text-sun", label: "动态审核结果" };
 
 function describe(n: NotificationItem): { title: string; body: string; to?: any } {
   const p = n.payload || {};
@@ -72,6 +73,18 @@ function describe(n: NotificationItem): { title: string; body: string; to?: any 
         body: p.note || "",
         to: { to: "/me/reports" },
       };
+    case "post_reviewed": {
+      const map: Record<string, string> = {
+        approved: "你的动态已通过审核",
+        rejected: "你的动态未通过审核",
+        removed: "你的动态已被移除",
+      };
+      return {
+        title: map[p.status as string] ?? "动态审核更新",
+        body: (p.post_title ? `《${p.post_title}》 ` : "") + (p.note || ""),
+        to: { to: "/community" },
+      };
+    }
     default:
       return { title: n.type, body: "" };
   }
