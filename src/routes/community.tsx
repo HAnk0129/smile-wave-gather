@@ -357,7 +357,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   );
 }
 
-function JoinCampusGate({ onJoined }: { onJoined: () => void }) {
+function InlineJoinForm({ onJoined }: { onJoined: () => void }) {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const redeemFn = useServerFn(redeemCampusInvite);
@@ -375,41 +375,44 @@ function JoinCampusGate({ onJoined }: { onJoined: () => void }) {
       setSubmitting(false);
     }
   };
-  // strip the ?join=1 hint if present
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.location.search.includes("join=1")) {
-      const u = new URL(window.location.href);
-      u.searchParams.delete("join");
-      window.history.replaceState({}, "", u.toString());
-    }
-  }, []);
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        每个学校/园区都是独立的同频圈子。向圈内同学要一个邀请码即可加入。
+      </p>
+      <input
+        value={code}
+        onChange={(e) => setCode(e.target.value.toUpperCase())}
+        maxLength={16}
+        placeholder="例如 K7QZ4M2A"
+        className="w-full h-12 px-4 rounded-2xl bg-background/40 border border-border text-center font-mono tracking-[0.3em] text-lg uppercase outline-none focus:border-coral/60"
+      />
+      <button
+        onClick={submit}
+        disabled={!code.trim() || submitting}
+        className="w-full h-11 rounded-full bg-coral text-background font-semibold disabled:opacity-40"
+      >
+        {submitting ? "验证中…" : "加入社区"}
+      </button>
+    </div>
+  );
+}
+
+function JoinCampusGate({ onJoined }: { onJoined: () => void }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
-      <div className="max-w-sm w-full space-y-5 text-center">
+      <div className="max-w-sm w-full space-y-5">
         <div className="size-16 mx-auto rounded-2xl bg-coral/15 grid place-items-center">
           <KeyRound className="size-7 text-coral" />
         </div>
-        <div>
+        <div className="text-center">
           <h1 className="font-display text-2xl font-bold">输入邀请码加入社区</h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             每个学校/园区都是独立的同频圈子。<br/>向圈内同学要一个邀请码即可加入。
           </p>
         </div>
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          maxLength={16}
-          placeholder="例如 K7QZ4M2A"
-          className="w-full h-12 px-4 rounded-2xl bg-surface border border-border text-center font-mono tracking-[0.3em] text-lg uppercase outline-none focus:border-coral/60"
-        />
-        <button
-          onClick={submit}
-          disabled={!code.trim() || submitting}
-          className="w-full h-12 rounded-2xl bg-coral text-background font-semibold disabled:opacity-40"
-        >
-          {submitting ? "验证中…" : "加入社区"}
-        </button>
-        <Link to="/" className="block text-xs text-muted-foreground hover:text-foreground">← 暂不加入，返回首页</Link>
+        <InlineJoinForm onJoined={onJoined} />
+        <Link to="/me" className="block text-xs text-muted-foreground hover:text-foreground text-center">前往个人主页 →</Link>
       </div>
     </div>
   );
