@@ -14,6 +14,7 @@ import {
 import { BottomNav as AppBottomNav } from "@/components/BottomNav";
 import { ReportSheet, type ReportTargetType } from "@/components/ReportSheet";
 import { z } from "zod";
+import { track, Events } from "@/lib/analytics";
 import {
   listCommunityPosts,
   createCommunityPost,
