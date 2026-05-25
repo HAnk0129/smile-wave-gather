@@ -4,7 +4,14 @@ import { Flag, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { reportContent, blockUser } from "@/lib/moderation.functions";
 
-export type ReportTargetType = "user" | "post" | "treehole" | "message" | "comment";
+export type ReportTargetType =
+  | "user"
+  | "post"
+  | "treehole"
+  | "message"
+  | "comment"
+  | "video"
+  | "video_comment";
 
 const REASONS: { value: string; label: string }[] = [
   { value: "spam", label: "垃圾广告 / 营销刷屏" },
