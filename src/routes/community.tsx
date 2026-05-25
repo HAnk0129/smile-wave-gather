@@ -278,7 +278,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
       </main>
 
       {/* Bottom nav */}
-      <BottomNav onCompose={() => setComposeOpen(true)} />
+      <BottomNav active="community" onCompose={() => setComposeOpen(true)} />
 
       {/* Campus picker */}
       <AnimatePresence>
