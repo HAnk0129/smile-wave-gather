@@ -376,6 +376,57 @@ function RealChat({
     }
   };
 
+  const handleDeleteConv = async () => {
+    if (!confirm("确定要删除该会话吗？所有聊天记录将被永久删除且无法恢复。")) return;
+    try {
+      await deleteConvFn({ data: { conversationId: convId } });
+      toast.success("会话已删除");
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+      navigate({ to: "/messages" });
+    } catch (e: any) {
+      toast.error(e?.message || "删除失败");
+    }
+  };
+
+  const handlePickImage = () => fileInputRef.current?.click();
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !me) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("请选择图片文件");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("图片最大 8MB");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const path = `${me}/chat/${convId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("media").upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      // try to read dimensions for nicer rendering
+      const dims = await readImageDimensions(file);
+      await sendImageFn({ data: { conversationId: convId, storagePath: path, width: dims?.width, height: dims?.height } });
+      qc.invalidateQueries({ queryKey });
+    } catch (err: any) {
+      toast.error(err?.message || "图片发送失败");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const insertEmoji = (emoji: string) => {
+    setInput((v) => v + emoji);
+    setEmojiOpen(false);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
