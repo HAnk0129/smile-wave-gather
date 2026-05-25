@@ -149,10 +149,10 @@ export const createCommunityPost = createServerFn({ method: "POST" })
         location: data.location,
         media: data.media ?? [],
       })
-      .select("*")
+      .select("id, status, auto_flag_reason")
       .single();
     if (error) throw new Error(error.message);
-    return { post: row };
+    return { post: row, pending: row?.status === "pending" };
   });
 
 export const toggleCommunityLike = createServerFn({ method: "POST" })
