@@ -381,16 +381,40 @@ export const adminListTreehole = createServerFn({ method: "GET" })
 /** 社区帖子列表 */
 export const adminListPosts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: { status?: string } | undefined) =>
+    z.object({
+      status: z.enum(["all", "pending", "approved", "rejected", "removed"]).default("pending"),
+    }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
-    const { data, error } = await supabase
+    let q = supabase
       .from("community_posts")
-      .select("id, author_id, title, content, category, hot, likes_count, comments_count, created_at")
+      .select("id, author_id, title, content, category, hot, likes_count, comments_count, created_at, status, auto_flag_reason, review_note, reviewed_at")
       .order("created_at", { ascending: false })
       .limit(100);
+    if (data.status !== "all") q = q.eq("status", data.status);
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return { posts: data ?? [] };
+    // 同时查询每个帖子的待处理举报数
+    const ids = (rows ?? []).map((r: any) => r.id);
+    let reportCount = new Map<string, number>();
+    if (ids.length > 0) {
+      const { data: rep } = await supabaseAdmin
+        .from("reports")
+        .select("target_id, status")
+        .eq("target_type", "post")
+        .in("target_id", ids);
+      (rep ?? []).forEach((r: any) => {
+        if (r.status === "pending") {
+          reportCount.set(r.target_id, (reportCount.get(r.target_id) ?? 0) + 1);
+        }
+      });
+    }
+    return {
+      posts: (rows ?? []).map((r: any) => ({ ...r, reports_pending: reportCount.get(r.id) ?? 0 })),
+    };
   });
 
 /** 删除消息(管理员) */
@@ -543,7 +567,7 @@ export const adminReviewPost = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({
       id: z.string().uuid(),
-      action: z.enum(["approve", "remove"]),
+      action: z.enum(["approve", "reject", "remove"]),
       reason: z.string().max(200).optional(),
     }).parse(i),
   )
@@ -551,12 +575,55 @@ export const adminReviewPost = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     if (data.action === "remove") {
-      const { error } = await supabaseAdmin.from("community_posts").delete().eq("id", data.id);
+      const { error } = await supabaseAdmin
+        .from("community_posts")
+        .update({
+          status: "removed",
+          review_note: data.reason ?? null,
+          reviewed_by: userId,
+          reviewed_at: new Date().toISOString(),
+        } as never)
+        .eq("id", data.id);
       if (error) throw new Error(error.message);
       await supabaseAdmin.from("content_flags").insert({
         target_type: "post", target_id: data.id,
         reason: data.reason || "已被管理员移除", severity: "high", source: "admin", status: "resolved",
       } as never);
+    } else if (data.action === "reject") {
+      const { error } = await supabaseAdmin
+        .from("community_posts")
+        .update({
+          status: "rejected",
+          review_note: data.reason ?? null,
+          reviewed_by: userId,
+          reviewed_at: new Date().toISOString(),
+        } as never)
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } else {
+      // approve
+      const { error } = await supabaseAdmin
+        .from("community_posts")
+        .update({
+          status: "approved",
+          review_note: data.reason ?? null,
+          reviewed_by: userId,
+          reviewed_at: new Date().toISOString(),
+        } as never)
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+      // 同步关闭相关举报
+      await supabaseAdmin
+        .from("reports")
+        .update({
+          status: "rejected",
+          resolution_note: "审核后帖子已通过",
+          resolved_by: userId,
+          resolved_at: new Date().toISOString(),
+        } as never)
+        .eq("target_type", "post")
+        .eq("target_id", data.id)
+        .eq("status", "pending");
     }
     await supabaseAdmin.from("moderation_actions").insert({
       admin_id: userId, target_type: "post", target_id: data.id, action: data.action, note: data.reason ?? null,
@@ -604,7 +671,7 @@ export const adminModerationSummary = createServerFn({ method: "GET" })
       return count ?? 0;
     };
     const [posts, treehole, flagsOpen, reportsPending] = await Promise.all([
-      countOf("community_posts"),
+      countOf("community_posts", (q) => q.eq("status", "pending")),
       countOf("treehole_posts"),
       countOf("content_flags", (q) => q.eq("status", "open")),
       countOf("reports", (q) => q.eq("status", "pending")),

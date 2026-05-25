@@ -28,6 +28,9 @@ export type CommunityPost = {
   media: { url: string; type: "image" | "video" }[];
   author_nickname: string | null;
   author_avatar: string | null;
+  status: "approved" | "pending" | "rejected" | "removed";
+  review_note: string | null;
+  auto_flag_reason: string | null;
 };
 
 export const listCommunityPosts = createServerFn({ method: "GET" })
@@ -101,6 +104,9 @@ export const listCommunityPosts = createServerFn({ method: "GET" })
         media: Array.isArray(r.media) ? (r.media as any) : [],
         author_nickname: authorMap.get(r.author_id)?.nickname ?? null,
         author_avatar: authorMap.get(r.author_id)?.avatar ?? null,
+        status: (r.status as any) ?? "approved",
+        review_note: r.review_note ?? null,
+        auto_flag_reason: r.auto_flag_reason ?? null,
       })),
     };
   });
@@ -143,10 +149,10 @@ export const createCommunityPost = createServerFn({ method: "POST" })
         location: data.location,
         media: data.media ?? [],
       })
-      .select("*")
+      .select("id, status, auto_flag_reason")
       .single();
     if (error) throw new Error(error.message);
-    return { post: row };
+    return { post: row, pending: row?.status === "pending" };
   });
 
 export const toggleCommunityLike = createServerFn({ method: "POST" })

@@ -782,10 +782,29 @@ function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () =>
             +{post.media.length - 1}
           </span>
         )}
+        {post.status && post.status !== "approved" && (
+          <span
+            className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-medium backdrop-blur-md border ${
+              post.status === "pending"
+                ? "bg-amber-500/30 text-amber-50 border-amber-400/40"
+                : post.status === "rejected"
+                  ? "bg-rose-500/40 text-rose-50 border-rose-400/40"
+                  : "bg-zinc-700/60 text-zinc-100 border-zinc-500/40"
+            }`}
+          >
+            {post.status === "pending" ? "审核中" : post.status === "rejected" ? "已驳回" : "已移除"}
+          </span>
+        )}
       </div>
       <div className="p-3 space-y-2">
         <h3 className="text-sm font-semibold leading-snug line-clamp-2 text-foreground">{post.title}</h3>
         <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{post.content}</p>
+        {post.status && post.status !== "approved" && (post.review_note || post.auto_flag_reason) && (
+          <p className="text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-400/20 rounded-md px-2 py-1">
+            {post.status === "rejected" || post.status === "removed" ? "审核备注: " : "提示: "}
+            {post.review_note || post.auto_flag_reason}
+          </p>
+        )}
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {post.tags.slice(0, 3).map((t) => (
@@ -1224,7 +1243,7 @@ function ComposeSheet({
     if (!title.trim() || !content.trim()) return;
     setSubmitting(true);
     try {
-      await createFn({
+      const res = await createFn({
         data: {
           campus_id: campus.id,
           category: cat,
@@ -1236,7 +1255,11 @@ function ComposeSheet({
         },
       });
       track(Events.PostCreated, { category: cat, has_media: media.length > 0, tags_count: tags.length });
-      toast.success("发布成功");
+      if ((res as any)?.pending) {
+        toast.success("已提交,内容含敏感词,需管理员审核通过后才会公开展示");
+      } else {
+        toast.success("发布成功");
+      }
       onPublished();
       onClose();
     } catch (e: any) {

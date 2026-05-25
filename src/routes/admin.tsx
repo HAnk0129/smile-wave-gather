@@ -829,10 +829,14 @@ function PostModeration() {
   const qc = useQueryClient();
   const listFn = useServerFn(adminListPosts);
   const reviewFn = useServerFn(adminReviewPost);
-  const { data, isLoading } = useQuery({ queryKey: ["mod-posts"], queryFn: () => listFn() });
+  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "removed" | "all">("pending");
+  const { data, isLoading } = useQuery({
+    queryKey: ["mod-posts", status],
+    queryFn: () => listFn({ data: { status } }),
+  });
   const posts = data?.posts ?? [];
   const mut = useMutation({
-    mutationFn: (v: { id: string; action: "approve" | "remove"; reason?: string }) => {
+    mutationFn: (v: { id: string; action: "approve" | "reject" | "remove"; reason?: string }) => {
       track(Events.AdminActionPerformed, { action: "review_post", target: v });
       return reviewFn({ data: v });
     },
@@ -842,24 +846,70 @@ function PostModeration() {
     },
   });
 
+  const statusTabs: { key: typeof status; label: string }[] = [
+    { key: "pending", label: "待审核" },
+    { key: "approved", label: "已通过" },
+    { key: "rejected", label: "已驳回" },
+    { key: "removed", label: "已移除" },
+    { key: "all", label: "全部" },
+  ];
+  const statusBadge = (s: string) => {
+    const map: Record<string, string> = {
+      pending: "bg-amber-500/20 text-amber-300",
+      approved: "bg-emerald-500/20 text-emerald-300",
+      rejected: "bg-rose-500/20 text-rose-300",
+      removed: "bg-zinc-500/30 text-zinc-300",
+    };
+    const label: Record<string, string> = {
+      pending: "待审核",
+      approved: "已通过",
+      rejected: "已驳回",
+      removed: "已移除",
+    };
+    return <span className={`rounded px-1.5 py-0.5 text-[10px] ${map[s] ?? ""}`}>{label[s] ?? s}</span>;
+  };
+
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap gap-1.5">
+        {statusTabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setStatus(t.key)}
+            className={`rounded-lg px-3 py-1 text-xs transition ${
+              status === t.key ? "bg-coral text-white" : "border border-border text-muted-foreground hover:bg-surface"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
       {isLoading && <p className="text-sm text-muted-foreground">加载中…</p>}
       {!isLoading && posts.length === 0 && (
-        <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">暂无社区帖子</p>
+        <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">暂无对应状态的帖子</p>
       )}
       {posts.map((p: any) => (
         <div key={p.id} className="rounded-2xl border border-border bg-surface/40 p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {statusBadge(p.status)}
                 <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] text-violet-300">{p.category}</span>
                 <span>作者 {p.author_id.slice(0, 8)}</span>
                 <span>·</span>
                 <span>{new Date(p.created_at).toLocaleString()}</span>
+                {p.reports_pending > 0 && (
+                  <span className="rounded bg-rose-500/20 px-1.5 py-0.5 text-[10px] text-rose-300">⚑ {p.reports_pending} 条举报</span>
+                )}
               </div>
               <h3 className="mt-1.5 text-sm font-semibold">{p.title}</h3>
               <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">{p.content}</p>
+              {p.auto_flag_reason && (
+                <p className="mt-1.5 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-300">⚠ 自动标记: {p.auto_flag_reason}</p>
+              )}
+              {p.review_note && (
+                <p className="mt-1 rounded bg-surface/60 px-2 py-1 text-[11px] text-muted-foreground">审核备注: {p.review_note}</p>
+              )}
               <div className="mt-1.5 text-[11px] text-muted-foreground">❤ {p.likes_count} · 💬 {p.comments_count} · 🔥 {p.hot}</div>
             </div>
             <div className="flex shrink-0 flex-col gap-1.5">
@@ -871,8 +921,18 @@ function PostModeration() {
               </button>
               <button
                 onClick={() => {
+                  const r = prompt("请输入驳回原因(将通知作者)") || undefined;
+                  if (!r) return;
+                  mut.mutate({ id: p.id, action: "reject", reason: r });
+                }}
+                className="flex items-center justify-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-500/20"
+              >
+                <XCircle className="h-3.5 w-3.5" /> 驳回
+              </button>
+              <button
+                onClick={() => {
                   const r = prompt("请输入移除原因(可选)") || undefined;
-                  if (confirm("确认删除该帖子?")) mut.mutate({ id: p.id, action: "remove", reason: r });
+                  if (confirm("确认移除该帖子?移除后作者将收到通知")) mut.mutate({ id: p.id, action: "remove", reason: r });
                 }}
                 className="flex items-center justify-center gap-1 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-300 hover:bg-rose-500/20"
               >
