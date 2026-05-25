@@ -3,11 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
-  Search, MessageSquare, Home, Compass, Trophy, User as UserIcon,
+  Search, MessageSquare,
   Flame, Mic, Video as VideoIcon, Ghost, Heart, Sparkles,
 } from "lucide-react";
 import { listConversations } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { BottomNav } from "@/components/BottomNav";
 
 export const Route = createFileRoute("/messages")({
   head: () => ({
@@ -183,35 +184,7 @@ function MessagesPage() {
         )}
       </main>
 
-      <BottomNav />
+      <BottomNav active="messages" />
     </div>
-  );
-}
-
-function BottomNav() {
-  const items = [
-    { to: "/", icon: Home, label: "首页" },
-    { to: "/explore", icon: Compass, label: "发现" },
-    { to: "/messages", icon: MessageSquare, label: "消息", active: true },
-    { to: "/games", icon: Trophy, label: "破冰" },
-    { to: "/me", icon: UserIcon, label: "我的" },
-  ];
-  return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl bg-background/85 border-t border-border">
-      <div className="mx-auto max-w-3xl grid grid-cols-5 h-16">
-        {items.map((it) => (
-          <Link
-            key={it.label}
-            to={it.to}
-            className={`flex flex-col items-center justify-center gap-0.5 text-[10px] ${
-              it.active ? "text-coral" : "text-muted-foreground"
-            }`}
-          >
-            <it.icon className="size-5" />
-            {it.label}
-          </Link>
-        ))}
-      </div>
-    </nav>
   );
 }

@@ -7,9 +7,11 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, MessageCircle, MapPin, ChevronDown, Plus,
-  Flame, TrendingUp, Compass, Trophy, User, X, Image as ImageIcon,
+  Flame, TrendingUp, X, Image as ImageIcon,
   Tag, ShoppingBag, MessageSquare, HelpCircle, KeyRound, Copy, Check, School,
 } from "lucide-react";
+import { BottomNav } from "@/components/BottomNav";
+import { z } from "zod";
 import {
   listCommunityPosts,
   createCommunityPost,
@@ -37,6 +39,8 @@ export const Route = createFileRoute("/community")({
       { name: "description", content: "陵水黎安国际教育创新试验区的同频社区：二手闲置、生活吐槽、发帖求助。" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) =>
+    z.object({ compose: z.coerce.number().int().min(0).max(1).optional() }).parse(s),
   component: CommunityPage,
 });
 
@@ -115,6 +119,16 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   const [composeOpen, setComposeOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
+
+  // auto-open compose when arriving with ?compose=1 from the global "+" button
+  const search = Route.useSearch();
+  const nav = Route.useNavigate();
+  useEffect(() => {
+    if (search.compose === 1) {
+      setComposeOpen(true);
+      nav({ search: {} as never, replace: true });
+    }
+  }, [search.compose, nav]);
 
   const listFn = useServerFn(listCommunityPosts);
   const likeFn = useServerFn(toggleCommunityLike);
@@ -274,7 +288,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
       </main>
 
       {/* Bottom nav */}
-      <BottomNav onCompose={() => setComposeOpen(true)} />
+      <BottomNav active="community" onCompose={() => setComposeOpen(true)} />
 
       {/* Campus picker */}
       <AnimatePresence>
@@ -790,49 +804,7 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
   );
 }
 
-function BottomNav({ onCompose }: { onCompose?: () => void }) {
-  const items = [
-    { to: "/community", icon: MessageSquare, label: "社区", active: true },
-    { to: "/explore", icon: Compass, label: "发现" },
-    { type: "compose" as const },
-    { to: "/games", icon: Trophy, label: "游戏" },
-    { to: "/me", icon: User, label: "我的" },
-  ];
-  return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl bg-background/85 border-t border-border">
-      <div className="mx-auto max-w-3xl grid grid-cols-5 h-16 items-center">
-        {items.map((it, i) => {
-          if ("type" in it && it.type === "compose") {
-            return (
-              <button
-                key="compose"
-                onClick={() => onCompose?.()}
-                aria-label="发布内容"
-                className="flex items-center justify-center"
-              >
-                <span className="size-12 rounded-full bg-gradient-to-br from-coral to-sun text-background shadow-lg glow-coral flex items-center justify-center active:scale-95 transition -mt-4">
-                  <Plus className="size-6" />
-                </span>
-              </button>
-            );
-          }
-          return (
-            <Link
-              key={it.label}
-              to={it.to}
-              className={`flex flex-col items-center justify-center gap-0.5 text-[10px] ${
-                it.active ? "text-coral" : "text-muted-foreground"
-              }`}
-            >
-              <it.icon className="size-5" />
-              {it.label}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
-  );
-}
+// BottomNav lives in src/components/BottomNav.tsx
 
 function Modal({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
   return (
