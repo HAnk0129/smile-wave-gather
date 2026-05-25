@@ -263,9 +263,6 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
                 <h2 className="font-display font-bold text-base">热点排行榜</h2>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1 text-xs text-mint">
-              <TrendingUp className="size-3" /> 实时
-            </span>
           </div>
           <ol className="space-y-2.5">
             {hotRank.length === 0 && (
