@@ -6,7 +6,7 @@ import {
   Shield, Users, MessageSquare, Flag, AlertTriangle, FileText, Trees,
   Search, RefreshCw, Trash2, ImageIcon, Video as VideoIcon, Mic,
   ShieldCheck, CheckCircle2, XCircle, KeyRound, UserPlus, X, School, Copy, Check,
-  BadgeCheck, GraduationCap,
+  BadgeCheck, GraduationCap, Wallet, Gift, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -20,6 +20,9 @@ import {
   adminListPhotoQueue, adminReviewPhoto, adminReviewPost, adminReviewTreehole,
   adminModerationSummary,
   adminListRoleMembers, adminFindUser, adminAssignRole, adminRevokeRole,
+  adminListShortVideos, adminReviewShortVideo,
+  adminListVideoComments, adminDeleteVideoComment,
+  adminWalletOverview, adminListGifts, adminListLedger,
 } from "@/lib/admin.functions";
 import {
   adminListCampuses, adminCreateCampus, adminListCampusInvites,
@@ -37,7 +40,9 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "moderation" | "users" | "messages" | "reports" | "treehole" | "posts" | "verify" | "roles" | "campuses";
+type Tab =
+  | "overview" | "moderation" | "users" | "messages" | "reports"
+  | "treehole" | "posts" | "videos" | "wallet" | "verify" | "roles" | "campuses";
 
 function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -125,6 +130,8 @@ function AdminConsole() {
     { key: "messages", label: "消息", icon: MessageSquare },
     { key: "treehole", label: "树洞", icon: Trees },
     { key: "posts", label: "社区", icon: FileText },
+    { key: "videos", label: "短视频", icon: VideoIcon },
+    { key: "wallet", label: "钱包/礼物", icon: Wallet },
     { key: "reports", label: "举报", icon: Flag },
     { key: "verify", label: "认证", icon: BadgeCheck },
     { key: "roles", label: "权限", icon: KeyRound },
@@ -165,6 +172,8 @@ function AdminConsole() {
         {tab === "messages" && <MessagesTab />}
         {tab === "treehole" && <TreeholeTab />}
         {tab === "posts" && <PostsTab />}
+        {tab === "videos" && <VideosTab />}
+        {tab === "wallet" && <WalletTab />}
         {tab === "reports" && <ReportsTab />}
         {tab === "verify" && <VerifyTab />}
         {tab === "roles" && <RolesTab />}
