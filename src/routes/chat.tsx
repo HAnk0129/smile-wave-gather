@@ -569,8 +569,24 @@ function RealChat({
 
   const insertEmoji = (emoji: string) => {
     setInput((v) => v + emoji);
-    setEmojiOpen(false);
   };
+
+  const sendSticker = async (s: string) => {
+    if (sending) return;
+    setEmojiOpen(false);
+    setSending(true);
+    try {
+      await sendFn({ data: { conversationId: convId, content: s } });
+      track(Events.ChatMessageSent, { conversation_id: convId, kind: "sticker" });
+      qc.invalidateQueries({ queryKey });
+    } catch (e: any) {
+      toast.error(e?.message || "发送失败");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const [emojiTab, setEmojiTab] = useState<string>("smile");
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
