@@ -29,6 +29,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AddFriendRouteImport } from './routes/add-friend'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VideosUploadRouteImport } from './routes/videos.upload'
+import { Route as MeReportsRouteImport } from './routes/me.reports'
 import { Route as GamesPalmRouteImport } from './routes/games.palm'
 import { Route as GamesLeaderboardRouteImport } from './routes/games.leaderboard'
 import { Route as ExploreVoiceRouteImport } from './routes/explore.voice'
@@ -135,6 +136,11 @@ const VideosUploadRoute = VideosUploadRouteImport.update({
   path: '/upload',
   getParentRoute: () => VideosRoute,
 } as any)
+const MeReportsRoute = MeReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => MeRoute,
+} as any)
 const GamesPalmRoute = GamesPalmRouteImport.update({
   id: '/palm',
   path: '/palm',
@@ -171,7 +177,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
-  '/me': typeof MeRoute
+  '/me': typeof MeRouteWithChildren
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
+  '/me/reports': typeof MeReportsRoute
   '/videos/upload': typeof VideosUploadRoute
 }
 export interface FileRoutesByTo {
@@ -198,7 +205,7 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
-  '/me': typeof MeRoute
+  '/me': typeof MeRouteWithChildren
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
+  '/me/reports': typeof MeReportsRoute
   '/videos/upload': typeof VideosUploadRoute
 }
 export interface FileRoutesById {
@@ -226,7 +234,7 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
-  '/me': typeof MeRoute
+  '/me': typeof MeRouteWithChildren
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
+  '/me/reports': typeof MeReportsRoute
   '/videos/upload': typeof VideosUploadRoute
 }
 export interface FileRouteTypes {
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
+    | '/me/reports'
     | '/videos/upload'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
+    | '/me/reports'
     | '/videos/upload'
   id:
     | '__root__'
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
     | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
+    | '/me/reports'
     | '/videos/upload'
   fileRoutesById: FileRoutesById
 }
@@ -337,7 +349,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   ExploreRoute: typeof ExploreRouteWithChildren
   GamesRoute: typeof GamesRouteWithChildren
-  MeRoute: typeof MeRoute
+  MeRoute: typeof MeRouteWithChildren
   MessagesRoute: typeof MessagesRoute
   NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -491,6 +503,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VideosUploadRouteImport
       parentRoute: typeof VideosRoute
     }
+    '/me/reports': {
+      id: '/me/reports'
+      path: '/reports'
+      fullPath: '/me/reports'
+      preLoaderRoute: typeof MeReportsRouteImport
+      parentRoute: typeof MeRoute
+    }
     '/games/palm': {
       id: '/games/palm'
       path: '/palm'
@@ -556,6 +575,16 @@ const GamesRouteChildren: GamesRouteChildren = {
 
 const GamesRouteWithChildren = GamesRoute._addFileChildren(GamesRouteChildren)
 
+interface MeRouteChildren {
+  MeReportsRoute: typeof MeReportsRoute
+}
+
+const MeRouteChildren: MeRouteChildren = {
+  MeReportsRoute: MeReportsRoute,
+}
+
+const MeRouteWithChildren = MeRoute._addFileChildren(MeRouteChildren)
+
 interface VideosRouteChildren {
   VideosUploadRoute: typeof VideosUploadRoute
 }
@@ -577,7 +606,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   ExploreRoute: ExploreRouteWithChildren,
   GamesRoute: GamesRouteWithChildren,
-  MeRoute: MeRoute,
+  MeRoute: MeRouteWithChildren,
   MessagesRoute: MessagesRoute,
   NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
