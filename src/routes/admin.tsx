@@ -652,7 +652,7 @@ function PhotoModeration() {
   });
   const mut = useMutation({
     mutationFn: (v: { profileId: string; idx: number; action: "approve" | "reject" }) => {
-      track(Events.AdminActionPerformed, { action: "review_photo", ...v });
+      track(Events.AdminActionPerformed, { action: "review_photo", target: v });
       return reviewFn({ data: v });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mod-photos"] }),
@@ -743,7 +743,7 @@ function PostModeration() {
   const posts = data?.posts ?? [];
   const mut = useMutation({
     mutationFn: (v: { id: string; action: "approve" | "remove"; reason?: string }) => {
-      track(Events.AdminActionPerformed, { action: "review_post", ...v });
+      track(Events.AdminActionPerformed, { action: "review_post", target: v });
       return reviewFn({ data: v });
     },
     onSuccess: () => {
@@ -808,7 +808,7 @@ function VerifyTab() {
 
   const review = useMutation({
     mutationFn: (v: { id: string; action: "approve" | "reject"; note?: string }) => {
-      track(Events.AdminActionPerformed, { action: "review_verification", ...v });
+      track(Events.AdminActionPerformed, { action: "review_verification", target: v });
       return reviewFn({ data: v });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-verifications"] }),
