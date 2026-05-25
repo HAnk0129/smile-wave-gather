@@ -145,6 +145,7 @@ function GamesPage() {
           <GameGrid />
         </div>
       </main>
+      <BottomNav active="games" />
     </div>
   );
 }
