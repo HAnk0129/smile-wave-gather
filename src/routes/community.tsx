@@ -318,6 +318,20 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
         )}
       </AnimatePresence>
 
+      {/* Join another campus via invite code */}
+      <AnimatePresence>
+        {joinOpen && (
+          <Modal onClose={() => setJoinOpen(false)} title="加入新园区">
+            <InlineJoinForm
+              onJoined={() => {
+                setJoinOpen(false);
+                qc.invalidateQueries({ queryKey: ["my-campuses"] });
+              }}
+            />
+          </Modal>
+        )}
+      </AnimatePresence>
+
       {/* Compose */}
       <AnimatePresence>
         {composeOpen && (
