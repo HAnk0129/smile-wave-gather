@@ -1,8 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Hand, Heart, Loader2, RefreshCw, Sparkles, Upload, Zap } from "lucide-react";
-import { readPalm } from "@/lib/palm.functions";
+import { ArrowLeft, Check, Hand, Heart, Loader2, RefreshCw, Share2, Sparkles, Upload, Zap } from "lucide-react";
+import { toast } from "sonner";
+import {
+  getPalmQuota,
+  revealPalm,
+  verifyPalm,
+  type PalmReport,
+} from "@/lib/palm.functions";
 
 export const Route = createFileRoute("/games/palm")({
   head: () => ({
@@ -16,15 +23,29 @@ export const Route = createFileRoute("/games/palm")({
   component: PalmPage,
 });
 
-type Report = Awaited<ReturnType<typeof readPalm>>;
+type Report = PalmReport;
+type Stage = "idle" | "share" | "report";
 
 function PalmPage() {
-  const fn = useServerFn(readPalm);
+  const verifyFn = useServerFn(verifyPalm);
+  const revealFn = useServerFn(revealPalm);
+  const quotaFn = useServerFn(getPalmQuota);
+
   const [preview, setPreview] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stage, setStage] = useState<Stage>("idle");
+  const [readingId, setReadingId] = useState<string | null>(null);
+  const [shareConfirmed, setShareConfirmed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const quota = useQuery({
+    queryKey: ["palm-quota"],
+    queryFn: () => quotaFn({}),
+  });
+  const remaining = quota.data?.remaining ?? 0;
+  const limit = quota.data?.limit ?? 2;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -33,7 +54,6 @@ function PalmPage() {
   const onFile = async (file: File) => {
     setError(null);
     setReport(null);
-    // Downscale for payload size
     const dataUrl = await compressImage(file, 1024, 0.85);
     setPreview(dataUrl);
   };
@@ -43,10 +63,27 @@ function PalmPage() {
     setLoading(true);
     setError(null);
     try {
-      const r = await fn({ data: { imageDataUrl: preview } });
-      setReport(r);
+      const r = await verifyFn({ data: { imageDataUrl: preview } });
+      setReadingId(r.readingId);
+      setStage("share");
+      void quota.refetch();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "解析失败，请重试");
+      setError(e instanceof Error ? e.message : "识别失败，请重试");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reveal = async () => {
+    if (!readingId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await revealFn({ data: { readingId } });
+      setReport(r.preset);
+      setStage("report");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "查看失败，请重试");
     } finally {
       setLoading(false);
     }
@@ -56,8 +93,13 @@ function PalmPage() {
     setPreview(null);
     setReport(null);
     setError(null);
+    setStage("idle");
+    setReadingId(null);
+    setShareConfirmed(false);
     if (inputRef.current) inputRef.current.value = "";
   };
+
+  const outOfQuota = !quota.isLoading && remaining <= 0 && stage === "idle";
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -81,18 +123,22 @@ function PalmPage() {
       </header>
 
       <section className="relative mx-auto max-w-4xl px-6 pt-8 md:pt-10 pb-20">
-        {!report && (
+        {stage === "idle" && (
           <div className="relative rounded-[32px] border border-border bg-surface/70 backdrop-blur p-5 md:p-8">
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground">
                   <Sparkles className="size-3.5 text-coral" />
-                  <span>Powered by Pulse AI · 仅供娱乐</span>
+                  <span>Powered by Pulse AI · 仅供娱乐 · 每人 {limit} 次</span>
                 </div>
                 <h1 className="mt-4 font-display text-3xl md:text-5xl font-bold tracking-tight leading-[0.98]">
                   上传手掌，马上开始
                   <span className="font-serif-display italic text-gradient-hero"> AI 看手相</span>
                 </h1>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  剩余测试机会：<span className="font-bold text-foreground">{remaining}/{limit}</span> ·
+                  分享到朋友圈解锁结果
+                </p>
               </div>
             </div>
 
@@ -125,18 +171,20 @@ function PalmPage() {
 
                 <button
                   onClick={analyze}
-                  disabled={!preview || loading}
+                  disabled={!preview || loading || outOfQuota}
                   className="mt-8 w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-primary text-primary-foreground font-semibold glow-coral hover:scale-[1.01] active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      AI 解读中…
+                      正在识别手掌…
                     </>
+                  ) : outOfQuota ? (
+                    <>已用完 {limit} 次机会</>
                   ) : (
                     <>
                       <Sparkles className="size-4" />
-                      开始解读手相
+                      开始识别手相
                     </>
                   )}
                 </button>
@@ -149,7 +197,18 @@ function PalmPage() {
           </div>
         )}
 
-        {report && preview && (
+        {stage === "share" && preview && (
+          <ShareGate
+            preview={preview}
+            confirmed={shareConfirmed}
+            onConfirm={() => setShareConfirmed(true)}
+            onReveal={reveal}
+            loading={loading}
+            error={error}
+          />
+        )}
+
+        {stage === "report" && report && preview && (
           <ReportView report={report} preview={preview} onReset={reset} />
         )}
       </section>
@@ -296,6 +355,152 @@ function ReportView({
           <Heart className="size-4" />
           去匹配同频的人
         </Link>
+      </div>
+    </div>
+  );
+}
+
+function ShareGate({
+  preview,
+  confirmed,
+  onConfirm,
+  onReveal,
+  loading,
+  error,
+}: {
+  preview: string;
+  confirmed: boolean;
+  onConfirm: () => void;
+  onReveal: () => void;
+  loading: boolean;
+  error: string | null;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const downloadCard = async () => {
+    // Render a simple share card on a canvas and trigger download
+    const canvas = document.createElement("canvas");
+    const W = 750;
+    const H = 1000;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    // background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, "#0e0e12");
+    grad.addColorStop(1, "#1a1216");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    // load palm preview
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.crossOrigin = "anonymous";
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = preview;
+    }).catch(() => null);
+    if (img) {
+      const size = 500;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect((W - size) / 2, 200, size, size, 36);
+      ctx.clip();
+      ctx.drawImage(img, (W - size) / 2, 200, size, size);
+      ctx.restore();
+    }
+    ctx.fillStyle = "#ff6b6b";
+    ctx.font = "bold 28px -apple-system, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("PULSE · AI 手相", W / 2, 100);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 56px -apple-system, system-ui, sans-serif";
+    ctx.fillText("我的专属手相报告", W / 2, 170);
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.font = "400 26px -apple-system, system-ui, sans-serif";
+    ctx.fillText("扫描朋友圈，揭晓我的爱情线", W / 2, 770);
+    ctx.fillText("· 上 Pulse · AI 看手相 ·", W / 2, 820);
+    ctx.fillStyle = "#ffd166";
+    ctx.font = "italic 22px Georgia, serif";
+    ctx.fillText("分享后解锁你的完整运势", W / 2, 900);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "palm-share.png";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("已保存到本地，去朋友圈分享吧～");
+    }, "image/png");
+  };
+
+  return (
+    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="relative rounded-[32px] border border-border bg-surface/70 backdrop-blur p-6 md:p-8">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-mint/15 text-mint px-3 py-1.5 text-xs font-semibold">
+            <Check className="size-3.5" />
+            手掌识别成功
+          </div>
+          <h2 className="mt-4 font-display text-2xl md:text-3xl font-bold">
+            分享到朋友圈，解锁你的手相报告
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            保存下方卡片 → 发到朋友圈 → 回来点击「已分享，查看结果」
+          </p>
+        </div>
+
+        <div
+          ref={cardRef}
+          className="mx-auto max-w-sm rounded-3xl overflow-hidden border border-border bg-gradient-to-br from-coral/20 via-background to-sun/15 p-6"
+        >
+          <div className="text-coral text-xs font-bold tracking-widest">PULSE · AI 手相</div>
+          <h3 className="mt-1 font-display text-xl font-bold">我的专属手相报告已生成</h3>
+          <div className="mt-4 relative aspect-square rounded-2xl overflow-hidden border border-border">
+            <img src={preview} alt="手掌" className="w-full h-full object-cover" />
+            <PalmLines />
+          </div>
+          <div className="mt-4 text-xs text-muted-foreground">
+            扫描朋友圈，揭晓你的爱情线 · 事业线 · 生命线
+          </div>
+          <div className="mt-2 font-serif-display italic text-sm text-foreground">
+            "分享后解锁你的完整运势 ✨"
+          </div>
+        </div>
+
+        <div className="mt-6 grid sm:grid-cols-2 gap-3">
+          <button
+            onClick={downloadCard}
+            className="inline-flex items-center justify-center gap-2 h-12 rounded-full border border-border bg-surface hover:bg-surface-2 transition text-sm font-semibold"
+          >
+            <Share2 className="size-4" />
+            保存卡片图片
+          </button>
+          {!confirmed ? (
+            <button
+              onClick={onConfirm}
+              className="inline-flex items-center justify-center gap-2 h-12 rounded-full bg-mint text-background hover:scale-[1.01] transition text-sm font-semibold"
+            >
+              <Check className="size-4" />
+              我已分享朋友圈
+            </button>
+          ) : (
+            <button
+              onClick={onReveal}
+              disabled={loading}
+              className="inline-flex items-center justify-center gap-2 h-12 rounded-full bg-primary text-primary-foreground glow-coral hover:scale-[1.01] transition text-sm font-semibold disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+              查看我的手相结果
+            </button>
+          )}
+        </div>
+        {error && <p className="mt-3 text-sm text-coral text-center">{error}</p>}
+        <p className="mt-4 text-xs text-muted-foreground text-center">
+          诚信小提示：分享是给小伙伴一起玩的福利，不分享也能查看，但会少点仪式感～
+        </p>
       </div>
     </div>
   );
