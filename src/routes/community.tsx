@@ -113,7 +113,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   const [campusOpen, setCampusOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
-  const [activePost, setActivePost] = useState<CommunityPost | null>(null);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
 
   const listFn = useServerFn(listCommunityPosts);
   const likeFn = useServerFn(toggleCommunityLike);
@@ -127,17 +127,16 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
 
   const posts = data?.posts ?? [];
 
-  // 排行榜独立查询：始终展示全部分类下的热门，不被当前分类筛选影响
-  const hotKey = ["community-posts", campus.id, "all"] as const;
-  const { data: hotData } = useQuery({
-    queryKey: hotKey,
-    queryFn: () => listFn({ data: { category: "all", campus_id: campus.id } }),
-    enabled: activeCat !== "all",
-  });
-  const hotSource = activeCat === "all" ? posts : hotData?.posts ?? [];
+  // 排行榜只在「全部」分类显示，直接复用 posts，无需二次请求
   const hotRank = useMemo(
-    () => [...hotSource].sort((a, b) => b.hot - a.hot).slice(0, 5),
-    [hotSource],
+    () => [...posts].sort((a, b) => b.hot - a.hot).slice(0, 5),
+    [posts],
+  );
+
+  // 详情页使用 posts 中的最新数据，保证点赞 / 评论数实时同步
+  const activePost = useMemo(
+    () => (activePostId ? posts.find((p) => p.id === activePostId) ?? null : null),
+    [activePostId, posts],
   );
 
   const likeMut = useMutation({
@@ -157,7 +156,6 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
       return { prev };
     },
     onError: (_e, _v, ctx) => ctx?.prev && qc.setQueryData(queryKey, ctx.prev),
-    onSettled: () => qc.invalidateQueries({ queryKey }),
   });
 
   return (
