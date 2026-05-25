@@ -24,6 +24,7 @@ import {
 } from "@/lib/community.functions";
 import {
   listMyCampuses,
+  listAllCampuses,
   redeemCampusInvite,
   createCampusInvite,
   type Campus,
@@ -54,16 +55,31 @@ function heightFor(id: string): "tall" | "mid" | "short" {
 
 function CommunityPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    const check = async (uid: string | undefined) => {
+      if (!uid) { setIsAdmin(false); return; }
+      const { data } = await supabase
+        .from("user_roles").select("role")
+        .eq("user_id", uid).eq("role", "admin").maybeSingle();
+      setIsAdmin(!!data);
+    };
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthed(!!data.session);
+      check(data.session?.user.id);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setAuthed(!!s);
+      check(s?.user.id);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
   const myCampusesFn = useServerFn(listMyCampuses);
+  const allCampusesFn = useServerFn(listAllCampuses);
   const { data: campusData, isLoading: campusLoading, refetch: refetchCampuses } = useQuery({
-    queryKey: ["my-campuses"],
-    queryFn: () => myCampusesFn(),
+    queryKey: ["my-campuses", isAdmin],
+    queryFn: () => (isAdmin ? allCampusesFn() : myCampusesFn()),
     enabled: authed === true,
   });
   const myCampuses = campusData?.campuses ?? [];
