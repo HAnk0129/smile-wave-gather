@@ -7,9 +7,11 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, MessageCircle, MapPin, ChevronDown, Plus,
-  Flame, TrendingUp, Compass, Trophy, User, X, Image as ImageIcon,
+  Flame, TrendingUp, X, Image as ImageIcon,
   Tag, ShoppingBag, MessageSquare, HelpCircle, KeyRound, Copy, Check, School,
 } from "lucide-react";
+import { BottomNav } from "@/components/BottomNav";
+import { z } from "zod";
 import {
   listCommunityPosts,
   createCommunityPost,
@@ -37,6 +39,8 @@ export const Route = createFileRoute("/community")({
       { name: "description", content: "陵水黎安国际教育创新试验区的同频社区：二手闲置、生活吐槽、发帖求助。" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) =>
+    z.object({ compose: z.coerce.number().int().min(0).max(1).optional() }).parse(s),
   component: CommunityPage,
 });
 
