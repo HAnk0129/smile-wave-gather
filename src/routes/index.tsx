@@ -1,8 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Heart, MessageCircle, Sparkles, Zap, Globe2, ArrowRight, Radar, Gamepad2, Mic } from "lucide-react";
 import { AuthButtons, NeonButton, NeonInner, neonButtonClass } from "@/components/AuthButtons";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    throw redirect({ to: "/community" });
+  },
   component: Index,
 });
 
