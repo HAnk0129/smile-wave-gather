@@ -230,7 +230,7 @@ function VideoCard({ v }: { v: ShortVideoFeedItem }) {
       <ReportSheet
         open={openReport}
         onClose={() => setOpenReport(false)}
-        targetType="post"
+        targetType="video"
         targetId={v.id}
         authorId={v.author_id}
       />
