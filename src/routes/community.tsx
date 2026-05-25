@@ -888,6 +888,7 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
   const [idx, setIdx] = useState(0);
   const [draft, setDraft] = useState("");
   const [meId, setMeId] = useState<string | null>(null);
+  const [report, setReport] = useState<{ type: ReportTargetType; id: string; authorId?: string | null } | null>(null);
   const qc = useQueryClient();
   const listFn = useServerFn(listCommunityComments);
   const addFn = useServerFn(addCommunityComment);
@@ -991,6 +992,15 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
               <div className="text-sm font-medium truncate">{displayName}</div>
               <div className="text-[11px] text-muted-foreground">Pulse 用户</div>
             </div>
+          {meId && meId !== post.author_id && (
+            <button
+              onClick={() => setReport({ type: "post", id: post.id, authorId: post.author_id })}
+              className="size-8 rounded-full bg-surface/70 flex items-center justify-center text-muted-foreground hover:text-coral"
+              aria-label="举报"
+            >
+              <Flag className="size-4" />
+            </button>
+          )}
             <button onClick={onClose} className="size-8 rounded-full bg-surface/70 flex items-center justify-center md:bg-transparent">
               <X className="size-4" />
             </button>
@@ -1040,6 +1050,14 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
                               删除
                             </button>
                           )}
+                          {meId && meId !== c.author_id && (
+                            <button
+                              onClick={() => setReport({ type: "comment", id: c.id, authorId: c.author_id })}
+                              className="ml-auto inline-flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-coral"
+                            >
+                              <Flag className="size-3" /> 举报
+                            </button>
+                          )}
                         </div>
                         <p className="text-sm leading-relaxed mt-0.5 whitespace-pre-wrap break-words">{c.content}</p>
                       </div>
@@ -1085,6 +1103,15 @@ function PostDetail({ post, onClose, onLike }: { post: CommunityPost; onClose: (
           </div>
         </div>
       </motion.div>
+      {report && (
+        <ReportSheet
+          open
+          onClose={() => setReport(null)}
+          targetType={report.type}
+          targetId={report.id}
+          authorId={report.authorId ?? undefined}
+        />
+      )}
     </motion.div>
   );
 }
