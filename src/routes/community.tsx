@@ -298,7 +298,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
               ))}
               <li className="pt-2 mt-2 border-t border-border">
                 <button
-                  onClick={() => { setCampusOpen(false); window.location.href = "/community?join=1"; }}
+                  onClick={() => { setCampusOpen(false); setJoinOpen(true); }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-surface/60 text-muted-foreground"
                 >
                   <KeyRound className="size-4" />
