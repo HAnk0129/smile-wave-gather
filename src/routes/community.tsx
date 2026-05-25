@@ -133,7 +133,7 @@ function CommunityPage() {
     );
   }
   if (authed === null || (authed === true && (!roleReady || campusPending))) {
-    return <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">加载中…</div>;
+    return <CommunityBootSkeleton />;
   }
   if (campusIsError) {
     return (
