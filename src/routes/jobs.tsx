@@ -11,7 +11,7 @@ import { Header, EmptyState } from "@/routes/contests";
 export const Route = createFileRoute("/jobs")({
   head: () => ({
     meta: [
-      { title: "工作需求 · Pulse" },
+      { title: "实习与工作 · Pulse" },
       { name: "description", content: "校园兼职、实习、项目合作需求集合,快速找到搭子或人才。" },
     ],
   }),
@@ -47,7 +47,7 @@ function JobsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24">
-      <Header title="工作需求" subtitle="兼职/实习/合作 一站搞定" icon={<Briefcase className="h-5 w-5" />} />
+      <Header title="实习与工作" subtitle="兼职/实习/合作 一站搞定" icon={<Briefcase className="h-5 w-5" />} />
       <div className="mx-auto max-w-3xl px-5">
         <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto pb-1">
           {CATS.map((c) => (
@@ -115,7 +115,7 @@ function Compose({ onClose, onSubmit, submitting }: any) {
   return (
     <div className="fixed inset-0 z-40 flex items-end bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="max-h-[88vh] w-full overflow-y-auto rounded-t-3xl border-t border-border bg-background p-5">
-        <h2 className="font-display text-xl font-semibold">发布工作需求</h2>
+        <h2 className="font-display text-xl font-semibold">发布实习/工作</h2>
         <div className="mt-4 space-y-3">
           <Field label="标题"><input className={ipt} value={v.title} onChange={upd("title")} placeholder="例如:周末活动摄影助理" /></Field>
           <Field label="一句话摘要"><input className={ipt} value={v.summary} onChange={upd("summary")} maxLength={160} /></Field>
