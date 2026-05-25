@@ -264,7 +264,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
                   key={post.id}
                   post={post}
                   onLike={() => likeMut.mutate(post.id)}
-                  onOpen={() => setActivePost(post)}
+                  onOpen={() => setActivePostId(post.id)}
                 />
               ))}
             </AnimatePresence>
@@ -333,7 +333,7 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
         {activePost && (
           <PostDetail
             post={activePost}
-            onClose={() => setActivePost(null)}
+            onClose={() => setActivePostId(null)}
             onLike={() => likeMut.mutate(activePost.id)}
           />
         )}
