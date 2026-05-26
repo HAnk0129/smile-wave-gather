@@ -25,6 +25,22 @@ function brandedErrorResponse(): Response {
   });
 }
 
+function isStaleServerFunctionError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.includes("Invalid server function ID");
+}
+
+function staleServerFunctionResponse(): Response {
+  return new Response(JSON.stringify({ error: "STALE_CLIENT", refresh: true }), {
+    status: 409,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store, max-age=0",
+      "clear-site-data": '"cache"',
+    },
+  });
+}
+
 function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boolean {
   let payload: unknown;
   try {
@@ -73,6 +89,10 @@ export default {
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
+      if (request.url.includes("/_serverFn/") && isStaleServerFunctionError(error)) {
+        console.warn("Ignored stale server function request. The browser will refresh its cached client bundle.");
+        return staleServerFunctionResponse();
+      }
       console.error(error);
       return brandedErrorResponse();
     }
