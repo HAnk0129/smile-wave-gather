@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Briefcase, MapPin, Coins, Plus, Phone } from "lucide-react";
 import { toast } from "sonner";
-import { listJobs, createJob, type Job } from "@/lib/jobs.functions";
+import { listJobs, createJob, getJobContact, type Job } from "@/lib/jobs.functions";
 import { BottomNav } from "@/components/BottomNav";
 import { Header, EmptyState } from "@/components/SectionChrome";
 
@@ -78,6 +78,21 @@ function JobsPage() {
 }
 
 function JobCard({ j }: { j: Job }) {
+  const fetchContact = useServerFn(getJobContact);
+  const [contact, setContact] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const reveal = async () => {
+    if (contact || loading) return;
+    setLoading(true);
+    try {
+      const r = await fetchContact({ data: { id: j.id } });
+      setContact(r.contact);
+    } catch (e: any) {
+      toast.error(e?.message ?? "获取联系方式失败");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <article className="rounded-2xl border border-border bg-surface/70 p-4 backdrop-blur">
       <div className="flex items-start justify-between gap-3">
@@ -90,7 +105,14 @@ function JobCard({ j }: { j: Job }) {
       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
         {j.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{j.location}</span>}
         {j.salary && <span className="inline-flex items-center gap-1 text-coral"><Coins className="h-3 w-3" />{j.salary}</span>}
-        <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{j.contact}</span>
+        {contact ? (
+          <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{contact}</span>
+        ) : (
+          <button onClick={reveal} disabled={loading}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2 py-0.5 text-mint hover:bg-mint/10 disabled:opacity-60">
+            <Phone className="h-3 w-3" />{loading ? "加载中…" : "查看联系方式"}
+          </button>
+        )}
       </div>
       {Array.isArray(j.tags) && j.tags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
