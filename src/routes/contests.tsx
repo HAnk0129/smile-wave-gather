@@ -1,11 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Trophy, MapPin, Calendar, Plus, ExternalLink, Sparkles, ChevronLeft } from "lucide-react";
+import { Trophy, MapPin, Calendar, Plus, ExternalLink, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { listContests, createContest, type Contest } from "@/lib/contests.functions";
 import { BottomNav } from "@/components/BottomNav";
+import { Header, EmptyState } from "@/components/SectionChrome";
 
 export const Route = createFileRoute("/contests")({
   head: () => ({
@@ -173,30 +174,6 @@ function Field({ label, children }: any) {
       <span className="mb-1 block text-xs text-muted-foreground">{label}</span>
       {children}
     </label>
-  );
-}
-
-export function Header({ title, subtitle, icon }: { title: string; subtitle?: string; icon?: React.ReactNode }) {
-  return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-        <Link to="/" className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-surface/60"><ChevronLeft className="h-4 w-4" /></Link>
-        <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-coral to-sun text-background">{icon}</div>
-        <div>
-          <h1 className="font-display text-lg font-semibold leading-tight">{title}</h1>
-          {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
-        </div>
-      </div>
-    </header>
-  );
-}
-
-export function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="grid place-items-center rounded-2xl border border-dashed border-border bg-surface/30 px-6 py-12 text-center">
-      <div className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-surface/60 text-muted-foreground">{icon}</div>
-      <p className="text-sm text-muted-foreground">{text}</p>
-    </div>
   );
 }
 
