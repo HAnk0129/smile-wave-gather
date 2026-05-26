@@ -217,4 +217,59 @@
     to { transform: translateX(-50%); }
   }
   .animate-marquee { animation: marquee 30s linear infinite; }
+
+  @keyframes vs-pulse {
+    0%, 100% { transform: scale(1) rotate(-6deg); filter: brightness(1); }
+    50% { transform: scale(1.08) rotate(-6deg); filter: brightness(1.15); }
+  }
+  @keyframes vs-shine {
+    0% { transform: translateX(-120%) skewX(-20deg); }
+    60%, 100% { transform: translateX(220%) skewX(-20deg); }
+  }
+  @keyframes vs-ring {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+
+  .vs-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: white;
+    background:
+      radial-gradient(120% 120% at 30% 20%, color-mix(in oklab, var(--sun) 70%, white) 0%, transparent 55%),
+      linear-gradient(135deg, var(--coral) 0%, oklch(0.62 0.22 18) 55%, oklch(0.48 0.20 350) 100%);
+    box-shadow:
+      0 10px 25px -8px color-mix(in oklab, var(--coral) 70%, transparent),
+      0 0 0 1px color-mix(in oklab, white 30%, transparent) inset,
+      0 -6px 12px -6px color-mix(in oklab, black 40%, transparent) inset,
+      0 6px 14px -6px color-mix(in oklab, white 60%, transparent) inset;
+    text-shadow: 0 1px 0 color-mix(in oklab, black 35%, transparent);
+    animation: vs-pulse 2.4s ease-in-out infinite;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .vs-badge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, color-mix(in oklab, white 75%, transparent) 50%, transparent 70%);
+    animation: vs-shine 2.8s ease-in-out infinite;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+  .vs-badge::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    border: 1.5px solid color-mix(in oklab, var(--coral) 60%, transparent);
+    animation: vs-ring 2s ease-out infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
 }
