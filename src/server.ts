@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { isStaleServerFunctionError, staleServerFunctionResponse } from "./lib/stale-client";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -22,22 +23,6 @@ function brandedErrorResponse(): Response {
   return new Response(renderErrorPage(), {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
-  });
-}
-
-function isStaleServerFunctionError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error ?? "");
-  return message.includes("Invalid server function ID");
-}
-
-function staleServerFunctionResponse(): Response {
-  return new Response(JSON.stringify({ error: "STALE_CLIENT", refresh: true }), {
-    status: 409,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store, max-age=0",
-      "clear-site-data": '"cache"',
-    },
   });
 }
 
