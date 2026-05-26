@@ -26,13 +26,13 @@ export const listJobs = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("jobs")
-      .select("*")
+      .select("id,author_id,title,summary,description,category,location,salary,tags,status,expires_at,created_at")
       .order("created_at", { ascending: false })
       .limit(60);
     if (data.category && data.category !== "all") q = q.eq("category", data.category);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return { jobs: (rows ?? []) as Job[] };
+    return { jobs: (rows ?? []) as Omit<Job, "contact">[] };
   });
 
 const JobInput = z.object({
