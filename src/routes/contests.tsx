@@ -23,7 +23,7 @@ const CATS = [
   { k: "football", label: "足球" },
   { k: "badminton", label: "羽毛球" },
   { k: "tennis", label: "网球" },
-  { k: "sports_meet", label: "舔干净运动会" },
+  { k: "track_field", label: "田径运动会" },
   { k: "academic", label: "学术竞赛" },
 ];
 
