@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -93,27 +93,48 @@ function ContestsPage() {
 }
 
 function ContestCard({ c }: { c: Contest }) {
+  const vsMatch = c.title.match(/^(.+?)\s*(?:vs|VS|对|对阵)\s*(.+)$/);
   return (
-    <article className="overflow-hidden rounded-2xl border border-border bg-surface/70 backdrop-blur">
-      <div className="relative h-24 bg-gradient-to-br from-coral/40 via-sun/20 to-mint/20">
+    <Link
+      to="/contests/$contestId"
+      params={{ contestId: c.id }}
+      className="block overflow-hidden rounded-2xl border border-border bg-surface/70 backdrop-blur transition hover:-translate-y-0.5 hover:border-coral/50 hover:shadow-lg"
+    >
+      <div className="relative h-28 bg-gradient-to-br from-coral/40 via-sun/20 to-mint/20">
         {c.cover && <img src={c.cover} alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />}
         <span className="absolute left-3 top-3 rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-medium text-foreground">{c.category}</span>
       </div>
       <div className="p-4">
-        <h3 className="font-display text-lg font-semibold">{c.title}</h3>
-        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{c.summary}</p>
+        {vsMatch ? (
+          <div className="flex items-stretch gap-3">
+            <div className="flex-1 text-right">
+              <p className="font-display text-base font-semibold leading-snug">{vsMatch[1]}</p>
+            </div>
+            <div className="flex flex-col items-center justify-center">
+              <span className="rounded-full bg-gradient-to-br from-coral to-sun px-2.5 py-0.5 font-display text-xs font-black tracking-wider text-background shadow-md shadow-coral/30">
+                VS
+              </span>
+            </div>
+            <div className="flex-1 text-left">
+              <p className="font-display text-base font-semibold leading-snug">{vsMatch[2]}</p>
+            </div>
+          </div>
+        ) : (
+          <h3 className="font-display text-lg font-semibold">{c.title}</h3>
+        )}
+        {c.summary && !vsMatch && (
+          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{c.summary}</p>
+        )}
+        {vsMatch && c.summary && (
+          <p className="mt-2 text-center text-xs text-muted-foreground">{c.summary}</p>
+        )}
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
           {c.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{c.location}</span>}
           {c.deadline && <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />截止 {fmt(c.deadline)}</span>}
           {c.prize && <span className="inline-flex items-center gap-1"><Sparkles className="h-3 w-3" />{c.prize}</span>}
         </div>
-        {c.register_url && (
-          <a href={c.register_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs text-coral">
-            立即报名 <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
       </div>
-    </article>
+    </Link>
   );
 }
 
