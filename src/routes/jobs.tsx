@@ -6,7 +6,7 @@ import { Briefcase, MapPin, Coins, Plus, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { listJobs, createJob, type Job } from "@/lib/jobs.functions";
 import { BottomNav } from "@/components/BottomNav";
-import { Header, EmptyState } from "@/routes/contests";
+import { Header, EmptyState } from "@/components/SectionChrome";
 
 export const Route = createFileRoute("/jobs")({
   head: () => ({
