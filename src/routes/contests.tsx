@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Trophy, MapPin, Calendar, Plus, ExternalLink, Sparkles } from "lucide-react";
+import { Trophy, MapPin, Calendar, Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { listContests, createContest, type Contest } from "@/lib/contests.functions";
 import { BottomNav } from "@/components/BottomNav";
