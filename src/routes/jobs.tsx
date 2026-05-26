@@ -62,7 +62,7 @@ function JobsPage() {
           {!isLoading && (data?.jobs ?? []).length === 0 && (
             <EmptyState icon={<Briefcase className="h-6 w-6" />} text="还没有发布需求,做第一个发布者吧" />
           )}
-          {(data?.jobs ?? []).map((j) => <JobCard key={j.id} j={j as Job} />)}
+          {(data?.jobs ?? []).map((j) => <JobCard key={j.id} j={j} />)}
         </div>
       </div>
 
@@ -77,7 +77,7 @@ function JobsPage() {
   );
 }
 
-function JobCard({ j }: { j: Job }) {
+function JobCard({ j }: { j: Omit<Job, "contact"> }) {
   const fetchContact = useServerFn(getJobContact);
   const [contact, setContact] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
