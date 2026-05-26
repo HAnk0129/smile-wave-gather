@@ -35,6 +35,19 @@ export const listJobs = createServerFn({ method: "GET" })
     return { jobs: (rows ?? []) as Omit<Job, "contact">[] };
   });
 
+export const getJobContact = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("jobs")
+      .select("contact")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { contact: (row?.contact ?? null) as string | null };
+  });
+
 const JobInput = z.object({
   title: z.string().min(2).max(80),
   summary: z.string().min(2).max(160),
