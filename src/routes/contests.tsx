@@ -19,11 +19,12 @@ export const Route = createFileRoute("/contests")({
 
 const CATS = [
   { k: "all", label: "全部" },
-  { k: "academic", label: "学术" },
-  { k: "creative", label: "创意" },
-  { k: "sport", label: "体育" },
-  { k: "tech", label: "科技" },
-  { k: "general", label: "其他" },
+  { k: "basketball", label: "篮球" },
+  { k: "football", label: "足球" },
+  { k: "badminton", label: "羽毛球" },
+  { k: "tennis", label: "网球" },
+  { k: "sports_meet", label: "舔干净运动会" },
+  { k: "academic", label: "学术竞赛" },
 ];
 
 function ContestsPage() {
@@ -117,7 +118,7 @@ function ContestCard({ c }: { c: Contest }) {
 
 function ComposeSheet({ onClose, onSubmit, submitting }: any) {
   const [v, setV] = useState({
-    title: "", summary: "", description: "", category: "general",
+    title: "", summary: "", description: "", category: "basketball",
     location: "", prize: "", organizer: "", contact: "", register_url: "", deadline: "",
   });
   const upd = (k: string) => (e: any) => setV((s) => ({ ...s, [k]: e.target.value }));
