@@ -93,7 +93,7 @@ function ContestsPage() {
   );
 }
 
-function ContestCard({ c }: { c: Contest }) {
+function ContestCard({ c }: { c: Omit<Contest, "contact"> }) {
   const vsMatch = c.title.match(/^(.+?)\s*(?:vs|VS|对|对阵)\s*(.+)$/);
   return (
     <Link
