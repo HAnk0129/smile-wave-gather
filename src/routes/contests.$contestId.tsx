@@ -63,9 +63,7 @@ function ContestDetailPage() {
                   <p className="font-display text-xl font-bold leading-tight">{vsMatch[1]}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
-                  <span className="rounded-full bg-gradient-to-br from-coral to-sun px-3 py-1 font-display text-sm font-black tracking-widest text-background shadow-lg shadow-coral/30">
-                    VS
-                  </span>
+                  <span className="vs-badge rounded-2xl px-4 py-2 text-lg">VS</span>
                 </div>
                 <div className="flex-1 text-left">
                   <p className="font-display text-xl font-bold leading-tight">{vsMatch[2]}</p>
