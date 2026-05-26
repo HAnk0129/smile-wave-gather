@@ -35,6 +35,19 @@ export const listContests = createServerFn({ method: "GET" })
     return { contests: (data ?? []) as Contest[] };
   });
 
+export const getContest = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("contests")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { contest: (row as Contest | null) };
+  });
+
 const ContestInput = z.object({
   title: z.string().min(2).max(80),
   summary: z.string().min(2).max(160),
