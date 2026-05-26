@@ -9,7 +9,7 @@ import {
   type Venue,
 } from "@/lib/venues.functions";
 import { BottomNav } from "@/components/BottomNav";
-import { Header, EmptyState } from "@/routes/contests";
+import { Header, EmptyState } from "@/components/SectionChrome";
 
 export const Route = createFileRoute("/venues")({
   head: () => ({
