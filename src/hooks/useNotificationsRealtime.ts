@@ -12,19 +12,31 @@ import { toast } from "sonner";
 export function useNotificationsRealtime() {
   const qc = useQueryClient();
   const userIdRef = useRef<string | null>(null);
+  const setupIdRef = useRef(0);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let alive = true;
 
-    const setup = async () => {
-      const { data } = await supabase.auth.getSession();
-      const userId = data.session?.user.id ?? null;
+    const teardownChannel = () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+        channel = null;
+      }
+    };
+
+    const setup = async (nextUserId?: string | null) => {
+      const setupId = ++setupIdRef.current;
+      const userId = nextUserId ?? (await supabase.auth.getSession()).data.session?.user.id ?? null;
       if (!alive || !userId) return;
+      if (userId === userIdRef.current && channel) return;
+      teardownChannel();
+      if (!alive || setupId !== setupIdRef.current) return;
+
       userIdRef.current = userId;
 
       channel = supabase
-        .channel(`notif-rt-${userId}`)
+        .channel(`notif-rt-${userId}-${setupId}`)
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
@@ -45,17 +57,16 @@ export function useNotificationsRealtime() {
 
     const onAuth = supabase.auth.onAuthStateChange((_e, session) => {
       if (session?.user.id !== userIdRef.current) {
-        if (channel) supabase.removeChannel(channel);
-        channel = null;
+        teardownChannel();
         userIdRef.current = null;
-        setup();
+        setup(session?.user.id ?? null);
       }
     });
 
     return () => {
       alive = false;
       onAuth.data.subscription.unsubscribe();
-      if (channel) supabase.removeChannel(channel);
+      teardownChannel();
     };
   }, [qc]);
 }
