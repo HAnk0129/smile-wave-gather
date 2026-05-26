@@ -122,6 +122,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <StaleClientRecovery />
       <AuthSync />
       <NotificationsBridge />
       <AnalyticsBridge />
@@ -130,6 +131,31 @@ function RootComponent() {
       <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
+}
+
+function StaleClientRecovery() {
+  useEffect(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const response = await originalFetch(input, init);
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes("/_serverFn/") && response.status === 409) {
+        try {
+          const payload = await response.clone().json();
+          if (payload?.error === "STALE_CLIENT" && !sessionStorage.getItem("pulse-stale-client-refresh")) {
+            sessionStorage.setItem("pulse-stale-client-refresh", "1");
+            window.location.reload();
+          }
+        } catch {}
+      }
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+  return null;
 }
 
 function AnalyticsBridge() {

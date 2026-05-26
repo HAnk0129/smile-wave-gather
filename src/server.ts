@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { isStaleServerFunctionError, staleServerFunctionResponse } from "./lib/stale-client";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -73,6 +74,10 @@ export default {
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
+      if (request.url.includes("/_serverFn/") && isStaleServerFunctionError(error)) {
+        console.warn("Ignored stale server function request. The browser will refresh its cached client bundle.");
+        return staleServerFunctionResponse();
+      }
       console.error(error);
       return brandedErrorResponse();
     }
