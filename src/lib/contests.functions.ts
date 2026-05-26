@@ -28,11 +28,11 @@ export const listContests = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("contests")
-      .select("*")
+      .select("id,author_id,title,summary,description,cover,category,location,prize,organizer,register_url,starts_at,ends_at,deadline,status,hot,created_at")
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
-    return { contests: (data ?? []) as Contest[] };
+    return { contests: (data ?? []) as Omit<Contest, "contact">[] };
   });
 
 export const getContest = createServerFn({ method: "GET" })
