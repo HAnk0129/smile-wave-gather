@@ -62,7 +62,7 @@ function JobsPage() {
           {!isLoading && (data?.jobs ?? []).length === 0 && (
             <EmptyState icon={<Briefcase className="h-6 w-6" />} text="还没有发布需求,做第一个发布者吧" />
           )}
-          {(data?.jobs ?? []).map((j) => <JobCard key={j.id} j={j} />)}
+          {(data?.jobs ?? []).map((j) => <JobCard key={j.id} j={j as Job} />)}
         </div>
       </div>
 
