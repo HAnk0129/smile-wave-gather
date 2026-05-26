@@ -38,6 +38,7 @@ import { Route as GamesLeaderboardRouteImport } from './routes/games.leaderboard
 import { Route as ExploreVoiceRouteImport } from './routes/explore.voice'
 import { Route as ExploreVideoRouteImport } from './routes/explore.video'
 import { Route as ExploreTreeholeRouteImport } from './routes/explore.treehole'
+import { Route as ContestsContestIdRouteImport } from './routes/contests.$contestId'
 
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
@@ -184,6 +185,11 @@ const ExploreTreeholeRoute = ExploreTreeholeRouteImport.update({
   path: '/treehole',
   getParentRoute: () => ExploreRoute,
 } as any)
+const ContestsContestIdRoute = ContestsContestIdRouteImport.update({
+  id: '/$contestId',
+  path: '/$contestId',
+  getParentRoute: () => ContestsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -192,7 +198,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/community': typeof CommunityRoute
-  '/contests': typeof ContestsRoute
+  '/contests': typeof ContestsRouteWithChildren
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/videos': typeof VideosRouteWithChildren
   '/voice-card': typeof VoiceCardRoute
   '/wallet': typeof WalletRoute
+  '/contests/$contestId': typeof ContestsContestIdRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
@@ -223,7 +230,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/community': typeof CommunityRoute
-  '/contests': typeof ContestsRoute
+  '/contests': typeof ContestsRouteWithChildren
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
@@ -239,6 +246,7 @@ export interface FileRoutesByTo {
   '/videos': typeof VideosRouteWithChildren
   '/voice-card': typeof VoiceCardRoute
   '/wallet': typeof WalletRoute
+  '/contests/$contestId': typeof ContestsContestIdRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
@@ -255,7 +263,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
   '/community': typeof CommunityRoute
-  '/contests': typeof ContestsRoute
+  '/contests': typeof ContestsRouteWithChildren
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRouteWithChildren
   '/games': typeof GamesRouteWithChildren
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   '/videos': typeof VideosRouteWithChildren
   '/voice-card': typeof VoiceCardRoute
   '/wallet': typeof WalletRoute
+  '/contests/$contestId': typeof ContestsContestIdRoute
   '/explore/treehole': typeof ExploreTreeholeRoute
   '/explore/video': typeof ExploreVideoRoute
   '/explore/voice': typeof ExploreVoiceRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/voice-card'
     | '/wallet'
+    | '/contests/$contestId'
     | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/voice-card'
     | '/wallet'
+    | '/contests/$contestId'
     | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/voice-card'
     | '/wallet'
+    | '/contests/$contestId'
     | '/explore/treehole'
     | '/explore/video'
     | '/explore/voice'
@@ -382,7 +394,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChatRoute: typeof ChatRoute
   CommunityRoute: typeof CommunityRoute
-  ContestsRoute: typeof ContestsRoute
+  ContestsRoute: typeof ContestsRouteWithChildren
   DiscoverRoute: typeof DiscoverRoute
   ExploreRoute: typeof ExploreRouteWithChildren
   GamesRoute: typeof GamesRouteWithChildren
@@ -605,8 +617,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExploreTreeholeRouteImport
       parentRoute: typeof ExploreRoute
     }
+    '/contests/$contestId': {
+      id: '/contests/$contestId'
+      path: '/$contestId'
+      fullPath: '/contests/$contestId'
+      preLoaderRoute: typeof ContestsContestIdRouteImport
+      parentRoute: typeof ContestsRoute
+    }
   }
 }
+
+interface ContestsRouteChildren {
+  ContestsContestIdRoute: typeof ContestsContestIdRoute
+}
+
+const ContestsRouteChildren: ContestsRouteChildren = {
+  ContestsContestIdRoute: ContestsContestIdRoute,
+}
+
+const ContestsRouteWithChildren = ContestsRoute._addFileChildren(
+  ContestsRouteChildren,
+)
 
 interface ExploreRouteChildren {
   ExploreTreeholeRoute: typeof ExploreTreeholeRoute
@@ -663,7 +694,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChatRoute: ChatRoute,
   CommunityRoute: CommunityRoute,
-  ContestsRoute: ContestsRoute,
+  ContestsRoute: ContestsRouteWithChildren,
   DiscoverRoute: DiscoverRoute,
   ExploreRoute: ExploreRouteWithChildren,
   GamesRoute: GamesRouteWithChildren,
@@ -683,3 +714,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
