@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Calendar, ExternalLink, MapPin, Sparkles, Trophy, User } from "lucide-react";
 import { getContest } from "@/lib/contests.functions";
 import { BottomNav } from "@/components/BottomNav";
+import vsBrush from "@/assets/vs-brush.png";
 
 export const Route = createFileRoute("/contests/$contestId")({
   head: () => ({
@@ -63,7 +64,7 @@ function ContestDetailPage() {
                   <p className="font-display text-xl font-bold leading-tight">{vsMatch[1]}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
-                  <span className="vs-badge rounded-2xl px-4 py-2 text-lg">VS</span>
+                  <img src={vsBrush} alt="VS" className="h-16 w-16 drop-shadow-[0_6px_14px_rgba(255,90,40,0.55)]" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="font-display text-xl font-bold leading-tight">{vsMatch[2]}</p>

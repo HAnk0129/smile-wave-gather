@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { listContests, createContest, type Contest } from "@/lib/contests.functions";
 import { BottomNav } from "@/components/BottomNav";
 import { Header, EmptyState } from "@/components/SectionChrome";
+import vsBrush from "@/assets/vs-brush.png";
 
 export const Route = createFileRoute("/contests")({
   head: () => ({
@@ -111,7 +112,7 @@ function ContestCard({ c }: { c: Contest }) {
               <p className="font-display text-base font-semibold leading-snug">{vsMatch[1]}</p>
             </div>
             <div className="flex flex-col items-center justify-center">
-              <span className="vs-badge rounded-xl px-3 py-1.5 text-sm">VS</span>
+              <img src={vsBrush} alt="VS" className="h-12 w-12 drop-shadow-[0_4px_10px_rgba(255,90,40,0.5)] transition-transform group-hover:scale-110" />
             </div>
             <div className="flex-1 text-left">
               <p className="font-display text-base font-semibold leading-snug">{vsMatch[2]}</p>
