@@ -111,9 +111,7 @@ function ContestCard({ c }: { c: Contest }) {
               <p className="font-display text-base font-semibold leading-snug">{vsMatch[1]}</p>
             </div>
             <div className="flex flex-col items-center justify-center">
-              <span className="rounded-full bg-gradient-to-br from-coral to-sun px-2.5 py-0.5 font-display text-xs font-black tracking-wider text-background shadow-md shadow-coral/30">
-                VS
-              </span>
+              <span className="vs-badge rounded-xl px-3 py-1.5 text-sm">VS</span>
             </div>
             <div className="flex-1 text-left">
               <p className="font-display text-base font-semibold leading-snug">{vsMatch[2]}</p>
