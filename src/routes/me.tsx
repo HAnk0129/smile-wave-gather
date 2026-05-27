@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Settings, Edit3, LogOut, Shield, Bell, Lock, Heart, MessageCircle,
   Sparkles, MapPin, Cake, Briefcase, GraduationCap, Crown, ChevronRight,
-  Home, User as UserIcon, Flame, Camera, Film, Mic,
+  Home, User as UserIcon, Flame, Camera, Film, Mic, Users, ShieldCheck, QrCode,
 } from "lucide-react";
 import { getMyProfile } from "@/lib/profile.functions";
 import { supabase } from "@/integrations/supabase/client";
