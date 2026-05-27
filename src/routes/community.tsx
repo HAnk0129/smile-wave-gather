@@ -57,6 +57,13 @@ const CATEGORY_META: Record<Exclude<Category, "all">, { label: string; color: st
   ask: { label: "发帖求助", color: "bg-sun/20 text-sun border-sun/30", icon: HelpCircle },
 };
 
+const TAB_META: Record<Category, { label: string; icon: typeof ShoppingBag }> = {
+  all: { label: "全部", icon: Tag },
+  second: { label: "二手闲置", icon: ShoppingBag },
+  vent: { label: "吐槽日常", icon: MessageSquare },
+  ask: { label: "发帖求助", icon: HelpCircle },
+};
+
 function heightFor(id: string): "tall" | "mid" | "short" {
   const n = id.charCodeAt(0) + id.charCodeAt(id.length - 1);
   return n % 3 === 0 ? "tall" : n % 3 === 1 ? "mid" : "short";
@@ -225,32 +232,47 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
   return (
     <div className="min-h-screen bg-background text-foreground pb-24">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/80 border-b border-border">
+      <header className="sticky top-0 z-30 backdrop-blur-2xl bg-background/70 border-b border-border/60">
         <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-3">
           <button
+            onClick={() => setCampusOpen(true)}
+            className="group flex items-center gap-2.5 min-w-0 pr-3 pl-1.5 py-1.5 rounded-2xl bg-gradient-to-r from-surface/80 to-surface/30 border border-border/70 hover:border-coral/40 transition"
+            title="切换校园 / 园区"
+          >
+            <span className="size-8 rounded-xl bg-gradient-to-br from-coral via-sun to-mint grid place-items-center shadow-sm text-background">
+              <School className="size-4" />
+            </span>
+            <span className="min-w-0 text-left">
+              <span className="block text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80 leading-none">校园社区</span>
+              <span className="block text-sm font-display font-semibold truncate max-w-[160px] leading-tight mt-0.5">{campus.name}</span>
+            </span>
+            <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-coral transition" />
+          </button>
+          <button
             onClick={() => setInviteOpen(true)}
-            className="ml-auto h-9 px-3 rounded-full bg-surface/80 border border-border text-xs inline-flex items-center gap-1.5 hover:border-coral/40"
+            className="ml-auto h-9 px-3.5 rounded-full bg-gradient-to-r from-coral to-sun text-background text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm hover:shadow-md hover:shadow-coral/30 transition"
             title="生成邀请码"
           >
-            <KeyRound className="size-3.5 text-coral" /> 邀请
+            <KeyRound className="size-3.5" /> 邀请
           </button>
         </div>
 
         {/* Category tabs */}
         <div className="mx-auto max-w-3xl px-4 pb-3 flex items-center gap-2 overflow-x-auto scrollbar-none">
           {(["all", "second", "vent", "ask"] as Category[]).map((c) => {
-            const label = c === "all" ? "全部" : CATEGORY_META[c].label;
+            const { label, icon: Icon } = TAB_META[c];
             const active = activeCat === c;
             return (
               <button
                 key={c}
                 onClick={() => setActiveCat(c)}
-                className={`shrink-0 h-8 px-4 rounded-full text-sm font-medium transition ${
+                className={`shrink-0 h-9 pl-3 pr-4 rounded-full text-sm font-medium inline-flex items-center gap-1.5 transition-all duration-200 ${
                   active
-                    ? "bg-foreground text-background"
-                    : "bg-surface/60 border border-border text-muted-foreground hover:text-foreground"
+                    ? "bg-gradient-to-r from-coral to-sun text-background shadow-sm shadow-coral/30 scale-[1.03]"
+                    : "bg-surface/60 border border-border/70 text-muted-foreground hover:text-foreground hover:border-coral/30"
                 }`}
               >
+                <Icon className="size-3.5" />
                 {label}
               </button>
             );
@@ -261,16 +283,20 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
       <main className="mx-auto max-w-3xl px-4 pt-4 space-y-6">
         {/* Hot ranking - 仅在「全部」分类下显示 */}
         {activeCat === "all" && (
-        <section className="rounded-3xl border border-border bg-gradient-to-br from-coral/10 via-surface/40 to-mint/10 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="size-8 rounded-xl bg-coral/20 flex items-center justify-center">
-                <Flame className="size-4 text-coral" />
+        <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-coral/15 via-sun/10 to-mint/15 p-5 shadow-sm">
+          <div className="absolute -top-12 -right-12 size-40 rounded-full bg-coral/20 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-10 size-40 rounded-full bg-mint/20 blur-3xl pointer-events-none" />
+          <div className="relative flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="size-9 rounded-xl bg-gradient-to-br from-coral to-sun grid place-items-center text-background shadow-md shadow-coral/30 animate-float">
+                <Flame className="size-4" />
               </div>
               <div>
-                <h2 className="font-display font-bold text-base">热点排行榜</h2>
+                <h2 className="font-display font-bold text-base leading-tight">热点排行榜</h2>
+                <p className="text-[11px] text-muted-foreground leading-none mt-0.5">最近大家都在聊的事</p>
               </div>
             </div>
+            <TrendingUp className="size-4 text-coral/70" />
           </div>
           <ol className="space-y-2.5">
             {hotRank.length === 0 && (
@@ -283,20 +309,20 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
                   <button
                     type="button"
                     onClick={() => setActivePostId(p.id)}
-                    className="w-full flex items-center gap-3 rounded-xl px-2 py-1.5 -mx-2 text-left transition hover:bg-surface/60 active:scale-[0.99]"
+                    className="group/rank w-full flex items-center gap-3 rounded-xl px-2 py-1.5 -mx-2 text-left transition hover:bg-background/40 active:scale-[0.99]"
                   >
                     <span
-                      className={`size-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${
-                        i === 0 ? "bg-coral text-background" :
-                        i === 1 ? "bg-sun text-background" :
-                        i === 2 ? "bg-mint text-background" :
-                        "bg-surface text-muted-foreground"
+                      className={`size-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 shadow-sm ${
+                        i === 0 ? "bg-gradient-to-br from-coral to-rose-500 text-background" :
+                        i === 1 ? "bg-gradient-to-br from-sun to-amber-500 text-background" :
+                        i === 2 ? "bg-gradient-to-br from-mint to-emerald-500 text-background" :
+                        "bg-surface/80 text-muted-foreground"
                       }`}
                     >
                       {i + 1}
                     </span>
                     <Icon className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="flex-1 text-sm truncate">{p.title}</span>
+                    <span className="flex-1 text-sm truncate group-hover/rank:text-coral transition">{p.title}</span>
                     <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                       {p.hot >= 1000 ? `${(p.hot / 1000).toFixed(1)}k` : p.hot}
                     </span>
