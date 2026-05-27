@@ -84,7 +84,8 @@ export const createCampusInvite = createServerFn({ method: "POST" })
     z
       .object({
         campus_id: z.string().uuid(),
-        max_uses: z.number().int().min(1).max(500).default(1),
+        // Each invite is single-use; ignore any client-provided value.
+        max_uses: z.literal(1).default(1),
         expires_in_hours: z.number().int().min(1).max(24 * 60).default(168),
       })
       .parse(input),
@@ -93,7 +94,7 @@ export const createCampusInvite = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: row, error } = await supabase.rpc("create_campus_invite", {
       p_campus_id: data.campus_id,
-      p_max_uses: data.max_uses,
+      p_max_uses: 1,
       p_expires_in_hours: data.expires_in_hours,
     });
     if (error) {
