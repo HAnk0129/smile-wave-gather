@@ -786,7 +786,7 @@ function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () =>
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
       onClick={onOpen}
-      className="mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-surface/70 border border-border hover:border-coral/50 hover:shadow-lg hover:shadow-coral/5 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer active:scale-[0.98]"
+      className="group mb-3 break-inside-avoid rounded-2xl overflow-hidden bg-card/80 backdrop-blur-sm border border-border/70 hover:border-coral/50 hover:shadow-xl hover:shadow-coral/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-[0.98]"
     >
       <div className={`relative ${heightClass} bg-gradient-to-br ${post.cover} overflow-hidden`}>
         {post.media && post.media[0] ? (
@@ -798,7 +798,7 @@ function PostCard({ post, onLike, onOpen }: { post: CommunityPost; onLike: () =>
         ) : (
           <div className="absolute inset-0 bg-grid opacity-30" />
         )}
-        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 via-black/15 to-transparent pointer-events-none" />
         <span className={`absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border backdrop-blur-md ${meta.color}`}>
           <meta.icon className="size-3" />
           {meta.label}
