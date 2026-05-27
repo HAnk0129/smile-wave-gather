@@ -98,13 +98,7 @@ function MePage() {
         </div>
 
         <div className="relative mx-auto flex w-full max-w-md items-center justify-between px-5 pt-5">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-coral to-sun text-background shadow-lg shadow-coral/30">
-              <Flame className="h-5 w-5" />
-            </div>
-            <span className="font-display text-lg font-semibold tracking-tight">我的</span>
-          </Link>
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2">
             <button className="grid h-9 w-9 place-items-center rounded-full border border-border/70 bg-card/70 backdrop-blur hover:border-coral/40 transition" aria-label="二维码名片">
               <QrCode className="h-4 w-4 text-muted-foreground" />
             </button>
