@@ -165,20 +165,15 @@ function RadarPage() {
           <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-mint/15" />
           <div className="absolute top-1/2 left-0 h-px w-full -translate-y-1/2 bg-mint/15" />
 
-          {/* sweep */}
+          {/* sweep — narrow 8° wedge from center with full scan radius */}
           <div
-            className="absolute left-1/2 top-1/2 h-1/2 w-1/2 origin-top-left"
-            style={{ transform: `rotate(${sweep}deg)` }}
-          >
-            <div
-              className="h-full w-full"
-              style={{
-                background:
-                  "conic-gradient(from 0deg, color-mix(in oklab, var(--mint) 55%, transparent) 0deg, transparent 60deg)",
-                clipPath: "polygon(0 0, 100% 0, 0 100%)",
-              }}
-            />
-          </div>
+            className="pointer-events-none absolute inset-0 rounded-full"
+            style={{
+              transform: `rotate(${sweep}deg)`,
+              background:
+                "conic-gradient(from -4deg, color-mix(in oklab, var(--mint) 70%, transparent) 0deg, color-mix(in oklab, var(--mint) 35%, transparent) 4deg, transparent 8deg, transparent 360deg)",
+            }}
+          />
 
           {/* center */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
