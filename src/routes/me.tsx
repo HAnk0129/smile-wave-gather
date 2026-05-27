@@ -89,77 +89,101 @@ function MePage() {
     <Shell>
       {/* Hero */}
       <header className="relative">
-        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-brand/30 via-coral/10 to-transparent" />
+        {/* Decorative banner */}
+        <div className="absolute inset-x-0 top-0 h-80 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-br from-coral/40 via-sun/25 to-mint/30" />
+          <div className="absolute -top-24 -left-16 size-72 rounded-full bg-coral/40 blur-3xl" />
+          <div className="absolute top-10 -right-20 size-80 rounded-full bg-mint/35 blur-3xl" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-background" />
+        </div>
+
         <div className="relative mx-auto flex w-full max-w-md items-center justify-between px-5 pt-5">
           <Link to="/" className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-coral to-sun text-background">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-coral to-sun text-background shadow-lg shadow-coral/30">
               <Flame className="h-5 w-5" />
             </div>
             <span className="font-display text-lg font-semibold tracking-tight">我的</span>
           </Link>
-          <Link to="/me" className="rounded-full border border-border bg-surface/60 p-2 backdrop-blur" aria-label="设置">
-            <Settings className="h-4 w-4 text-muted-foreground" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <button className="grid h-9 w-9 place-items-center rounded-full border border-border/70 bg-card/70 backdrop-blur hover:border-coral/40 transition" aria-label="二维码名片">
+              <QrCode className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <Link to="/me" className="grid h-9 w-9 place-items-center rounded-full border border-border/70 bg-card/70 backdrop-blur hover:border-coral/40 transition" aria-label="设置">
+              <Settings className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </div>
         </div>
 
-        <div className="relative mx-auto mt-6 w-full max-w-md px-5">
-          <div className="rounded-3xl border border-border bg-surface/80 p-5 backdrop-blur-xl shadow-2xl">
-            <div className="flex items-center gap-4">
+        <div className="relative mx-auto mt-8 w-full max-w-md px-5">
+          <div className="relative rounded-[28px] border border-white/60 bg-card/85 p-5 pt-12 backdrop-blur-xl shadow-[0_24px_60px_-24px_rgba(214,113,71,0.35)]">
+            {/* Floating avatar */}
+            <div className="absolute -top-10 left-5">
               <div className="relative">
+                <div className="absolute inset-0 -m-1 rounded-[26px] bg-gradient-to-br from-coral via-sun to-mint blur-md opacity-70" />
                 {mainPhoto ? (
-                  <img src={mainPhoto} alt="头像" className="h-20 w-20 rounded-2xl object-cover ring-2 ring-coral/60" />
+                  <img src={mainPhoto} alt="头像" className="relative h-24 w-24 rounded-[24px] object-cover ring-4 ring-background shadow-xl" />
                 ) : (
-                  <div className="grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br from-coral to-sun font-display text-3xl text-background">
+                  <div className="relative grid h-24 w-24 place-items-center rounded-[24px] bg-gradient-to-br from-coral to-sun font-display text-4xl text-background ring-4 ring-background shadow-xl">
                     {(profile?.nickname || "我").slice(0, 1)}
                   </div>
                 )}
-                <Link to="/onboarding" className="absolute -bottom-1.5 -right-1.5 grid h-7 w-7 place-items-center rounded-full border-2 border-background bg-brand text-background shadow">
+                <Link to="/onboarding" className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full border-2 border-background bg-foreground text-background shadow-lg">
                   <Camera className="h-3.5 w-3.5" />
                 </Link>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="truncate font-display text-2xl font-semibold tracking-tight">
+            </div>
+
+            {/* Name row */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1 pl-[108px] -mt-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h1 className="truncate font-display text-2xl font-bold tracking-tight">
                     {isLoading ? "—" : profile?.nickname || "未命名"}
                   </h1>
                   {profile?.verify_real && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-mint/20 px-1.5 py-0.5 text-[10px] text-mint">
-                      <Shield className="h-3 w-3" /> 真人
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-mint/20 px-1.5 py-0.5 text-[10px] font-medium text-mint border border-mint/30">
+                      <ShieldCheck className="h-3 w-3" /> 真人
                     </span>
                   )}
                   {profile?.verify_student && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-brand/20 px-1.5 py-0.5 text-[10px] text-brand">
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary border border-primary/25">
                       <GraduationCap className="h-3 w-3" /> 学生
                     </span>
                   )}
                 </div>
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground leading-relaxed">
                   {profile?.signature || "还没有签名，点编辑加一句让人记住你的话"}
                 </p>
-                <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
-                  {profile?.city && <Chip icon={MapPin}>{profile.city}</Chip>}
-                  {profile?.mbti && <Chip icon={Sparkles}>{profile.mbti}</Chip>}
-                  {profile?.zodiac && <Chip icon={Cake}>{profile.zodiac}</Chip>}
-                </div>
               </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {profile?.city && <Chip icon={MapPin}>{profile.city}</Chip>}
+              {profile?.mbti && <Chip icon={Sparkles}>{profile.mbti}</Chip>}
+              {profile?.zodiac && <Chip icon={Cake}>{profile.zodiac}</Chip>}
+              {!profile?.city && !profile?.mbti && !profile?.zodiac && !isLoading && (
+                <Link to="/onboarding" className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:border-coral/40 hover:text-coral transition">
+                  + 添加标签
+                </Link>
+              )}
             </div>
 
             {!onboarded && !isLoading && (
               <Link
                 to="/onboarding"
-                className="mt-4 flex items-center justify-between rounded-2xl border border-coral/30 bg-coral/10 px-4 py-3 text-sm text-coral"
+                className="group mt-4 flex items-center justify-between rounded-2xl border border-coral/30 bg-gradient-to-r from-coral/15 via-sun/10 to-coral/15 px-4 py-3 text-sm text-coral hover:border-coral/60 transition"
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2 font-medium">
                   <Sparkles className="h-4 w-4" /> 完善资料解锁更多匹配
                 </span>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition" />
               </Link>
             )}
 
-            <div className="mt-4 grid grid-cols-3 divide-x divide-border rounded-2xl bg-background/60 py-3 text-center">
-              <Stat label="同频喜欢" value="0" />
-              <Stat label="互相匹配" value="0" />
-              <Stat label="收到留言" value="0" />
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <StatPill icon={Heart} label="同频喜欢" value="0" tone="coral" />
+              <StatPill icon={Sparkles} label="互相匹配" value="0" tone="sun" />
+              <StatPill icon={MessageCircle} label="收到留言" value="0" tone="mint" />
             </div>
           </div>
         </div>
