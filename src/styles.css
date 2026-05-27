@@ -201,7 +201,7 @@
   .bg-background\/85,
   .bg-background\/90
 ) {
-  background-color: #f1f1f2 !important;
+  background-color: #d8d9dc !important;
   --foreground: oklch(0.18 0.02 240);
   --card-foreground: oklch(0.18 0.02 240);
   --popover-foreground: oklch(0.18 0.02 240);
@@ -216,7 +216,7 @@
 /* Make sure inputs / textareas inside light containers stay readable */
 .dark :is(.bg-card, [class*="bg-surface"], .bg-popover, .bg-muted, .bg-secondary, [class*="bg-background\\/"]) :is(input, textarea, select) {
   color: oklch(0.18 0.02 240);
-  background-color: #ececee;
+  background-color: #cfd0d3;
   border-color: oklch(0.18 0.02 240 / 25%);
 }
 .dark :is(.bg-card, [class*="bg-surface"], .bg-popover, .bg-muted, .bg-secondary, [class*="bg-background\\/"]) :is(input, textarea)::placeholder {
