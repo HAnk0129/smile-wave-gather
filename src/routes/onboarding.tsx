@@ -384,7 +384,7 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full h-11 rounded-xl bg-surface/70 border border-border px-4 text-sm outline-none focus:border-coral/60 focus:bg-surface transition placeholder:text-muted-foreground"
+      className="w-full h-11 rounded-xl bg-background border-2 border-border px-4 text-sm text-foreground outline-none focus:border-coral focus:ring-2 focus:ring-coral/30 transition placeholder:text-muted-foreground/60 shadow-inner"
     />
   );
 }
