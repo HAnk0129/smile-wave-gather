@@ -193,29 +193,9 @@ export const inviteUsersToCampus = createServerFn({ method: "POST" })
       .maybeSingle();
     const campusName = (campus?.name as string | undefined) ?? "我的园区";
 
-    // Create one invite code with capacity = number of recipients.
-    const { data: invite, error: invErr } = await supabase.rpc("create_campus_invite", {
-      p_campus_id: data.campus_id,
-      p_max_uses: data.recipient_ids.length,
-      p_expires_in_hours: data.expires_in_hours,
-    });
-    if (invErr) {
-      if ((invErr.message || "").includes("NOT_A_MEMBER"))
-        throw new Error("你还不是该园区的成员");
-      throw new Error(invErr.message || "生成邀请码失败");
-    }
-    const code = (invite as CampusInvite).code;
-
-    // Build the message body.
-    const body = [
-      `📮 邀请你加入「${campusName}」社区`,
-      `邀请码：${code}`,
-      data.note ? `\n${data.note}` : "",
-      `\n在「社区」页输入邀请码即可加入。`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
+    // Each invite is single-use, so mint one dedicated code per recipient.
+    // p_revoke_existing=false keeps the inviter's personal active code intact.
+    let firstInvite: CampusInvite | null = null;
     const results: { recipient_id: string; ok: boolean; error?: string }[] = [];
     for (const rid of data.recipient_ids) {
       if (rid === userId) {
@@ -223,6 +203,25 @@ export const inviteUsersToCampus = createServerFn({ method: "POST" })
         continue;
       }
       try {
+        const { data: invite, error: invErr } = await supabase.rpc("create_campus_invite", {
+          p_campus_id: data.campus_id,
+          p_max_uses: 1,
+          p_expires_in_hours: data.expires_in_hours,
+          p_revoke_existing: false,
+        });
+        if (invErr) throw invErr;
+        const code = (invite as CampusInvite).code;
+        if (!firstInvite) firstInvite = invite as CampusInvite;
+
+        const body = [
+          `📮 邀请你加入「${campusName}」社区`,
+          `专属邀请码：${code}（仅你可用一次）`,
+          data.note ? `\n${data.note}` : "",
+          `\n在「社区」页输入邀请码即可加入。`,
+        ]
+          .filter(Boolean)
+          .join("\n");
+
         const { data: convId, error: convErr } = await supabase.rpc("start_conversation", {
           partner_id: rid,
           source: "match",
@@ -241,7 +240,7 @@ export const inviteUsersToCampus = createServerFn({ method: "POST" })
     }
 
     return {
-      invite: invite as CampusInvite,
+      invite: firstInvite as CampusInvite,
       sent: results.filter((r) => r.ok).length,
       failed: results.filter((r) => !r.ok).length,
       results,
