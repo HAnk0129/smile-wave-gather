@@ -14,6 +14,7 @@ import { Toaster } from "sonner";
 import { useNotificationsRealtime } from "@/hooks/useNotificationsRealtime";
 import { initAnalytics, trackPageview, identifyUser, resetAnalytics } from "@/lib/analytics";
 import { SideRail } from "@/components/SideRail";
+import { GlobalBackButton, ThemeToggle } from "@/components/AppChrome";
 
 import appCss from "../styles.css?url";
 
@@ -128,6 +129,8 @@ function RootComponent() {
       <AnalyticsBridge />
       <Outlet />
       <SideRail />
+      <GlobalBackButton />
+      <ThemeToggle />
       <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
