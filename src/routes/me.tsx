@@ -192,8 +192,12 @@ function MePage() {
       <main className="relative mx-auto w-full max-w-md px-5 pb-28 pt-5">
         {/* Photo gallery */}
         <section className="mt-2">
-          <div className="mb-2 flex items-end justify-between">
-            <h2 className="font-display text-base font-semibold">我的相册</h2>
+          <div className="mb-3 flex items-end justify-between">
+            <h2 className="font-display text-base font-semibold flex items-center gap-2">
+              <span className="inline-block h-4 w-1 rounded-full bg-gradient-to-b from-coral to-sun" />
+              我的相册
+              {photos.length > 0 && <span className="text-xs text-muted-foreground font-normal">· {photos.length}</span>}
+            </h2>
             <Link to="/onboarding" className="text-xs text-muted-foreground hover:text-foreground">
               编辑
             </Link>
@@ -201,17 +205,17 @@ function MePage() {
           {photos.length === 0 ? (
             <Link
               to="/onboarding"
-              className="grid h-32 place-items-center rounded-2xl border border-dashed border-border bg-surface/40 text-sm text-muted-foreground"
+              className="grid h-32 place-items-center rounded-2xl border-2 border-dashed border-border bg-surface/40 text-sm text-muted-foreground hover:border-coral/40 hover:text-coral transition"
             >
-              + 上传你的第一张照片
+              <span className="flex items-center gap-2"><Camera className="h-4 w-4" /> 上传你的第一张照片</span>
             </Link>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2.5">
               {photos.slice(0, 9).map((p, i) => (
-                <div key={i} className="relative aspect-square overflow-hidden rounded-xl border border-border">
-                  <img src={p} alt="" className="h-full w-full object-cover" />
+                <div key={i} className="group relative aspect-square overflow-hidden rounded-2xl border border-border/70 shadow-sm hover:shadow-lg hover:shadow-coral/10 hover:-translate-y-0.5 transition-all duration-300">
+                  <img src={p} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   {i === mainIdx && (
-                    <span className="absolute left-1 top-1 rounded-full bg-coral/90 px-1.5 py-0.5 text-[9px] font-semibold text-background">主图</span>
+                    <span className="absolute left-1.5 top-1.5 rounded-full bg-gradient-to-r from-coral to-sun px-2 py-0.5 text-[9px] font-semibold text-background shadow-md">主图</span>
                   )}
                 </div>
               ))}
@@ -221,8 +225,11 @@ function MePage() {
 
         {/* About */}
         <section className="mt-6">
-          <h2 className="mb-2 font-display text-base font-semibold">关于我</h2>
-          <div className="rounded-2xl border border-border bg-surface/60 p-4 text-sm leading-relaxed text-foreground/90">
+          <h2 className="mb-3 font-display text-base font-semibold flex items-center gap-2">
+            <span className="inline-block h-4 w-1 rounded-full bg-gradient-to-b from-mint to-primary" />
+            关于我
+          </h2>
+          <div className="rounded-2xl border border-border/70 bg-card/70 p-4 text-sm leading-relaxed text-foreground/90 shadow-sm">
             {profile?.intro || "还没有写自我介绍。让别人通过你的故事认识你。"}
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
@@ -236,8 +243,11 @@ function MePage() {
         {/* Tags */}
         {(interests.length > 0 || personality.length > 0) && (
           <section className="mt-6">
-            <h2 className="mb-2 font-display text-base font-semibold">兴趣 & 性格</h2>
-            <div className="rounded-2xl border border-border bg-surface/60 p-4">
+            <h2 className="mb-3 font-display text-base font-semibold flex items-center gap-2">
+              <span className="inline-block h-4 w-1 rounded-full bg-gradient-to-b from-sun to-coral" />
+              兴趣 &amp; 性格
+            </h2>
+            <div className="rounded-2xl border border-border/70 bg-card/70 p-4 shadow-sm">
               {interests.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {interests.map((t) => (
@@ -260,22 +270,24 @@ function MePage() {
           </section>
         )}
 
-        {/* Menu */}
-        <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-surface/60 divide-y divide-border">
-          <MenuItem icon={Edit3} label="编辑资料" to="/onboarding" />
-          <MenuItem icon={Film} label="我的短视频" to="/videos" />
-          <MenuItem icon={Mic} label="语音名片" to="/voice-card" />
-          <MenuItem icon={Heart} label="我喜欢的人" badge="敬请期待" />
-          <MenuItem icon={MessageCircle} label="我的消息" to="/messages" />
-          <MenuItem icon={Crown} label="钱包 · Pulse Pro" to="/wallet" badge="HOT" badgeColor="bg-sun text-background" />
+        {/* Menu - 内容创作 */}
+        <SectionLabel>创作与互动</SectionLabel>
+        <section className="overflow-hidden rounded-2xl border border-border/70 bg-card/70 divide-y divide-border/60 shadow-sm">
+          <MenuItem icon={Edit3} label="编辑资料" to="/onboarding" iconColor="text-primary" iconBg="bg-primary/15" />
+          <MenuItem icon={Film} label="我的短视频" to="/videos" iconColor="text-coral" iconBg="bg-coral/15" />
+          <MenuItem icon={Mic} label="语音名片" to="/voice-card" iconColor="text-mint" iconBg="bg-mint/15" />
+          <MenuItem icon={Heart} label="我喜欢的人" badge="敬请期待" iconColor="text-coral" iconBg="bg-coral/15" />
+          <MenuItem icon={MessageCircle} label="我的消息" to="/messages" iconColor="text-primary" iconBg="bg-primary/15" />
+          <MenuItem icon={Crown} label="钱包 · Pulse Pro" to="/wallet" badge="HOT" badgeColor="bg-gradient-to-r from-coral to-sun text-background" iconColor="text-sun" iconBg="bg-sun/20" />
         </section>
 
-        <section className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface/60 divide-y divide-border">
-          <MenuItem icon={Bell} label="通知中心" to="/notifications" />
-          <MenuItem icon={Lock} label="隐私与可见性" to="/privacy" />
-          <MenuItem icon={Shield} label="实名 & 学生认证" to="/verify" />
-          <MenuItem icon={Shield} label="我的举报与申诉" to="/me/reports" />
-          <MenuItem icon={Shield} label="账号安全" />
+        <SectionLabel>设置与安全</SectionLabel>
+        <section className="overflow-hidden rounded-2xl border border-border/70 bg-card/70 divide-y divide-border/60 shadow-sm">
+          <MenuItem icon={Bell} label="通知中心" to="/notifications" iconColor="text-sun" iconBg="bg-sun/15" />
+          <MenuItem icon={Lock} label="隐私与可见性" to="/privacy" iconColor="text-mint" iconBg="bg-mint/15" />
+          <MenuItem icon={ShieldCheck} label="实名 & 学生认证" to="/verify" iconColor="text-primary" iconBg="bg-primary/15" />
+          <MenuItem icon={Shield} label="我的举报与申诉" to="/me/reports" iconColor="text-coral" iconBg="bg-coral/15" />
+          <MenuItem icon={Users} label="账号安全" iconColor="text-muted-foreground" iconBg="bg-muted" />
         </section>
 
         <button
