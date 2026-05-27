@@ -174,6 +174,55 @@
   }
 }
 
+/*
+ * Dark mode container unification.
+ * In dark mode, all common container surfaces use a low-saturation off-white
+ * background, and we re-scope foreground/border tokens within those containers
+ * so every descendant (labels, inputs, hints, buttons text) reads as deep
+ * black with strong contrast — no per-component overrides needed.
+ */
+.dark :is(
+  .bg-card,
+  .bg-surface,
+  .bg-surface\/30,
+  .bg-surface\/40,
+  .bg-surface\/50,
+  .bg-surface\/60,
+  .bg-surface\/70,
+  .bg-surface\/80,
+  .bg-surface-2,
+  .bg-popover,
+  .bg-muted,
+  .bg-secondary,
+  .bg-background\/40,
+  .bg-background\/60,
+  .bg-background\/70,
+  .bg-background\/80,
+  .bg-background\/85,
+  .bg-background\/90
+) {
+  background-color: oklch(0.96 0.004 240) !important;
+  --foreground: oklch(0.18 0.02 240);
+  --card-foreground: oklch(0.18 0.02 240);
+  --popover-foreground: oklch(0.18 0.02 240);
+  --secondary-foreground: oklch(0.18 0.02 240);
+  --accent-foreground: oklch(0.18 0.02 240);
+  --muted-foreground: oklch(0.38 0.02 240);
+  --border: oklch(0.18 0.02 240 / 18%);
+  --input: oklch(0.18 0.02 240 / 22%);
+  color: oklch(0.18 0.02 240);
+}
+
+/* Make sure inputs / textareas inside light containers stay readable */
+.dark :is(.bg-card, [class*="bg-surface"], .bg-popover, .bg-muted, .bg-secondary, [class*="bg-background\\/"]) :is(input, textarea, select) {
+  color: oklch(0.18 0.02 240);
+  background-color: oklch(0.99 0.002 240);
+  border-color: oklch(0.18 0.02 240 / 25%);
+}
+.dark :is(.bg-card, [class*="bg-surface"], .bg-popover, .bg-muted, .bg-secondary, [class*="bg-background\\/"]) :is(input, textarea)::placeholder {
+  color: oklch(0.45 0.02 240);
+}
+
 @layer utilities {
   .font-display { font-family: var(--font-display); }
   .font-serif-display { font-family: var(--font-serif); }
