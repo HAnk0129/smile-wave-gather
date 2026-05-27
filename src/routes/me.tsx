@@ -327,6 +327,31 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function StatPill({
+  icon: Icon, label, value, tone,
+}: { icon: any; label: string; value: string; tone: "coral" | "sun" | "mint" }) {
+  const tones = {
+    coral: "from-coral/20 to-coral/5 text-coral border-coral/25",
+    sun: "from-sun/25 to-sun/5 text-amber-700 border-sun/30",
+    mint: "from-mint/20 to-mint/5 text-mint border-mint/25",
+  } as const;
+  return (
+    <div className={`relative rounded-2xl border bg-gradient-to-br ${tones[tone]} px-3 py-3 text-center overflow-hidden`}>
+      <Icon className="absolute -top-1 -right-1 h-8 w-8 opacity-15" />
+      <div className="font-display text-xl font-bold text-foreground tabular-nums leading-none">{value}</div>
+      <div className="mt-1.5 text-[10px] text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mt-6 mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground">
+      {children}
+    </h3>
+  );
+}
+
 function InfoRow({ icon: Icon, children }: { icon: any; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 rounded-xl border border-border bg-background/40 px-3 py-2 text-muted-foreground">
@@ -337,17 +362,19 @@ function InfoRow({ icon: Icon, children }: { icon: any; children: React.ReactNod
 }
 
 function MenuItem({
-  icon: Icon, label, to, search, badge, badgeColor,
+  icon: Icon, label, to, search, badge, badgeColor, iconColor, iconBg,
 }: {
   icon: any; label: string; to?: string; search?: Record<string, unknown>;
-  badge?: string; badgeColor?: string;
+  badge?: string; badgeColor?: string; iconColor?: string; iconBg?: string;
 }) {
   const inner = (
-    <div className="flex items-center gap-3 px-4 py-3.5">
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      <span className="flex-1 text-sm">{label}</span>
+    <div className="flex items-center gap-3 px-4 py-3">
+      <span className={`grid h-8 w-8 place-items-center rounded-xl ${iconBg ?? "bg-muted"}`}>
+        <Icon className={`h-4 w-4 ${iconColor ?? "text-muted-foreground"}`} />
+      </span>
+      <span className="flex-1 text-sm font-medium">{label}</span>
       {badge && (
-        <span className={`rounded-full px-2 py-0.5 text-[10px] ${badgeColor ?? "bg-surface text-muted-foreground"}`}>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeColor ?? "bg-muted text-muted-foreground"}`}>
           {badge}
         </span>
       )}
