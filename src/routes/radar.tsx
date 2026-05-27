@@ -275,20 +275,20 @@ function RadarPage() {
               <li key={b.id}>
                 <button
                   onClick={() => setSelected(b)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface/70 p-3 text-left transition hover:border-mint/40"
+                  className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface/70 p-3 text-left transition hover:border-mint/40 hover:bg-mint/90 active:bg-mint focus:bg-mint/90 dark:bg-[#f4f5f7] dark:border-[#d4d6dc] dark:hover:bg-white dark:active:bg-white dark:focus:bg-white"
                 >
-                  <div className="relative grid h-10 w-10 place-items-center rounded-full font-display font-semibold text-background"
+                  <div className="relative grid h-10 w-10 place-items-center rounded-full font-display font-semibold text-background dark:text-white"
                     style={{ background: b.heat==='hot' ? 'var(--coral)' : b.heat==='warm' ? 'var(--sun)' : 'var(--mint)' }}>
                     {b.name.slice(0,1)}
-                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background bg-mint" />
+                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background bg-mint dark:border-[#f4f5f7] group-hover:dark:border-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="font-medium truncate">{b.name}</span>
-                      <span className="text-xs text-muted-foreground">{b.age}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">{b.distanceM < 1000 ? `${b.distanceM}m` : `${(b.distanceM/1000).toFixed(1)}km`}</span>
+                      <span className="font-medium truncate group-hover:text-background dark:text-black dark:group-hover:text-black">{b.name}</span>
+                      <span className="text-xs text-muted-foreground group-hover:text-background/80 dark:text-black/70 dark:group-hover:text-black/80">{b.age}</span>
+                      <span className="ml-auto text-xs text-muted-foreground group-hover:text-background/80 dark:text-black/70 dark:group-hover:text-black/80">{b.distanceM < 1000 ? `${b.distanceM}m` : `${(b.distanceM/1000).toFixed(1)}km`}</span>
                     </div>
-                    <div className="mt-0.5 text-xs text-muted-foreground truncate">#{b.tag} · {b.status}</div>
+                    <div className="mt-0.5 text-xs text-muted-foreground truncate group-hover:text-background/80 dark:text-black/70 dark:group-hover:text-black/80">#{b.tag} · {b.status}</div>
                   </div>
                 </button>
               </li>
