@@ -84,8 +84,8 @@ export const createCampusInvite = createServerFn({ method: "POST" })
     z
       .object({
         campus_id: z.string().uuid(),
-        // Each invite is single-use; ignore any client-provided value.
-        max_uses: z.literal(1).default(1),
+        // Each invite is single-use; accept any client value but ignore it.
+        max_uses: z.number().int().optional().default(1),
         expires_in_hours: z.number().int().min(1).max(24 * 60).default(168),
       })
       .parse(input),
