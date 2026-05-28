@@ -1582,56 +1582,31 @@ export type Database = {
       }
     }
     Functions: {
-      create_campus_invite:
-        | {
-            Args: {
-              p_campus_id: string
-              p_expires_in_hours?: number
-              p_max_uses?: number
-            }
-            Returns: {
-              campus_id: string
-              code: string
-              created_at: string
-              expires_at: string | null
-              id: string
-              inviter_id: string
-              max_uses: number
-              status: string
-              uses: number
-            }
-            SetofOptions: {
-              from: "*"
-              to: "campus_invites"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              p_campus_id: string
-              p_expires_in_hours?: number
-              p_max_uses?: number
-              p_revoke_existing?: boolean
-            }
-            Returns: {
-              campus_id: string
-              code: string
-              created_at: string
-              expires_at: string | null
-              id: string
-              inviter_id: string
-              max_uses: number
-              status: string
-              uses: number
-            }
-            SetofOptions: {
-              from: "*"
-              to: "campus_invites"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      create_campus_invite: {
+        Args: {
+          p_campus_id: string
+          p_expires_in_hours?: number
+          p_max_uses?: number
+          p_revoke_existing?: boolean
+        }
+        Returns: {
+          campus_id: string
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          inviter_id: string
+          max_uses: number
+          status: string
+          uses: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "campus_invites"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_notification: {
         Args: { _payload: Json; _type: string; _user_id: string }
         Returns: undefined
