@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Trophy, Users, Wand2, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Dices, Flame, Hand, Heart, MessagesSquare, Sparkles, Trophy, Users, Wand2, Zap, BadgeCheck } from "lucide-react";
 import { NeonInner, neonButtonClass } from "@/components/AuthButtons";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -31,6 +31,19 @@ type Game = {
 };
 
 const GAMES: Game[] = [
+  {
+    id: "sbti",
+    title: "SBTI 趣味人格测试",
+    tagline: "解锁你的专属人格铭牌。",
+    desc: "26 种抽象人格任你选，专属铭牌 + 限定虚拟装扮，一键装备到个人主页。",
+    players: "1 人",
+    duration: "1-3 分钟",
+    hotness: 99,
+    color: "coral",
+    icon: BadgeCheck,
+    badge: "限定铭牌",
+    href: "/games/sbti",
+  },
   {
     id: "palm",
     title: "AI 看手相",
