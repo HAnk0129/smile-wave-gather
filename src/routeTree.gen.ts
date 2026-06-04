@@ -33,6 +33,7 @@ import { Route as AddFriendRouteImport } from './routes/add-friend'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VideosUploadRouteImport } from './routes/videos.upload'
 import { Route as MeReportsRouteImport } from './routes/me.reports'
+import { Route as GamesSbtiRouteImport } from './routes/games.sbti'
 import { Route as GamesPalmRouteImport } from './routes/games.palm'
 import { Route as GamesLeaderboardRouteImport } from './routes/games.leaderboard'
 import { Route as ExploreVoiceRouteImport } from './routes/explore.voice'
@@ -160,6 +161,11 @@ const MeReportsRoute = MeReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => MeRoute,
 } as any)
+const GamesSbtiRoute = GamesSbtiRouteImport.update({
+  id: '/sbti',
+  path: '/sbti',
+  getParentRoute: () => GamesRoute,
+} as any)
 const GamesPalmRoute = GamesPalmRouteImport.update({
   id: '/palm',
   path: '/palm',
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
+  '/games/sbti': typeof GamesSbtiRoute
   '/me/reports': typeof MeReportsRoute
   '/videos/upload': typeof VideosUploadRoute
 }
@@ -252,6 +259,7 @@ export interface FileRoutesByTo {
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
+  '/games/sbti': typeof GamesSbtiRoute
   '/me/reports': typeof MeReportsRoute
   '/videos/upload': typeof VideosUploadRoute
 }
@@ -285,6 +293,7 @@ export interface FileRoutesById {
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
+  '/games/sbti': typeof GamesSbtiRoute
   '/me/reports': typeof MeReportsRoute
   '/videos/upload': typeof VideosUploadRoute
 }
@@ -319,6 +328,7 @@ export interface FileRouteTypes {
     | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
+    | '/games/sbti'
     | '/me/reports'
     | '/videos/upload'
   fileRoutesByTo: FileRoutesByTo
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
     | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
+    | '/games/sbti'
     | '/me/reports'
     | '/videos/upload'
   id:
@@ -383,6 +394,7 @@ export interface FileRouteTypes {
     | '/explore/voice'
     | '/games/leaderboard'
     | '/games/palm'
+    | '/games/sbti'
     | '/me/reports'
     | '/videos/upload'
   fileRoutesById: FileRoutesById
@@ -582,6 +594,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeReportsRouteImport
       parentRoute: typeof MeRoute
     }
+    '/games/sbti': {
+      id: '/games/sbti'
+      path: '/sbti'
+      fullPath: '/games/sbti'
+      preLoaderRoute: typeof GamesSbtiRouteImport
+      parentRoute: typeof GamesRoute
+    }
     '/games/palm': {
       id: '/games/palm'
       path: '/palm'
@@ -657,11 +676,13 @@ const ExploreRouteWithChildren =
 interface GamesRouteChildren {
   GamesLeaderboardRoute: typeof GamesLeaderboardRoute
   GamesPalmRoute: typeof GamesPalmRoute
+  GamesSbtiRoute: typeof GamesSbtiRoute
 }
 
 const GamesRouteChildren: GamesRouteChildren = {
   GamesLeaderboardRoute: GamesLeaderboardRoute,
   GamesPalmRoute: GamesPalmRoute,
+  GamesSbtiRoute: GamesSbtiRoute,
 }
 
 const GamesRouteWithChildren = GamesRoute._addFileChildren(GamesRouteChildren)
@@ -714,3 +735,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
