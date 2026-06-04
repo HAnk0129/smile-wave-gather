@@ -40,6 +40,7 @@ import { Route as ExploreVoiceRouteImport } from './routes/explore.voice'
 import { Route as ExploreVideoRouteImport } from './routes/explore.video'
 import { Route as ExploreTreeholeRouteImport } from './routes/explore.treehole'
 import { Route as ContestsContestIdRouteImport } from './routes/contests.$contestId'
+import { Route as GamesSbtiSelectRouteImport } from './routes/games.sbti.select'
 
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
@@ -196,6 +197,11 @@ const ContestsContestIdRoute = ContestsContestIdRouteImport.update({
   path: '/$contestId',
   getParentRoute: () => ContestsRoute,
 } as any)
+const GamesSbtiSelectRoute = GamesSbtiSelectRouteImport.update({
+  id: '/select',
+  path: '/select',
+  getParentRoute: () => GamesSbtiRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -226,9 +232,10 @@ export interface FileRoutesByFullPath {
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
-  '/games/sbti': typeof GamesSbtiRoute
+  '/games/sbti': typeof GamesSbtiRouteWithChildren
   '/me/reports': typeof MeReportsRoute
   '/videos/upload': typeof VideosUploadRoute
+  '/games/sbti/select': typeof GamesSbtiSelectRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -259,9 +266,10 @@ export interface FileRoutesByTo {
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
-  '/games/sbti': typeof GamesSbtiRoute
+  '/games/sbti': typeof GamesSbtiRouteWithChildren
   '/me/reports': typeof MeReportsRoute
   '/videos/upload': typeof VideosUploadRoute
+  '/games/sbti/select': typeof GamesSbtiSelectRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -293,9 +301,10 @@ export interface FileRoutesById {
   '/explore/voice': typeof ExploreVoiceRoute
   '/games/leaderboard': typeof GamesLeaderboardRoute
   '/games/palm': typeof GamesPalmRoute
-  '/games/sbti': typeof GamesSbtiRoute
+  '/games/sbti': typeof GamesSbtiRouteWithChildren
   '/me/reports': typeof MeReportsRoute
   '/videos/upload': typeof VideosUploadRoute
+  '/games/sbti/select': typeof GamesSbtiSelectRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/games/sbti'
     | '/me/reports'
     | '/videos/upload'
+    | '/games/sbti/select'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/games/sbti'
     | '/me/reports'
     | '/videos/upload'
+    | '/games/sbti/select'
   id:
     | '__root__'
     | '/'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/games/sbti'
     | '/me/reports'
     | '/videos/upload'
+    | '/games/sbti/select'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -643,6 +655,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContestsContestIdRouteImport
       parentRoute: typeof ContestsRoute
     }
+    '/games/sbti/select': {
+      id: '/games/sbti/select'
+      path: '/select'
+      fullPath: '/games/sbti/select'
+      preLoaderRoute: typeof GamesSbtiSelectRouteImport
+      parentRoute: typeof GamesSbtiRoute
+    }
   }
 }
 
@@ -673,16 +692,28 @@ const ExploreRouteChildren: ExploreRouteChildren = {
 const ExploreRouteWithChildren =
   ExploreRoute._addFileChildren(ExploreRouteChildren)
 
+interface GamesSbtiRouteChildren {
+  GamesSbtiSelectRoute: typeof GamesSbtiSelectRoute
+}
+
+const GamesSbtiRouteChildren: GamesSbtiRouteChildren = {
+  GamesSbtiSelectRoute: GamesSbtiSelectRoute,
+}
+
+const GamesSbtiRouteWithChildren = GamesSbtiRoute._addFileChildren(
+  GamesSbtiRouteChildren,
+)
+
 interface GamesRouteChildren {
   GamesLeaderboardRoute: typeof GamesLeaderboardRoute
   GamesPalmRoute: typeof GamesPalmRoute
-  GamesSbtiRoute: typeof GamesSbtiRoute
+  GamesSbtiRoute: typeof GamesSbtiRouteWithChildren
 }
 
 const GamesRouteChildren: GamesRouteChildren = {
   GamesLeaderboardRoute: GamesLeaderboardRoute,
   GamesPalmRoute: GamesPalmRoute,
-  GamesSbtiRoute: GamesSbtiRoute,
+  GamesSbtiRoute: GamesSbtiRouteWithChildren,
 }
 
 const GamesRouteWithChildren = GamesRoute._addFileChildren(GamesRouteChildren)
