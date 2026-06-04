@@ -41,6 +41,7 @@ import { Route as ExploreVideoRouteImport } from './routes/explore.video'
 import { Route as ExploreTreeholeRouteImport } from './routes/explore.treehole'
 import { Route as ContestsContestIdRouteImport } from './routes/contests.$contestId'
 import { Route as GamesSbtiSelectRouteImport } from './routes/games.sbti.select'
+import { Route as GamesSbtiShareCodeRouteImport } from './routes/games.sbti.share.$code'
 import { Route as GamesSbtiResultCodeRouteImport } from './routes/games.sbti.result.$code'
 
 const WalletRoute = WalletRouteImport.update({
@@ -203,6 +204,11 @@ const GamesSbtiSelectRoute = GamesSbtiSelectRouteImport.update({
   path: '/select',
   getParentRoute: () => GamesSbtiRoute,
 } as any)
+const GamesSbtiShareCodeRoute = GamesSbtiShareCodeRouteImport.update({
+  id: '/share/$code',
+  path: '/share/$code',
+  getParentRoute: () => GamesSbtiRoute,
+} as any)
 const GamesSbtiResultCodeRoute = GamesSbtiResultCodeRouteImport.update({
   id: '/result/$code',
   path: '/result/$code',
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/videos/upload': typeof VideosUploadRoute
   '/games/sbti/select': typeof GamesSbtiSelectRoute
   '/games/sbti/result/$code': typeof GamesSbtiResultCodeRoute
+  '/games/sbti/share/$code': typeof GamesSbtiShareCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/videos/upload': typeof VideosUploadRoute
   '/games/sbti/select': typeof GamesSbtiSelectRoute
   '/games/sbti/result/$code': typeof GamesSbtiResultCodeRoute
+  '/games/sbti/share/$code': typeof GamesSbtiShareCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/videos/upload': typeof VideosUploadRoute
   '/games/sbti/select': typeof GamesSbtiSelectRoute
   '/games/sbti/result/$code': typeof GamesSbtiResultCodeRoute
+  '/games/sbti/share/$code': typeof GamesSbtiShareCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
     | '/videos/upload'
     | '/games/sbti/select'
     | '/games/sbti/result/$code'
+    | '/games/sbti/share/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/videos/upload'
     | '/games/sbti/select'
     | '/games/sbti/result/$code'
+    | '/games/sbti/share/$code'
   id:
     | '__root__'
     | '/'
@@ -421,6 +432,7 @@ export interface FileRouteTypes {
     | '/videos/upload'
     | '/games/sbti/select'
     | '/games/sbti/result/$code'
+    | '/games/sbti/share/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -674,6 +686,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GamesSbtiSelectRouteImport
       parentRoute: typeof GamesSbtiRoute
     }
+    '/games/sbti/share/$code': {
+      id: '/games/sbti/share/$code'
+      path: '/share/$code'
+      fullPath: '/games/sbti/share/$code'
+      preLoaderRoute: typeof GamesSbtiShareCodeRouteImport
+      parentRoute: typeof GamesSbtiRoute
+    }
     '/games/sbti/result/$code': {
       id: '/games/sbti/result/$code'
       path: '/result/$code'
@@ -714,11 +733,13 @@ const ExploreRouteWithChildren =
 interface GamesSbtiRouteChildren {
   GamesSbtiSelectRoute: typeof GamesSbtiSelectRoute
   GamesSbtiResultCodeRoute: typeof GamesSbtiResultCodeRoute
+  GamesSbtiShareCodeRoute: typeof GamesSbtiShareCodeRoute
 }
 
 const GamesSbtiRouteChildren: GamesSbtiRouteChildren = {
   GamesSbtiSelectRoute: GamesSbtiSelectRoute,
   GamesSbtiResultCodeRoute: GamesSbtiResultCodeRoute,
+  GamesSbtiShareCodeRoute: GamesSbtiShareCodeRoute,
 }
 
 const GamesSbtiRouteWithChildren = GamesSbtiRoute._addFileChildren(
