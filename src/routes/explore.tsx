@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useLocation, Link } from "@tanstack/react-router";
-import { Radar, Mic, Video, Trees, ArrowLeft, Flame, Gamepad2 } from "lucide-react";
+import { Phone, Video, Moon, ArrowLeft, Flame, Gamepad2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -7,7 +7,7 @@ export const Route = createFileRoute("/explore")({
   head: () => ({
     meta: [
       { title: "发现 · Pulse" },
-      { name: "description", content: "社交雷达、语音、视频、匿名树洞——在 Pulse 发现更多可能。" },
+      { name: "description", content: "选择一种方式，认识有趣的人。" },
     ],
   }),
   component: ExploreLayout,
@@ -15,49 +15,36 @@ export const Route = createFileRoute("/explore")({
 
 const MODULES = [
   {
-    href: "/radar" as const,
-    title: "社交雷达",
-    desc: "扫描附近，遇见同频的人",
-    icon: Radar,
-    grad: "from-mint/30 via-mint/10 to-transparent",
-    accent: "text-mint",
-    tags: ["附近", "扫描", "在线"],
+    href: "/games" as const,
+    title: "小游戏",
+    desc: "测测你的隐藏人格",
+    icon: Gamepad2,
+    grad: "from-coral/30 via-sun/10 to-transparent",
+    accent: "text-coral",
   },
   {
     href: "/explore/voice" as const,
-    title: "语音聊天",
-    desc: "10 分钟随机连线,只用声音认识彼此",
-    icon: Mic,
-    grad: "from-coral/30 via-coral/10 to-transparent",
-    accent: "text-coral",
-    tags: ["随机", "10min", "匿名"],
+    title: "语音通话",
+    desc: "随机匹配同频的人",
+    icon: Phone,
+    grad: "from-mint/30 via-mint/10 to-transparent",
+    accent: "text-mint",
   },
   {
     href: "/explore/video" as const,
-    title: "视频聊天",
-    desc: "5 分钟视频,露脸或装扮自由选",
+    title: "视频通话",
+    desc: "面对面快速破冰",
     icon: Video,
     grad: "from-sun/30 via-sun/10 to-transparent",
     accent: "text-sun",
-    tags: ["道具", "5min", "趣味"],
   },
   {
     href: "/explore/treehole" as const,
     title: "匿名树洞",
-    desc: "说出口的秘密,总会被人接住",
-    icon: Trees,
+    desc: "匿名表达真实想法",
+    icon: Moon,
     grad: "from-[#a78bfa]/30 via-[#a78bfa]/10 to-transparent",
     accent: "text-[#c4b5fd]",
-    tags: ["匿名", "倾诉", "共鸣"],
-  },
-  {
-    href: "/games" as const,
-    title: "小游戏",
-    desc: "AI 看手相、真心话、心动盲盒，破冰从此不尴尬",
-    icon: Gamepad2,
-    grad: "from-coral/30 via-sun/10 to-transparent",
-    accent: "text-coral",
-    tags: ["破冰", "趣味", "互动"],
   },
 ];
 
@@ -80,15 +67,11 @@ function ExploreLayout() {
         </Link>
       </header>
 
-      <main className="relative z-10 mx-auto w-full max-w-5xl px-5 pb-24 pt-10">
-        <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">
-          发现 <span className="text-gradient-hero font-serif-display italic">同频</span>
-        </h1>
-        <p className="mt-3 max-w-xl text-muted-foreground">
-          多种方式打破社恐——附近的人、随机的声音、自在出镜的视频、匿名树洞，还有一起玩的小游戏。
-        </p>
+      <main className="relative z-10 mx-auto w-full max-w-3xl px-5 pb-24 pt-10">
+        <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">发现</h1>
+        <p className="mt-3 max-w-xl text-muted-foreground">选择一种方式，认识有趣的人</p>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+        <div className="mt-10 grid grid-cols-2 gap-4">
           {MODULES.map((m, i) => (
             <motion.div
               key={m.href}
@@ -98,23 +81,27 @@ function ExploreLayout() {
             >
               <Link
                 to={m.href}
-                className="group relative block overflow-hidden rounded-3xl border border-border bg-surface/60 p-6 backdrop-blur transition hover:border-foreground/30"
+                className="group relative block aspect-square overflow-hidden rounded-3xl border border-border bg-surface/60 p-5 backdrop-blur transition hover:border-foreground/30"
               >
                 <div className={`absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br ${m.grad} blur-2xl`} />
                 <div className="relative flex items-start justify-between">
-                  <div className={`grid h-12 w-12 place-items-center rounded-2xl bg-surface ${m.accent} ring-1 ring-border`}>
-                    <m.icon className="h-6 w-6" />
+                  <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-surface ${m.accent} ring-1 ring-border`}>
+                    <m.icon className="h-7 w-7" />
                   </div>
                   <span className="text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">进入 →</span>
                 </div>
-                <div className="relative mt-5">
-                  <div className="font-display text-2xl font-semibold tracking-tight">{m.title}</div>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{m.desc}</p>
+                <div className="relative mt-auto pt-8">
+                  <div className="font-display text-xl font-semibold tracking-tight">{m.title}</div>
+                  <p className="mt-1 text-xs text-muted-foreground">{m.desc}</p>
                 </div>
               </Link>
             </motion.div>
           ))}
         </div>
+
+        <p className="mt-12 text-center text-xs text-muted-foreground">
+          尊重彼此，友好交流，共同维护安全社区
+        </p>
       </main>
       <BottomNav active="explore" />
     </div>
