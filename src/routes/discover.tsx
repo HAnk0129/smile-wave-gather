@@ -231,10 +231,12 @@ function DiscoverPage() {
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 18 }}
               className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#FF6A13]/50 p-6 text-center shadow-2xl"
-              style={{ backgroundColor: "#FF6A13" }}
+              style={{ backgroundColor: "#FFFFFF" }}
             >
+              {/* Top orange band (~1/3 height, covers heading + subtitle) */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3" style={{ backgroundColor: "#FF6A13" }} />
               {/* Radial burst lines */}
-              <div className="pointer-events-none absolute inset-0 grid place-items-center">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 grid place-items-center">
                 {Array.from({ length: 16 }).map((_, i) => {
                   const angle = (i / 16) * 360;
                   return (
@@ -273,7 +275,7 @@ function DiscoverPage() {
                 >
                   <MessageCircle className="h-4 w-4" /> 开始聊天吧
                 </Link>
-                <button onClick={() => setMatched(null)} className="mt-3 w-full text-xs text-white/80">继续滑卡</button>
+                <button onClick={() => setMatched(null)} className="mt-3 w-full text-xs text-muted-foreground">继续滑卡</button>
               </div>
             </motion.div>
           </motion.div>
