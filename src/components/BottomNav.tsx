@@ -25,7 +25,7 @@ export function BottomNav({
     { key: "me", to: "/me", icon: User, label: "我的" },
   ];
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl bg-background/85 border-t border-border">
+    <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl border-t border-border" style={{ backgroundColor: "#FFFFFF" }}>
       <div className="mx-auto max-w-3xl grid grid-cols-5 h-16 items-center">
         {items.map((it) => {
           if ("type" in it && it.type === "compose") {
