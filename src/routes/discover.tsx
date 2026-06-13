@@ -233,24 +233,18 @@ function DiscoverPage() {
               className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#FF6A13]/50 p-6 text-center shadow-2xl"
               style={{ backgroundColor: "#FFFFFF" }}
             >
-              {/* Top orange band (~1/3 height, covers heading + subtitle) */}
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3" style={{ backgroundColor: "#FF6A13" }} />
-              {/* Radial burst lines */}
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 grid place-items-center">
-                {Array.from({ length: 16 }).map((_, i) => {
-                  const angle = (i / 16) * 360;
-                  return (
-                    <motion.div
-                      key={i}
-                      className="absolute left-1/2 top-1/2 h-[2px] origin-left rounded-full"
-                      style={{ backgroundColor: "#FFFFFF", rotate: `${angle}deg` }}
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: [0, 90, 110], opacity: [0, 1, 0] }}
-                      transition={{ duration: 1.4, delay: 0.1 + i * 0.02, ease: "easeOut", repeat: Infinity, repeatDelay: 0.6 }}
-                    />
-                  );
-                })}
-              </div>
+              {/* Top orange band — frosted glass, breathing, layered shadows */}
+              <motion.div
+                className="pointer-events-none absolute inset-x-0 top-0 h-[42%] backdrop-blur-2xl"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(255,106,19,0.92) 0%, rgba(255,106,19,0.78) 60%, rgba(255,106,19,0.55) 100%)",
+                  boxShadow:
+                    "0 1px 0 rgba(255,255,255,0.45) inset, 0 -12px 24px -12px rgba(255,106,19,0.55), 0 24px 48px -24px rgba(255,106,19,0.55), 0 8px 24px -8px rgba(51,25,21,0.25)",
+                }}
+                animate={{ opacity: [0.92, 1, 0.92], scale: [1, 1.012, 1] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+              />
               <div className="relative">
                 <div className="text-xs uppercase tracking-[0.3em] text-white/80">It's a Match</div>
                 <div className="mt-2 inline-block rounded-2xl border-2 border-white px-5 py-2">
@@ -259,12 +253,30 @@ function DiscoverPage() {
                 <p className="mt-1 text-sm text-white/80">和 {matched.name} 同频度 {matched.match}%</p>
 
                 <div className="relative mx-auto mt-6 flex items-center justify-center">
-                  <div className="-mr-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-lg">
+                  <motion.div
+                    className="-mr-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-xl"
+                    initial={{ x: -140, rotate: -18, opacity: 0 }}
+                    animate={{ x: [-140, 8, -4, 0], rotate: [-18, 6, -2, 0], opacity: 1 }}
+                    transition={{ duration: 0.85, times: [0, 0.55, 0.8, 1], ease: "easeOut" }}
+                  >
                     <img src={profile3} alt="我" className="h-full w-full object-cover" />
-                  </div>
-                  <div className="-ml-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-lg">
+                  </motion.div>
+                  <motion.div
+                    className="-ml-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-xl"
+                    initial={{ x: 140, rotate: 18, opacity: 0 }}
+                    animate={{ x: [140, -8, 4, 0], rotate: [18, -6, 2, 0], opacity: 1 }}
+                    transition={{ duration: 0.85, times: [0, 0.55, 0.8, 1], ease: "easeOut" }}
+                  >
                     <img src={matched.photo} alt={matched.name} className="h-full w-full object-cover" />
-                  </div>
+                  </motion.div>
+                  {/* Collision flash */}
+                  <motion.div
+                    className="pointer-events-none absolute h-20 w-20 rounded-full"
+                    style={{ background: "radial-gradient(closest-side, rgba(255,255,255,0.9), rgba(255,106,19,0) 70%)" }}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: [0, 1.6, 2.2], opacity: [0, 0.9, 0] }}
+                    transition={{ duration: 0.7, delay: 0.5, ease: "easeOut" }}
+                  />
                 </div>
 
                 <Link
