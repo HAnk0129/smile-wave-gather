@@ -233,24 +233,47 @@ function DiscoverPage() {
               className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#FF6A13]/50 p-6 text-center shadow-2xl"
               style={{ backgroundColor: "#FFFFFF" }}
             >
-              {/* Top orange band — frosted glass, breathing, layered shadows */}
-              <motion.div
-                className="pointer-events-none absolute inset-x-0 top-0 h-[42%] backdrop-blur-2xl"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(255,106,19,0.92) 0%, rgba(255,106,19,0.78) 60%, rgba(255,106,19,0.55) 100%)",
-                  boxShadow:
-                    "0 1px 0 rgba(255,255,255,0.45) inset, 0 -12px 24px -12px rgba(255,106,19,0.55), 0 24px 48px -24px rgba(255,106,19,0.55), 0 8px 24px -8px rgba(51,25,21,0.25)",
-                }}
-                animate={{ opacity: [0.92, 1, 0.92], scale: [1, 1.012, 1] }}
-                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-              />
+              {/* Ambient orange wash — irregular blurred gradient blobs ending above avatars */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-[32%] overflow-hidden">
+                <motion.div
+                  className="absolute -left-12 -top-16 h-56 w-56 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(closest-side, rgba(255,106,19,0.85), rgba(255,106,19,0) 70%)" }}
+                  animate={{ opacity: [0.7, 0.95, 0.7], scale: [1, 1.08, 1] }}
+                  transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <motion.div
+                  className="absolute -right-16 -top-10 h-64 w-64 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(closest-side, rgba(255,138,60,0.75), rgba(255,106,19,0) 72%)" }}
+                  animate={{ opacity: [0.85, 0.6, 0.85], scale: [1.05, 1, 1.05] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <motion.div
+                  className="absolute left-1/4 -top-6 h-48 w-72 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(closest-side, rgba(255,170,110,0.6), rgba(255,106,19,0) 75%)" }}
+                  animate={{ opacity: [0.6, 0.85, 0.6], scale: [1, 1.06, 1] }}
+                  transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
+                />
+                {/* Soft bottom fade so blob melts into the cream/white background */}
+                <div
+                  className="absolute inset-x-0 bottom-0 h-20"
+                  style={{ background: "linear-gradient(180deg, rgba(255,247,238,0) 0%, rgba(255,247,238,0.85) 70%, #FFFFFF 100%)" }}
+                />
+                {/* Subtle grain texture */}
+                <div
+                  className="absolute inset-0 opacity-[0.18] mix-blend-overlay"
+                  style={{
+                    backgroundImage:
+                      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")",
+                    backgroundSize: "160px 160px",
+                  }}
+                />
+              </div>
               <div className="relative">
-                <div className="text-xs uppercase tracking-[0.3em] text-white/80">It's a Match</div>
-                <div className="mt-2 inline-block rounded-2xl border-2 border-white px-5 py-2">
-                  <h2 className="font-display text-3xl font-semibold text-white">我们开始聊天吧</h2>
+                <div className="text-xs uppercase tracking-[0.3em] text-white/90">It's a Match</div>
+                <div className="mt-2 inline-block rounded-2xl border-2 border-white/90 px-5 py-2">
+                  <h2 className="font-display text-3xl font-semibold text-white drop-shadow-sm">我们开始聊天吧</h2>
                 </div>
-                <p className="mt-1 text-sm text-white/80">和 {matched.name} 同频度 {matched.match}%</p>
+                <p className="mt-1 text-sm text-white/90">和 {matched.name} 同频度 {matched.match}%</p>
 
                 <div className="relative mx-auto mt-6 flex items-center justify-center">
                   <motion.div
@@ -283,7 +306,7 @@ function DiscoverPage() {
                   to="/chat"
                   search={{ name: matched.name, avatar: matched.gradient, from: "match", city: matched.city }}
                   className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-4 py-3 text-sm font-semibold text-white shadow-lg"
-                  style={{ backgroundColor: "#6B8E23" }}
+                  style={{ backgroundColor: "#331915" }}
                 >
                   <MessageCircle className="h-4 w-4" /> 开始聊天吧
                 </Link>
