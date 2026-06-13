@@ -233,37 +233,32 @@ function DiscoverPage() {
               className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#FF6A13]/50 p-6 text-center shadow-2xl"
               style={{ backgroundColor: "#FFFFFF" }}
             >
-              {/* Heart burst animation */}
+              {/* Radial burst lines */}
               <div className="pointer-events-none absolute inset-0 grid place-items-center">
-                {Array.from({ length: 12 }).map((_, i) => {
-                  const angle = (i / 12) * Math.PI * 2;
-                  const distance = 110;
+                {Array.from({ length: 16 }).map((_, i) => {
+                  const angle = (i / 16) * 360;
                   return (
                     <motion.div
                       key={i}
-                      className="absolute"
-                      initial={{ x: 0, y: 0, opacity: 0, scale: 0.4 }}
-                      animate={{
-                        x: Math.cos(angle) * distance,
-                        y: Math.sin(angle) * distance,
-                        opacity: [0, 1, 0],
-                        scale: [0.4, 1.2, 0.8],
-                      }}
-                      transition={{ duration: 1.4, delay: 0.2 + i * 0.03, ease: "easeOut", repeat: Infinity, repeatDelay: 0.6 }}
-                    >
-                      <Heart className="h-5 w-5 fill-current" style={{ color: "#FF6A13" }} />
-                    </motion.div>
+                      className="absolute left-1/2 top-1/2 h-[2px] origin-left rounded-full"
+                      style={{ backgroundColor: "#FF6A13", rotate: `${angle}deg` }}
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: [0, 90, 110], opacity: [0, 1, 0] }}
+                      transition={{ duration: 1.4, delay: 0.1 + i * 0.02, ease: "easeOut", repeat: Infinity, repeatDelay: 0.6 }}
+                    />
                   );
                 })}
               </div>
               <div className="relative">
                 <div className="text-xs uppercase tracking-[0.3em]" style={{ color: "#FF6A13" }}>It's a Match</div>
-                <h2 className="mt-2 font-display text-3xl font-semibold" style={{ color: "#FF6A13" }}>你们互相喜欢 💞</h2>
+                <div className="mt-2 inline-block rounded-2xl border-2 px-5 py-2" style={{ borderColor: "#FF6A13" }}>
+                  <h2 className="font-display text-3xl font-semibold" style={{ color: "#331915" }}>你们互相喜欢</h2>
+                </div>
                 <p className="mt-1 text-sm text-muted-foreground">和 {matched.name} 同频度 {matched.match}%</p>
 
                 <div className="relative mx-auto mt-6 flex items-center justify-center">
-                  <div className="grid h-24 w-24 -mr-4 place-items-center rounded-full border-4 border-white font-display text-2xl text-white shadow-lg" style={{ backgroundColor: "#FF6A13" }}>我</div>
-                  <div className="grid h-24 w-24 -ml-4 place-items-center rounded-full border-4 border-white font-display text-2xl text-white shadow-lg" style={{ backgroundColor: "#6B8E23" }}>
+                  <div className="grid h-24 w-24 -mr-4 place-items-center rounded-full border-4 border-white font-display text-2xl text-white shadow-lg" style={{ background: "linear-gradient(135deg, #FF6A13, #6B8E23)" }}>我</div>
+                  <div className="grid h-24 w-24 -ml-4 place-items-center rounded-full border-4 border-white font-display text-2xl text-white shadow-lg" style={{ background: "linear-gradient(135deg, #FF6A13, #6B8E23)" }}>
                     {matched.name.slice(0, 1)}
                   </div>
                   <motion.div
@@ -281,7 +276,7 @@ function DiscoverPage() {
                   className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-4 py-3 text-sm font-semibold text-white shadow-lg"
                   style={{ backgroundColor: "#6B8E23" }}
                 >
-                  <MessageCircle className="h-4 w-4" /> 发送第一条消息
+                  <MessageCircle className="h-4 w-4" /> 开始聊天吧
                 </Link>
                 <button onClick={() => setMatched(null)} className="mt-3 w-full text-xs text-muted-foreground">继续滑卡</button>
               </div>
