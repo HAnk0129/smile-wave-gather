@@ -235,8 +235,16 @@ function DiscoverPage() {
             >
               {/* Ambient orange wash — saturated Hermès orange base with frosted blob highlights */}
               <div
-                className="pointer-events-none absolute inset-x-0 top-0 h-[32%] overflow-hidden"
-                style={{ backgroundColor: "#FF8A00" }}
+                className="pointer-events-none absolute inset-x-0 top-0 h-[38%] overflow-hidden"
+                style={{
+                  backgroundColor: "#FF8A00",
+                  WebkitMaskImage:
+                    "radial-gradient(120% 95% at 30% 35%, #000 62%, rgba(0,0,0,0.85) 78%, rgba(0,0,0,0) 100%), radial-gradient(110% 90% at 75% 45%, #000 60%, rgba(0,0,0,0) 100%)",
+                  maskImage:
+                    "radial-gradient(120% 95% at 30% 35%, #000 62%, rgba(0,0,0,0.85) 78%, rgba(0,0,0,0) 100%), radial-gradient(110% 90% at 75% 45%, #000 60%, rgba(0,0,0,0) 100%)",
+                  WebkitMaskComposite: "source-over",
+                  maskComposite: "add",
+                }}
               >
                 <motion.div
                   className="absolute -left-16 -top-20 h-64 w-64 rounded-full blur-3xl"
