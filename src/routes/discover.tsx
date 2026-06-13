@@ -239,11 +239,9 @@ function DiscoverPage() {
                 style={{
                   backgroundColor: "#FF8A00",
                   WebkitMaskImage:
-                    "radial-gradient(120% 95% at 30% 35%, #000 62%, rgba(0,0,0,0.85) 78%, rgba(0,0,0,0) 100%), radial-gradient(110% 90% at 75% 45%, #000 60%, rgba(0,0,0,0) 100%)",
+                    "linear-gradient(180deg, #000 0%, #000 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.4) 90%, rgba(0,0,0,0) 100%)",
                   maskImage:
-                    "radial-gradient(120% 95% at 30% 35%, #000 62%, rgba(0,0,0,0.85) 78%, rgba(0,0,0,0) 100%), radial-gradient(110% 90% at 75% 45%, #000 60%, rgba(0,0,0,0) 100%)",
-                  WebkitMaskComposite: "source-over",
-                  maskComposite: "add",
+                    "linear-gradient(180deg, #000 0%, #000 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.4) 90%, rgba(0,0,0,0) 100%)",
                 }}
               >
                 <motion.div
