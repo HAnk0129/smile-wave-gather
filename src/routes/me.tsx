@@ -363,8 +363,11 @@ function MenuItem({
 }) {
   const inner = (
     <div className="flex items-center gap-3 px-4 py-3">
-      <span className={`grid h-8 w-8 place-items-center rounded-xl ${iconBg ?? "bg-muted"}`}>
-        <Icon className={`h-4 w-4 ${iconColor ?? "text-muted-foreground"}`} />
+      <span
+        className="grid h-8 w-8 place-items-center rounded-xl"
+        style={{ backgroundColor: "#8AA832" }}
+      >
+        <Icon className={`h-4 w-4 ${iconColor ?? "text-white"}`} />
       </span>
       <span className="flex-1 text-sm font-medium">{label}</span>
       {badge && (
