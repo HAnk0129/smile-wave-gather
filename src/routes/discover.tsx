@@ -233,30 +233,28 @@ function DiscoverPage() {
               className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#FF6A13]/50 p-6 text-center shadow-2xl"
               style={{ backgroundColor: "#FFFFFF" }}
             >
-              {/* Ambient orange wash — irregular blurred gradient blobs ending above avatars */}
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-[32%] overflow-hidden">
+              {/* Ambient orange wash — saturated Hermès orange base with frosted blob highlights */}
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 h-[32%] overflow-hidden"
+                style={{ backgroundColor: "#FF8A00" }}
+              >
                 <motion.div
-                  className="absolute -left-12 -top-16 h-56 w-56 rounded-full blur-3xl"
-                  style={{ background: "radial-gradient(closest-side, rgba(255,106,19,0.85), rgba(255,106,19,0) 70%)" }}
-                  animate={{ opacity: [0.7, 0.95, 0.7], scale: [1, 1.08, 1] }}
+                  className="absolute -left-16 -top-20 h-64 w-64 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(closest-side, rgba(255,180,90,0.85), rgba(255,138,0,0) 72%)" }}
+                  animate={{ opacity: [0.7, 1, 0.7], scale: [1, 1.1, 1] }}
                   transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.div
-                  className="absolute -right-16 -top-10 h-64 w-64 rounded-full blur-3xl"
-                  style={{ background: "radial-gradient(closest-side, rgba(255,138,60,0.75), rgba(255,106,19,0) 72%)" }}
-                  animate={{ opacity: [0.85, 0.6, 0.85], scale: [1.05, 1, 1.05] }}
+                  className="absolute -right-20 -top-12 h-72 w-72 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(closest-side, rgba(255,106,19,0.95), rgba(255,106,19,0) 72%)" }}
+                  animate={{ opacity: [0.9, 0.65, 0.9], scale: [1.06, 1, 1.06] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.div
-                  className="absolute left-1/4 -top-6 h-48 w-72 rounded-full blur-3xl"
-                  style={{ background: "radial-gradient(closest-side, rgba(255,170,110,0.6), rgba(255,106,19,0) 75%)" }}
-                  animate={{ opacity: [0.6, 0.85, 0.6], scale: [1, 1.06, 1] }}
+                  className="absolute left-1/3 -bottom-10 h-56 w-80 rounded-full blur-3xl"
+                  style={{ background: "radial-gradient(closest-side, rgba(255,200,130,0.7), rgba(255,138,0,0) 75%)" }}
+                  animate={{ opacity: [0.6, 0.9, 0.6], scale: [1, 1.08, 1] }}
                   transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
-                />
-                {/* Soft bottom fade so blob melts into the cream/white background */}
-                <div
-                  className="absolute inset-x-0 bottom-0 h-20"
-                  style={{ background: "linear-gradient(180deg, rgba(255,247,238,0) 0%, rgba(255,247,238,0.85) 70%, #FFFFFF 100%)" }}
                 />
                 {/* Subtle grain texture */}
                 <div
