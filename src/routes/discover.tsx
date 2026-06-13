@@ -193,13 +193,13 @@ function DiscoverPage() {
           <ActionBtn label="撤回" onClick={undo} className="h-12 w-12 border-border bg-surface text-muted-foreground hover:text-foreground">
             <Undo2 className="h-5 w-5" />
           </ActionBtn>
-          <ActionBtn label="跳过" onClick={() => swipe("left")} className="h-16 w-16 border-destructive/40 bg-surface text-destructive hover:bg-destructive/10">
+          <ActionBtn label="跳过" onClick={() => swipe("left")} style={{ borderColor: "#FF8A00", color: "#FF8A00" }} className="h-16 w-16 bg-surface hover:bg-[#FF8A00]/10">
             <X className="h-7 w-7" />
           </ActionBtn>
           <ActionBtn label="超级喜欢" onClick={() => swipe("up")} className="h-14 w-14 border-sun/40 bg-surface text-sun hover:bg-sun/10">
             <Star className="h-6 w-6" />
           </ActionBtn>
-          <ActionBtn label="喜欢" onClick={() => swipe("right")} className="h-16 w-16 border-mint/40 bg-gradient-to-br from-mint/20 to-coral/20 text-coral hover:from-mint/30 hover:to-coral/30">
+          <ActionBtn label="喜欢" onClick={() => swipe("right")} style={{ borderColor: "#FF8A00", color: "#FF8A00" }} className="h-16 w-16 bg-surface hover:bg-[#FF8A00]/10">
             <Heart className="h-7 w-7 fill-current" />
           </ActionBtn>
           <Link
