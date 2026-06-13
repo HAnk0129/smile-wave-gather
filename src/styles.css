@@ -223,10 +223,7 @@
   .font-serif-display { font-family: var(--font-serif); }
 
   .bg-grid {
-    background-image:
-      linear-gradient(to right, oklch(0.26 0.07 230 / 0.06) 1px, transparent 1px),
-      linear-gradient(to bottom, oklch(0.26 0.07 230 / 0.06) 1px, transparent 1px);
-    background-size: 48px 48px;
+    background-image: none;
   }
 
   .glow-coral {
@@ -245,9 +242,7 @@
   }
 
   .bg-tropical {
-    background-image:
-      radial-gradient(60% 40% at 20% 0%, color-mix(in oklab, var(--primary) 18%, transparent) 0%, transparent 70%),
-      radial-gradient(50% 40% at 100% 100%, color-mix(in oklab, var(--coral) 22%, transparent) 0%, transparent 70%);
+    background-image: none;
   }
 
   @keyframes float-y {
