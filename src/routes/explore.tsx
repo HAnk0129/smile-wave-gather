@@ -53,23 +53,22 @@ function ExploreLayout() {
   if (pathname !== "/explore") return <Outlet />;
 
   return (
-    <div className="min-h-screen bg-background bg-grid text-foreground">
-      <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_oklab,var(--coral)_22%,transparent),transparent)]" />
+    <div className="min-h-screen bg-white text-[#331915]">
       <header className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between px-5 pt-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-coral to-sun text-background">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#FF8A00] text-[#331915]">
             <Flame className="h-5 w-5" />
           </div>
-          <span className="font-display text-lg font-semibold tracking-tight">Pulse</span>
+          <span className="font-display text-lg font-semibold tracking-tight text-[#331915]">Pulse</span>
         </Link>
-        <Link to="/" className="inline-flex items-center gap-1 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur hover:text-foreground">
+        <Link to="/" className="inline-flex items-center gap-1 rounded-full bg-[#FF8A00] px-3 py-1.5 text-xs text-[#331915]">
           <ArrowLeft className="h-3.5 w-3.5" /> 首页
         </Link>
       </header>
 
       <main className="relative z-10 mx-auto w-full max-w-3xl px-5 pb-24 pt-10">
-        <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">发现</h1>
-        <p className="mt-3 max-w-xl text-muted-foreground">选择一种方式，认识有趣的人</p>
+        <h1 className="font-display text-4xl font-semibold tracking-tight text-[#331915] md:text-5xl">发现</h1>
+        <p className="mt-3 max-w-xl text-[#331915]">选择一种方式，认识有趣的人</p>
 
         <div className="mt-10 grid grid-cols-2 gap-4">
           {MODULES.map((m, i) => (
@@ -81,25 +80,30 @@ function ExploreLayout() {
             >
               <Link
                 to={m.href}
-                className="group relative block aspect-square overflow-hidden rounded-3xl border border-border bg-surface/60 p-5 backdrop-blur transition hover:border-foreground/30"
+                className="group relative block aspect-square overflow-hidden rounded-3xl p-5 transition"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at top left, #FF8A00 0%, #FF8A00 30%, #FFFFFF 75%), radial-gradient(circle at bottom right, #FF8A00 0%, #FF8A00 30%, #FFFFFF 75%)",
+                  backgroundBlendMode: "multiply",
+                  backgroundColor: "#FFFFFF",
+                }}
               >
-                <div className={`absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br ${m.grad} blur-2xl`} />
                 <div className="relative flex items-start justify-between">
-                  <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-surface ${m.accent} ring-1 ring-border`}>
+                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#FF8A00] text-[#331915]">
                     <m.icon className="h-7 w-7" />
                   </div>
-                  <span className="text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">进入 →</span>
+                  <span className="text-xs text-white opacity-0 transition group-hover:opacity-100">进入 →</span>
                 </div>
                 <div className="relative mt-auto pt-8">
-                  <div className="font-display text-xl font-semibold tracking-tight">{m.title}</div>
-                  <p className="mt-1 text-xs text-muted-foreground">{m.desc}</p>
+                  <div className="font-display text-xl font-semibold tracking-tight text-white">{m.title}</div>
+                  <p className="mt-1 text-xs text-white">{m.desc}</p>
                 </div>
               </Link>
             </motion.div>
           ))}
         </div>
 
-        <p className="mt-12 text-center text-xs text-muted-foreground">
+        <p className="mt-12 text-center text-xs text-[#331915]">
           尊重彼此，友好交流，共同维护安全社区
         </p>
       </main>
