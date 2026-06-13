@@ -268,9 +268,14 @@ function CampusFeed({ campuses }: { campuses: Campus[] }) {
                 onClick={() => setActiveCat(c)}
                 className={`shrink-0 h-9 pl-3 pr-4 rounded-full text-sm font-medium inline-flex items-center gap-1.5 transition-all duration-200 ${
                   active
-                    ? "bg-gradient-to-r from-coral to-sun text-background shadow-sm shadow-coral/30 scale-[1.03]"
-                    : "bg-surface/60 border border-border/70 text-muted-foreground hover:text-foreground hover:border-coral/30"
+                    ? "text-white shadow-sm scale-[1.03]"
+                    : "border border-border/70 text-muted-foreground hover:text-foreground"
                 }`}
+                style={
+                  active
+                    ? { backgroundColor: "#8AA832" }
+                    : { backgroundColor: "#8AA832", color: "#fff" }
+                }
               >
                 <Icon className="size-3.5" />
                 {label}
