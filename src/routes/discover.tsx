@@ -274,10 +274,10 @@ function DiscoverPage() {
               </div>
               <div className="relative">
                 <div className="text-xs uppercase tracking-[0.3em] text-white/90">It's a Match</div>
-                <div className="mt-2 inline-block rounded-2xl border-2 border-white/90 px-5 py-2">
+                <div className="mt-2 inline-block px-5 py-2">
                   <h2 className="font-display text-3xl font-semibold text-white drop-shadow-sm">我们开始聊天吧</h2>
                 </div>
-                <p className="mt-1 text-sm text-white/90">和 {matched.name} 同频度 {matched.match}%</p>
+                <p className="mt-1 text-sm" style={{ color: "#8AA832" }}>和 {matched.name} 同频度 {matched.match}%</p>
 
                 <div className="relative mx-auto mt-6 flex items-center justify-center">
                   <motion.div
