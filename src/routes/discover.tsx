@@ -428,12 +428,13 @@ function SwipeCard({ profile, onSwipe }: { profile: Profile; onSwipe: (d: "left"
 }
 
 function ActionBtn({
-  children, label, onClick, className,
-}: { children: React.ReactNode; label: string; onClick: () => void; className?: string }) {
+  children, label, onClick, className, style,
+}: { children: React.ReactNode; label: string; onClick: () => void; className?: string; style?: React.CSSProperties }) {
   return (
     <button
       onClick={onClick}
       aria-label={label}
+      style={style}
       className={`grid place-items-center rounded-full border shadow-lg transition-transform active:scale-90 ${className ?? ""}`}
     >
       {children}
