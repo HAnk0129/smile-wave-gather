@@ -81,22 +81,17 @@ function ExploreLayout() {
               <Link
                 to={m.href}
                 className="group relative block aspect-square overflow-hidden rounded-3xl p-5 transition"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at top left, #FF8A00 0%, #FF8A00 30%, #FFFFFF 75%), radial-gradient(circle at bottom right, #FF8A00 0%, #FF8A00 30%, #FFFFFF 75%)",
-                  backgroundBlendMode: "multiply",
-                  backgroundColor: "#FFFFFF",
-                }}
+                style={{ backgroundColor: "#FF8A00" }}
               >
                 <div className="relative flex items-start justify-between">
-                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#FF8A00] text-[#331915]">
+                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/30 text-[#331915]">
                     <m.icon className="h-7 w-7" />
                   </div>
-                  <span className="text-xs text-white opacity-0 transition group-hover:opacity-100">进入 →</span>
+                  <span className="text-xs text-[#331915] opacity-0 transition group-hover:opacity-100">进入 →</span>
                 </div>
                 <div className="relative mt-auto pt-8">
-                  <div className="font-display text-xl font-semibold tracking-tight text-white">{m.title}</div>
-                  <p className="mt-1 text-xs text-white">{m.desc}</p>
+                  <div className="font-display text-xl font-semibold tracking-tight text-[#331915]">{m.title}</div>
+                  <p className="mt-1 text-xs text-[#331915]">{m.desc}</p>
                 </div>
               </Link>
             </motion.div>
