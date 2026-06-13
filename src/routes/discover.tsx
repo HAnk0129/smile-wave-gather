@@ -231,7 +231,7 @@ function DiscoverPage() {
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 18 }}
               className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#FF6A13]/50 p-6 text-center shadow-2xl"
-              style={{ backgroundColor: "#FFFFFF" }}
+              style={{ backgroundColor: "#FF6A13" }}
             >
               {/* Radial burst lines */}
               <div className="pointer-events-none absolute inset-0 grid place-items-center">
@@ -241,7 +241,7 @@ function DiscoverPage() {
                     <motion.div
                       key={i}
                       className="absolute left-1/2 top-1/2 h-[2px] origin-left rounded-full"
-                      style={{ backgroundColor: "#FF6A13", rotate: `${angle}deg` }}
+                      style={{ backgroundColor: "#FFFFFF", rotate: `${angle}deg` }}
                       initial={{ width: 0, opacity: 0 }}
                       animate={{ width: [0, 90, 110], opacity: [0, 1, 0] }}
                       transition={{ duration: 1.4, delay: 0.1 + i * 0.02, ease: "easeOut", repeat: Infinity, repeatDelay: 0.6 }}
@@ -250,24 +250,19 @@ function DiscoverPage() {
                 })}
               </div>
               <div className="relative">
-                <div className="text-xs uppercase tracking-[0.3em]" style={{ color: "#FF6A13" }}>It's a Match</div>
-                <div className="mt-2 inline-block rounded-2xl border-2 px-5 py-2" style={{ borderColor: "#FF6A13" }}>
-                  <h2 className="font-display text-3xl font-semibold" style={{ color: "#331915" }}>你们互相喜欢</h2>
+                <div className="text-xs uppercase tracking-[0.3em] text-white/80">It's a Match</div>
+                <div className="mt-2 inline-block rounded-2xl border-2 border-white px-5 py-2">
+                  <h2 className="font-display text-3xl font-semibold text-white">我们开始聊天吧</h2>
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">和 {matched.name} 同频度 {matched.match}%</p>
+                <p className="mt-1 text-sm text-white/80">和 {matched.name} 同频度 {matched.match}%</p>
 
                 <div className="relative mx-auto mt-6 flex items-center justify-center">
-                  <div className="grid h-24 w-24 -mr-4 place-items-center rounded-full border-4 border-white font-display text-2xl text-white shadow-lg" style={{ background: "linear-gradient(135deg, #FF6A13, #6B8E23)" }}>我</div>
-                  <div className="grid h-24 w-24 -ml-4 place-items-center rounded-full border-4 border-white font-display text-2xl text-white shadow-lg" style={{ background: "linear-gradient(135deg, #FF6A13, #6B8E23)" }}>
-                    {matched.name.slice(0, 1)}
+                  <div className="-mr-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-lg">
+                    <img src={profile3} alt="我" className="h-full w-full object-cover" />
                   </div>
-                  <motion.div
-                    className="absolute grid h-10 w-10 place-items-center rounded-full text-white shadow-xl"
-                    style={{ backgroundColor: "#FF6A13" }}
-                    initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: "spring" }}
-                  >
-                    <Heart className="h-5 w-5 fill-current" />
-                  </motion.div>
+                  <div className="-ml-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-lg">
+                    <img src={matched.photo} alt={matched.name} className="h-full w-full object-cover" />
+                  </div>
                 </div>
 
                 <Link
@@ -278,7 +273,7 @@ function DiscoverPage() {
                 >
                   <MessageCircle className="h-4 w-4" /> 开始聊天吧
                 </Link>
-                <button onClick={() => setMatched(null)} className="mt-3 w-full text-xs text-muted-foreground">继续滑卡</button>
+                <button onClick={() => setMatched(null)} className="mt-3 w-full text-xs text-white/80">继续滑卡</button>
               </div>
             </motion.div>
           </motion.div>
