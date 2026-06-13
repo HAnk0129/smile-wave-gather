@@ -230,13 +230,13 @@ function DiscoverPage() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 18 }}
-              className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-coral/40 bg-surface p-6 text-center shadow-2xl"
+              className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#FF6A13]/50 p-6 text-center shadow-2xl"
+              style={{ backgroundColor: "#FF6A13" }}
             >
-              <div className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-b ${matched.gradient} opacity-50`} />
-              <div className="relative">
-                <div className="text-xs uppercase tracking-[0.3em] text-coral">It's a Match</div>
+              <div className="relative text-white">
+                <div className="text-xs uppercase tracking-[0.3em] text-white/80">It's a Match</div>
                 <h2 className="mt-2 font-display text-3xl font-semibold">你们互相喜欢 💞</h2>
-                <p className="mt-1 text-sm text-muted-foreground">和 {matched.name} 同频度 {matched.match}%</p>
+                <p className="mt-1 text-sm text-white/85">和 {matched.name} 同频度 {matched.match}%</p>
 
                 <div className="relative mx-auto mt-6 flex items-center justify-center">
                   <div className="grid h-24 w-24 -mr-4 place-items-center rounded-full border-4 border-background bg-gradient-to-br from-coral to-sun font-display text-2xl text-background shadow-lg">我</div>
@@ -254,11 +254,12 @@ function DiscoverPage() {
                 <Link
                   to="/chat"
                   search={{ name: matched.name, avatar: matched.gradient, from: "match", city: matched.city }}
-                  className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-coral to-sun px-4 py-3 text-sm font-semibold text-background shadow-lg"
+                  className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                  style={{ backgroundColor: "#6B8E23" }}
                 >
                   <MessageCircle className="h-4 w-4" /> 发送第一条消息
                 </Link>
-                <button onClick={() => setMatched(null)} className="mt-3 w-full text-xs text-muted-foreground">继续滑卡</button>
+                <button onClick={() => setMatched(null)} className="mt-3 w-full text-xs text-white/75">继续滑卡</button>
               </div>
             </motion.div>
           </motion.div>
