@@ -230,7 +230,7 @@ function DiscoverPage() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 18 }}
-              className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#FF6A13]/50 p-6 text-center shadow-2xl"
+              className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-transparent p-6 text-center shadow-2xl"
               style={{ backgroundColor: "#FFFFFF" }}
             >
               {/* Ambient orange wash — saturated Hermès orange base with frosted blob highlights */}
