@@ -171,8 +171,8 @@
   /* Global Header (标题层): 爱马仕橙径向渐变 + 白色小字 */
   header {
     background-image:
-      radial-gradient(circle at top left, rgba(255,138,0,0.8) 0%, rgba(255,138,0,0.8) 20%, rgba(255,138,0,0) 60%),
-      radial-gradient(circle at top right, rgba(255,138,0,0.8) 0%, rgba(255,138,0,0.8) 20%, rgba(255,138,0,0) 60%),
+      radial-gradient(circle at top left, rgba(255,138,0,0.8) 0%, rgba(255,138,0,0.8) 20%, rgba(255,138,0,0.4) 50%, rgba(255,138,0,0) 80%),
+      radial-gradient(circle at top right, rgba(255,138,0,0.8) 0%, rgba(255,138,0,0.8) 20%, rgba(255,138,0,0.4) 50%, rgba(255,138,0,0) 80%),
       linear-gradient(#FFFFFF, #FFFFFF) !important;
     background-color: #FFFFFF !important;
     color: #331915 !important;
