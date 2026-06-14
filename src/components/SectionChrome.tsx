@@ -6,7 +6,12 @@ export function Header({ title, subtitle, icon }: { title: string; subtitle?: st
   return (
     <header
       className="sticky top-0 z-10 border-b border-border backdrop-blur-xl"
-      style={{ backgroundColor: "#FF8A00", color: "#331915" }}
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at center, #FF8A00 0%, #FF8A00 55%, #FFFFFF 100%)",
+        backgroundColor: "#FF8A00",
+        color: "#331915",
+      }}
     >
       <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
         <Link to="/" className="grid h-9 w-9 place-items-center rounded-xl bg-white/30 text-[#331915]"><ChevronLeft className="h-4 w-4" /></Link>

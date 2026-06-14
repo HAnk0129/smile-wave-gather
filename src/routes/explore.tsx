@@ -81,7 +81,11 @@ function ExploreLayout() {
               <Link
                 to={m.href}
                 className="group relative block aspect-square overflow-hidden rounded-3xl p-5 transition"
-                style={{ backgroundColor: "#FF8A00" }}
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at center, #FF8A00 0%, #FF8A00 55%, #FFFFFF 100%)",
+                  backgroundColor: "#FF8A00",
+                }}
               >
                 <div className="relative flex items-start justify-between">
                   <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/30 text-[#331915]">

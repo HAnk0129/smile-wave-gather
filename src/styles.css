@@ -170,7 +170,7 @@
 
   /* Global Header (标题层): 爱马仕橙径向渐变 + 白色小字 */
   header {
-    background-image: none !important;
+    background-image: radial-gradient(circle at center, #FF8A00 0%, #FF8A00 55%, #FFFFFF 100%) !important;
     background-color: #FF8A00 !important;
     color: #331915 !important;
   }
