@@ -8,8 +8,8 @@ export function Header({ title, subtitle, icon }: { title: string; subtitle?: st
       className="sticky top-0 z-10 border-b border-border backdrop-blur-xl"
       style={{
         backgroundImage:
-          "radial-gradient(circle at top left, #FF8A00 0%, #FF8A00 20%, rgba(255,138,0,0) 60%), radial-gradient(circle at top right, #FF8A00 0%, #FF8A00 20%, rgba(255,138,0,0) 60%), linear-gradient(#FFFFFF, #FFFFFF)",
-        backgroundColor: "#FF8A00",
+          "radial-gradient(circle at top left, rgba(255,138,0,0.7) 0%, rgba(255,138,0,0.7) 20%, rgba(255,138,0,0) 60%), radial-gradient(circle at top right, rgba(255,138,0,0.7) 0%, rgba(255,138,0,0.7) 20%, rgba(255,138,0,0) 60%), linear-gradient(#FFFFFF, #FFFFFF)",
+        backgroundColor: "#FFFFFF",
         color: "#331915",
       }}
     >
