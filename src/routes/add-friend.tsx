@@ -122,7 +122,7 @@ function SearchPanel() {
       <form
         onSubmit={(e) => { e.preventDefault(); setSubmitted(q.trim()); }}
         className="flex items-center gap-2 rounded-full border border-border px-3 py-2"
-        style={{ backgroundColor: "#FFFBD3" }}
+        style={{ backgroundColor: "#FFFFFF" }}
       >
         <Search className="h-4 w-4 text-muted-foreground" />
         <input
