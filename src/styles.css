@@ -171,10 +171,10 @@
   /* Global Header (标题层): 爱马仕橙径向渐变 + 白色小字 */
   header {
     background-image:
-      radial-gradient(circle at top left, #FF8A00 0%, #FF8A00 20%, rgba(255,138,0,0) 60%),
-      radial-gradient(circle at top right, #FF8A00 0%, #FF8A00 20%, rgba(255,138,0,0) 60%),
+      radial-gradient(circle at top left, rgba(255,138,0,0.7) 0%, rgba(255,138,0,0.7) 20%, rgba(255,138,0,0) 60%),
+      radial-gradient(circle at top right, rgba(255,138,0,0.7) 0%, rgba(255,138,0,0.7) 20%, rgba(255,138,0,0) 60%),
       linear-gradient(#FFFFFF, #FFFFFF) !important;
-    background-color: #FF8A00 !important;
+    background-color: #FFFFFF !important;
     color: #331915 !important;
   }
   header :is(h1, h2, h3, h4, h5, h6, p, span, a, button, small, label) {
